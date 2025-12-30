@@ -20,6 +20,9 @@ dist-ssr
 # Vite
 .vite
 
+# Backend folder (not needed in this frontend repo)
+facebook-ads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
