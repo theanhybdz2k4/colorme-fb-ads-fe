@@ -98,7 +98,7 @@ export function AdSetsPage() {
     setSelectedCampaign('all');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || selectedCampaign !== 'all';
+  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || selectedCampaign !== 'all');
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);

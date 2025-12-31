@@ -1,4 +1,3 @@
-import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface EnergyBarProps {
@@ -30,17 +29,17 @@ function getVariantFromValue(value: number): "success" | "warning" | "danger" | 
   return "default";
 }
 
-export function EnergyBar({ 
-  value, 
+export function EnergyBar({
+  value,
   label,
   showValue = false,
   size = "md",
   variant,
-  className 
+  className
 }: EnergyBarProps) {
   const clampedValue = Math.max(0, Math.min(100, value));
   const autoVariant = variant || getVariantFromValue(clampedValue);
-  
+
   return (
     <div className={cn("space-y-1", className)}>
       {(label || showValue) && (

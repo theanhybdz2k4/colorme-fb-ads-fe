@@ -90,7 +90,7 @@ export function CampaignsPage() {
     setSelectedAccount('all');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || selectedAccount !== 'all';
+  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || selectedAccount !== 'all');
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);

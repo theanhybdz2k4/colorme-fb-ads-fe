@@ -106,7 +106,7 @@ export function AdsPage() {
     setSelectedAdset('all');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || selectedAdset !== 'all';
+  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || selectedAdset !== 'all');
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);

@@ -89,7 +89,7 @@ export function AdAccountsPage() {
     setStatusFilter('1');
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== '1';
+  const hasActiveFilters = Boolean(searchQuery || statusFilter !== '1');
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
