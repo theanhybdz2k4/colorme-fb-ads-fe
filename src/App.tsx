@@ -1,18 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth, LoginPage, RegisterPage } from '@/features/auth';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { LoginPage } from '@/pages/LoginPage';
-import { RegisterPage } from '@/pages/RegisterPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { FbAccountsPage } from '@/pages/FbAccountsPage';
-import { AdAccountsPage } from '@/pages/AdAccountsPage';
-import { CampaignsPage } from '@/pages/CampaignsPage';
-import { AdsetsPage } from '@/pages/AdsetsPage';
-import { AdsPage } from '@/pages/AdsPage';
-import { InsightsPage } from '@/pages/InsightsPage';
-import { JobsPage } from '@/pages/JobsPage';
+import { DashboardPage } from '@/features/dashboard';
+import { FbAccountsPage } from '@/features/fbAccounts';
+import { AdAccountsPage } from '@/features/adAccounts';
+import { CampaignsPage } from '@/features/campaigns';
+import { AdSetsPage } from '@/features/adSets';
+import { AdsPage } from '@/features/ads';
+import { InsightsPage } from '@/features/insights';
+import { JobsPage } from '@/features/jobs';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,7 +88,7 @@ function AppRoutes() {
         <Route path="fb-accounts" element={<FbAccountsPage />} />
         <Route path="ad-accounts" element={<AdAccountsPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />
-        <Route path="adsets" element={<AdsetsPage />} />
+        <Route path="adsets" element={<AdSetsPage />} />
         <Route path="ads" element={<AdsPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="jobs" element={<JobsPage />} />

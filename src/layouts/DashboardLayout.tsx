@@ -1,101 +1,186 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { useAuth } from '@/features/auth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
+import { ROUTES } from '@/constants';
+import { cn } from '@/lib/utils';
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Megaphone,
+  FolderOpen,
+  FileText,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  LogOut,
+} from 'lucide-react';
 
 const navItems = [
-    { path: '/', label: 'Dashboard', icon: '📊' },
-    { path: '/fb-accounts', label: 'Tài khoản FB', icon: '👤' },
-    { path: '/ad-accounts', label: 'Ad Accounts', icon: '💳' },
-    { path: '/campaigns', label: 'Campaigns', icon: '📣' },
-    { path: '/adsets', label: 'Ad Sets', icon: '📁' },
-    { path: '/ads', label: 'Ads', icon: '📝' },
-    { path: '/insights', label: 'Insights', icon: '📈' },
-    { path: '/jobs', label: 'Jobs', icon: '⚙️' },
+  { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
+  { path: ROUTES.FB_ACCOUNTS, label: 'Tài khoản FB', icon: Users },
+  { path: ROUTES.AD_ACCOUNTS, label: 'Ad Accounts', icon: CreditCard },
+  { path: ROUTES.CAMPAIGNS, label: 'Campaigns', icon: Megaphone },
+  { path: ROUTES.ADSETS, label: 'Ad Sets', icon: FolderOpen },
+  { path: ROUTES.ADS, label: 'Ads', icon: FileText },
+  { path: ROUTES.INSIGHTS, label: 'Insights', icon: BarChart3 },
+  { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
 ];
 
 export function DashboardLayout() {
-    const { user, logout } = useAuth();
-    const location = useLocation();
-    const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
-    };
+  const handleLogout = async () => {
+    await logout();
+    navigate(ROUTES.LOGIN);
+  };
 
-    return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="bg-white sticky top-0 z-50 w-full shadow">
-                <div className="container mx-auto flex gap-6 h-14 items-center">
-                    <div className="flex w-64">
-                        <Link to="/" className="mr-6 flex items-center space-x-2">
-                            <img src="./Icon.png" alt="" className='w-8 h-8 rounded-sm' />
-                            <span className="font-bold">FB Ads Manager</span>
-                        </Link>
-                    </div>
-                    <div className="flex flex-1 items-center justify-end space-x-4">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full cursor-pointer">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback>
-                                            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <div className="flex items-center justify-start gap-2 p-2">
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                                        <p className="text-xs text-muted-foreground">{user?.email}</p>
-                                    </div>
-                                </div>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>Đăng xuất</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-            </header>
-
-            <div className="container mx-auto flex gap-6 pb-6">
-                {/* Sidebar */}
-                <aside className="w-64 shrink-0" style={{ boxShadow: '4px 0 4px -2px rgba(0, 0, 0, 0.1)' }}>
-                    <nav className="space-y-1">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${location.pathname === item.path
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                    }`}
-                            >
-                                <span>{item.icon}</span>
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
-                </aside>
-
-                <Separator orientation="vertical" className="h-auto" />
-
-                {/* Main content */}
-                <main className="flex-1 min-w-0 pt-6">
-                    <Outlet />
-                </main>
-            </div>
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen",
+          "bg-sidebar border-r border-sidebar-border",
+          "transition-all duration-300 ease-out",
+          sidebarExpanded ? "w-56" : "w-16"
+        )}
+      >
+        {/* Logo */}
+        <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="./Icon.png" alt="" className="w-8 h-8 rounded-md shrink-0" />
+            <span
+              className={cn(
+                "font-semibold text-sidebar-foreground whitespace-nowrap",
+                "transition-opacity duration-200",
+                sidebarExpanded ? "opacity-100" : "opacity-0 w-0"
+              )}
+            >
+              FB Ads
+            </span>
+          </Link>
         </div>
-    );
+
+        {/* Navigation */}
+        <nav className="p-2 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5",
+                  "text-sm transition-all duration-200",
+                  "group relative",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+              >
+                {/* Active indicator */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
+                )}
+
+                <Icon className={cn(
+                  "h-5 w-5 shrink-0 transition-colors",
+                  isActive ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80"
+                )} />
+
+                <span
+                  className={cn(
+                    "whitespace-nowrap transition-opacity duration-200",
+                    sidebarExpanded ? "opacity-100" : "opacity-0 w-0"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Toggle button */}
+        <button
+          onClick={() => setSidebarExpanded(!sidebarExpanded)}
+          className={cn(
+            "absolute bottom-4 right-0 translate-x-1/2",
+            "p-1.5 rounded-full bg-card border border-border",
+            "text-muted-foreground hover:text-foreground",
+            "transition-all duration-200 hover:scale-110",
+            "shadow-lg"
+          )}
+        >
+          <ChevronLeft className={cn(
+            "h-4 w-4 transition-transform duration-300",
+            !sidebarExpanded && "rotate-180"
+          )} />
+        </button>
+      </aside>
+
+      {/* Main content area */}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarExpanded ? "ml-56" : "ml-16"
+        )}
+      >
+        {/* Header */}
+        <header className="sticky top-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border/50">
+          <div className="h-full px-6 flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9 border border-border">
+                    <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center gap-3 p-3">
+                  <Avatar className="h-10 w-10 border border-border">
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
 }
