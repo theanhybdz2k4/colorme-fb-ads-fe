@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAds } from './useAds';
 import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from './ads.types';
@@ -32,6 +33,7 @@ import {
 } from '@/components/custom';
 
 export function AdsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedAdset, setSelectedAdset] = useState<string>('all');
   const [syncingAll, setSyncingAll] = useState(false);
@@ -191,6 +193,7 @@ export function AdsPage() {
                   ad={ad}
                   statusVariant={getAdStatusVariant(ad.effectiveStatus || ad.status)}
                   onSyncInsights={() => handleSyncInsights(ad)}
+                  onClick={() => navigate(`/ads/${ad.id}`)}
                   isSyncing={syncingAd === ad.id}
                 />
               ))}

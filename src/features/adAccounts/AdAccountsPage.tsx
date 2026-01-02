@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, CreditCard } from 'lucide-react';
+import { Loader2, RefreshCw, CreditCard, Image } from 'lucide-react';
 import {
   PageHeader,
   FilterBar,
@@ -22,6 +22,7 @@ import {
 export function AdAccountsPage() {
   const queryClient = useQueryClient();
   const [syncingAccount, setSyncingAccount] = useState<string | null>(null);
+  const [syncingCreatives, setSyncingCreatives] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('1');
@@ -58,6 +59,20 @@ export function AdAccountsPage() {
       toast.error('Lỗi sync');
     } finally {
       setSyncingAccount(null);
+    }
+  };
+
+  const handleSyncCreatives = async (accountId: string) => {
+    setSyncingCreatives(accountId);
+    try {
+      await syncApi.entities(accountId, 'creatives');
+      toast.success('Đã bắt đầu sync Creatives', {
+        description: `Account: ${accountId}`,
+      });
+    } catch {
+      toast.error('Lỗi sync creatives');
+    } finally {
+      setSyncingCreatives(null);
     }
   };
 
@@ -178,20 +193,37 @@ export function AdAccountsPage() {
                         {new Date(account.syncedAt).toLocaleString('vi-VN')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSyncAll(account.id)}
-                          disabled={syncingAccount === account.id}
-                          className="bg-muted/30 border-border/50 hover:bg-muted/50"
-                        >
-                          {syncingAccount === account.id ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                          )}
-                          Sync All
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSyncCreatives(account.id)}
+                            disabled={syncingCreatives === account.id}
+                            className="bg-muted/30 border-border/50 hover:bg-muted/50"
+                            title="Sync Creatives để lấy thumbnail"
+                          >
+                            {syncingCreatives === account.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Image className="h-4 w-4 mr-1" />
+                            )}
+                            Creatives
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSyncAll(account.id)}
+                            disabled={syncingAccount === account.id}
+                            className="bg-muted/30 border-border/50 hover:bg-muted/50"
+                          >
+                            {syncingAccount === account.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4 mr-1" />
+                            )}
+                            Sync All
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

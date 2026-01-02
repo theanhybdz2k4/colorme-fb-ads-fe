@@ -8,7 +8,7 @@ import { FbAccountsPage } from '@/features/fbAccounts';
 import { AdAccountsPage } from '@/features/adAccounts';
 import { CampaignsPage } from '@/features/campaigns';
 import { AdSetsPage } from '@/features/adSets';
-import { AdsPage } from '@/features/ads';
+import { AdsPage, AdDetailPage } from '@/features/ads';
 import { InsightsPage } from '@/features/insights';
 import { JobsPage } from '@/features/jobs';
 
@@ -90,6 +90,7 @@ function AppRoutes() {
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="adsets" element={<AdSetsPage />} />
         <Route path="ads" element={<AdsPage />} />
+        <Route path="ads/:adId" element={<AdDetailPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="jobs" element={<JobsPage />} />
       </Route>

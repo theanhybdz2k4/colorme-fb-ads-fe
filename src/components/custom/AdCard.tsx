@@ -16,6 +16,7 @@ interface AdCardProps {
   };
   statusVariant: "default" | "secondary" | "destructive" | "outline";
   onSyncInsights: () => void;
+  onClick?: () => void;
   isSyncing: boolean;
   className?: string;
 }
@@ -24,6 +25,7 @@ export function AdCard({
   ad,
   statusVariant,
   onSyncInsights,
+  onClick,
   isSyncing,
   className,
 }: AdCardProps) {
@@ -35,11 +37,15 @@ export function AdCard({
         "group rounded-lg bg-card border border-border/50",
         "shadow-lg transition-all duration-300",
         "hover:-translate-y-1 hover:shadow-xl hover:border-border/80",
+        onClick && "cursor-pointer",
         className
       )}
     >
-      {/* Thumbnail / Preview */}
-      <div className="relative aspect-video bg-muted/30 rounded-t-lg overflow-hidden">
+      {/* Thumbnail / Preview - Clickable */}
+      <div 
+        className="relative aspect-video bg-muted/30 rounded-t-lg overflow-hidden cursor-pointer"
+        onClick={onClick}
+      >
         {ad.thumbnailUrl ? (
           <img
             src={ad.thumbnailUrl}
