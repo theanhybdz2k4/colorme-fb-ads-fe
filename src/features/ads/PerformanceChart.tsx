@@ -23,7 +23,7 @@ interface PerformanceChartProps {
 
 type TimeRange = '3d' | '7d' | '30d' | 'today' | 'yesterday';
 
-const formatCurrency = (value: number | undefined, currency = 'VND') => {
+const formatCurrency = (value: number | undefined) => {
   if (value === undefined) return '';
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;
@@ -168,10 +168,10 @@ export function PerformanceChart({ adId, dailyData, currency = 'VND' }: Performa
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#888' }} />
-              <YAxis tick={{ fontSize: 10, fill: '#888' }} tickFormatter={(v) => formatCurrency(v, currency)} />
+              <YAxis tick={{ fontSize: 10, fill: '#888' }} tickFormatter={formatCurrency} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
-                formatter={(value: number | undefined) => [`${formatCurrency(value, currency)} ${currency}`, 'Chi tiêu']}
+                formatter={(value: number | undefined) => [`${formatCurrency(value)} ${currency}`, 'Chi tiêu']}
               />
               <Area type="monotone" dataKey="spend" stroke="#3b82f6" fillOpacity={1} fill="url(#spendGradient)" strokeWidth={2} />
             </AreaChart>
