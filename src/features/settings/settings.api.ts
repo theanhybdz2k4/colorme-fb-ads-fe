@@ -167,4 +167,28 @@ export const userTelegramBotApi = {
         const { data } = await apiClient.delete(`/telegram/bots/${botId}/settings`);
         return data.result || data;
     },
+
+    /**
+     * Send test message to all subscribers of a bot
+     */
+    sendTestMessage: async (botId: number): Promise<{ success: boolean; subscriberCount: number; message: string }> => {
+        const { data } = await apiClient.post(`/telegram/bots/${botId}/test`);
+        return data;
+    },
+
+    /**
+     * Migrate subscribers from telegram_subscribers to telegram_bot_subscribers
+     */
+    migrateSubscribers: async (botId: number): Promise<{ success: boolean; migrated: number; skipped: number; message: string }> => {
+        const { data } = await apiClient.post(`/telegram/bots/${botId}/migrate-subscribers`);
+        return data;
+    },
+
+    /**
+     * Manually add a subscriber to a bot
+     */
+    addSubscriber: async (botId: number, dto: { chatId: string; name?: string }): Promise<{ success: boolean; subscriber: any; message: string }> => {
+        const { data } = await apiClient.post(`/telegram/bots/${botId}/add-subscriber`, dto);
+        return data;
+    },
 };

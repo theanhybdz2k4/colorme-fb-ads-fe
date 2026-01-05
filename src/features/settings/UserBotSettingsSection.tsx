@@ -5,6 +5,8 @@ import {
     useUpsertUserTelegramBot,
     useDeleteUserTelegramBot,
     useUpsertBotSettings,
+    useTestBotMessage,
+    useMigrateSubscribers,
 } from './useCronSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +25,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Bot, Plus, Trash2, Loader2, ExternalLink, Users, Clock, Save, Check } from 'lucide-react';
+import { Bot, Plus, Trash2, Loader2, ExternalLink, Users, Clock, Save, Check, Send } from 'lucide-react';
 import { HOURS } from './settings.types';
 
 export function UserBotSettingsSection() {
@@ -31,6 +33,8 @@ export function UserBotSettingsSection() {
     const upsertMutation = useUpsertUserTelegramBot();
     const deleteMutation = useDeleteUserTelegramBot();
     const upsertSettingsMutation = useUpsertBotSettings();
+    const testMessageMutation = useTestBotMessage();
+    const migrateMutation = useMigrateSubscribers();
 
     const [showAddDialog, setShowAddDialog] = useState(false);
     const [editingBotId, setEditingBotId] = useState<number | null>(null);
@@ -128,6 +132,34 @@ export function UserBotSettingsSection() {
         }
     };
 
+    const handleTestMessage = async (botId: number) => {
+        try {
+            const result = await testMessageMutation.mutateAsync(botId);
+            if (result.success) {
+                toast.success(`Đã gửi test message đến ${result.subscriberCount} người`);
+            } else {
+                toast.error('Không thể gửi test message');
+            }
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || 'Lỗi khi gửi test message';
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleMigrateSubscribers = async (botId: number) => {
+        try {
+            const result = await migrateMutation.mutateAsync(botId);
+            if (result.success) {
+                toast.success(`Đã migrate ${result.migrated} subscribers${result.skipped > 0 ? `, bỏ qua ${result.skipped}` : ''}`);
+            } else {
+                toast.error('Không thể migrate subscribers');
+            }
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || 'Lỗi khi migrate subscribers';
+            toast.error(errorMessage);
+        }
+    };
+
     const bots = data?.bots || [];
 
     if (error) {
@@ -190,6 +222,15 @@ export function UserBotSettingsSection() {
                                         <Button
                                             size="sm"
                                             variant="outline"
+                                            onClick={() => handleTestMessage(bot.id)}
+                                            disabled={testMessageMutation.isPending}
+                                        >
+                                            <Send className="h-4 w-4 mr-1" />
+                                            Test
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
                                             onClick={() => openSettingsDialog(bot.id)}
                                         >
                                             <Clock className="h-4 w-4 mr-1" />
@@ -243,6 +284,29 @@ export function UserBotSettingsSection() {
                                         </span>
                                     </div>
                                 </div>
+
+                                {bot.activeSubscribers === 0 && (
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleMigrateSubscribers(bot.id)}
+                                            disabled={migrateMutation.isPending}
+                                        >
+                                            {migrateMutation.isPending ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                    Đang migrate...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Users className="h-4 w-4 mr-1" />
+                                                    Migrate từ bảng cũ
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                )}
 
                                 <p className="text-xs text-muted-foreground">
                                     Chia sẻ link cho team để họ bấm /start → /subscribe

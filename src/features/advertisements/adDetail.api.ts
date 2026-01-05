@@ -109,10 +109,18 @@ export const adDetailApi = {
         if (dateStart) params.append('dateStart', dateStart);
         if (dateEnd) params.append('dateEnd', dateEnd);
         const query = params.toString() ? `?${params.toString()}` : '';
-        return apiClient.get<AdAnalytics>(`/ads/${adId}/analytics${query}`);
+        return apiClient.get<AdAnalytics>(`/insights/ads/${adId}/analytics${query}`);
     },
     getHourly: (adId: string, date?: string) => {
         const query = date ? `?date=${date}` : '';
-        return apiClient.get<HourlyInsight[]>(`/ads/${adId}/hourly${query}`);
+        return apiClient.get<HourlyInsight[]>(`/insights/ads/${adId}/hourly${query}`);
+    },
+    syncInsights: (adId: string, dateStart: string, dateEnd: string, breakdown: string = 'all') => {
+        return apiClient.post(`/insights/sync`, {
+            adId,
+            dateStart,
+            dateEnd,
+            breakdown,
+        });
     },
 };

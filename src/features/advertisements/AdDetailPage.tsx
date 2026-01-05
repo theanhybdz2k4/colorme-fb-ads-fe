@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAdDetail, useAdAnalytics } from './useAdDetail';
+import { useAdDetail, useAdAnalytics, useSyncAdInsights } from './useAdDetail';
 import { PerformanceChart } from './PerformanceChart';
 import type { DailyInsight, DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from './adDetail.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Image as ImageIcon, TrendingUp, Users, MousePointerClick, DollarSign, Target, Eye } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, TrendingUp, Users, MousePointerClick, DollarSign, Target, Eye, RefreshCw } from 'lucide-react';
+import { getVietnamDateString } from '@/lib/utils';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   FloatingCard,
   FloatingCardHeader,
@@ -36,9 +39,58 @@ const formatPercent = (value: number) => {
 export function AdDetailPage() {
   const { adId } = useParams<{ adId: string }>();
   const navigate = useNavigate();
+  const [syncingSection, setSyncingSection] = useState<string | null>(null);
 
   const { data: ad, isLoading: isLoadingAd } = useAdDetail(adId || '');
-  const { data: analytics, isLoading: isLoadingAnalytics } = useAdAnalytics(adId || '');
+  const { data: analytics, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useAdAnalytics(adId || '');
+  const syncInsightsMutation = useSyncAdInsights(adId || '');
+
+  // Tính toán 7 ngày từ hôm nay
+  const getDateRange7Days = () => {
+    const today = getVietnamDateString();
+    const [year, month, day] = today.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day);
+    startDate.setDate(startDate.getDate() - 6); // 7 ngày bao gồm cả hôm nay
+    const dateStart = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+    return { dateStart, dateEnd: today };
+  };
+
+  const handleSync = async (section: string) => {
+    if (!adId) return;
+    
+    setSyncingSection(section);
+    try {
+      const { dateStart, dateEnd } = getDateRange7Days();
+      // Luôn sync tất cả insights (bao gồm hourly và các breakdowns khác) trong 7 ngày
+      const result = await syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' });
+      
+      toast.success('Sync insights thành công!', {
+        description: `Đã sync ${result || 0} insights từ ${dateStart} đến ${dateEnd}`,
+      });
+      
+      // Đợi một chút để đảm bảo backend đã lưu xong, sau đó refetch ngay lập tức
+      setTimeout(async () => {
+        try {
+          // Refetch analytics với force refresh
+          await refetchAnalytics();
+          
+          // Refetch lại sau 1 giây nữa để đảm bảo có dữ liệu
+          setTimeout(async () => {
+            await refetchAnalytics();
+          }, 1000);
+        } catch (error) {
+          console.error('Error refetching data:', error);
+        }
+      }, 2000);
+    } catch (error: any) {
+      console.error('Sync failed:', error);
+      toast.error('Sync insights thất bại', {
+        description: error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi sync insights',
+      });
+    } finally {
+      setSyncingSection(null);
+    }
+  };
 
   if (isLoadingAd || isLoadingAnalytics) {
     return <LoadingPage />;
@@ -106,6 +158,29 @@ export function AdDetailPage() {
               <p><span className="opacity-60">Campaign:</span> {ad.campaign?.name || '-'}</p>
               <p><span className="opacity-60">Ad Set:</span> {ad.adset?.name || '-'}</p>
             </div>
+          </div>
+
+          {/* Sync Button */}
+          <div className="shrink-0">
+            <Button
+              variant="default"
+              size="default"
+              onClick={() => handleSync('header')}
+              disabled={syncingSection === 'header'}
+              className="h-10"
+            >
+              {syncingSection === 'header' ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Đang sync...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sync Insights
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>
@@ -192,7 +267,28 @@ export function AdDetailPage() {
       {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
         <FloatingCard>
           <FloatingCardHeader>
-            <FloatingCardTitle>Biểu đồ tăng trưởng</FloatingCardTitle>
+            <div className="flex items-center justify-between w-full">
+              <FloatingCardTitle>Biểu đồ tăng trưởng</FloatingCardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSync('chart')}
+                disabled={syncingSection === 'chart'}
+                className="h-8"
+              >
+                {syncingSection === 'chart' ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                    Đang sync...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Sync
+                  </>
+                )}
+              </Button>
+            </div>
           </FloatingCardHeader>
           <FloatingCardContent>
             <PerformanceChart adId={ad.id} dailyData={analytics.dailyInsights} currency={currency} />
@@ -204,7 +300,28 @@ export function AdDetailPage() {
       {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
         <FloatingCard>
           <FloatingCardHeader>
-            <FloatingCardTitle>Hiệu suất theo ngày</FloatingCardTitle>
+            <div className="flex items-center justify-between w-full">
+              <FloatingCardTitle>Hiệu suất theo ngày</FloatingCardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSync('daily')}
+                disabled={syncingSection === 'daily'}
+                className="h-8"
+              >
+                {syncingSection === 'daily' ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                    Đang sync...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Sync
+                  </>
+                )}
+              </Button>
+            </div>
           </FloatingCardHeader>
           <FloatingCardContent>
             <div className="overflow-x-auto">
@@ -245,7 +362,28 @@ export function AdDetailPage() {
         {analytics?.deviceBreakdown && analytics.deviceBreakdown.length > 0 && (
           <FloatingCard>
             <FloatingCardHeader>
-              <FloatingCardTitle>Theo thiết bị</FloatingCardTitle>
+              <div className="flex items-center justify-between w-full">
+                <FloatingCardTitle>Theo thiết bị</FloatingCardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSync('device')}
+                  disabled={syncingSection === 'device'}
+                  className="h-8"
+                >
+                  {syncingSection === 'device' ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                      Đang sync...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2" />
+                      Sync
+                    </>
+                  )}
+                </Button>
+              </div>
             </FloatingCardHeader>
             <FloatingCardContent>
               <Table>
@@ -274,7 +412,28 @@ export function AdDetailPage() {
         {analytics?.placementBreakdown && analytics.placementBreakdown.length > 0 && (
           <FloatingCard>
             <FloatingCardHeader>
-              <FloatingCardTitle>Theo vị trí đặt</FloatingCardTitle>
+              <div className="flex items-center justify-between w-full">
+                <FloatingCardTitle>Theo vị trí đặt</FloatingCardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSync('placement')}
+                  disabled={syncingSection === 'placement'}
+                  className="h-8"
+                >
+                  {syncingSection === 'placement' ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                      Đang sync...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2" />
+                      Sync
+                    </>
+                  )}
+                </Button>
+              </div>
             </FloatingCardHeader>
             <FloatingCardContent>
               <Table>
@@ -304,7 +463,28 @@ export function AdDetailPage() {
       {analytics?.ageGenderBreakdown && analytics.ageGenderBreakdown.length > 0 && (
         <FloatingCard>
           <FloatingCardHeader>
-            <FloatingCardTitle>Theo độ tuổi & giới tính</FloatingCardTitle>
+            <div className="flex items-center justify-between w-full">
+              <FloatingCardTitle>Theo độ tuổi & giới tính</FloatingCardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSync('age_gender')}
+                disabled={syncingSection === 'age_gender'}
+                className="h-8"
+              >
+                {syncingSection === 'age_gender' ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                    Đang sync...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-2" />
+                    Sync
+                  </>
+                )}
+              </Button>
+            </div>
           </FloatingCardHeader>
           <FloatingCardContent>
             <div className="overflow-x-auto">
@@ -341,6 +521,16 @@ export function AdDetailPage() {
           icon={<TrendingUp className="h-12 w-12" />}
           title="Chưa có dữ liệu insights"
           description="Sync insights cho ad này để xem phân tích chi tiết"
+          action={{
+            label: syncingSection === 'empty' ? 'Đang sync...' : 'Sync Insights',
+            onClick: () => handleSync('empty'),
+            disabled: syncingSection === 'empty',
+            icon: syncingSection === 'empty' ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            ),
+          }}
         />
       )}
     </div>

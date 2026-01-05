@@ -9,6 +9,8 @@ interface EmptyStateProps {
     action?: {
         label: string;
         onClick: () => void;
+        disabled?: boolean;
+        icon?: React.ReactNode;
     };
     className?: string;
 }
@@ -51,7 +53,9 @@ export function EmptyState({
                     onClick={action.onClick}
                     className="mt-4"
                     size="sm"
+                    disabled={action.disabled}
                 >
+                    {action.icon && <span className="mr-2">{action.icon}</span>}
                     {action.label}
                 </Button>
             )}

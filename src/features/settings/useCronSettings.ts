@@ -171,3 +171,25 @@ export function useDeleteBotSettings() {
         },
     });
 }
+
+export function useTestBotMessage() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (botId: number) => userTelegramBotApi.sendTestMessage(botId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['telegram', 'bots'], refetchType: 'active' });
+        },
+    });
+}
+
+export function useMigrateSubscribers() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (botId: number) => userTelegramBotApi.migrateSubscribers(botId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['telegram', 'bots'], refetchType: 'active' });
+        },
+    });
+}
