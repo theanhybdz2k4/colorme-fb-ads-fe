@@ -63,7 +63,7 @@ export function DashboardLayout() {
         {/* Logo */}
         <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-3">
-            <img src="https://d1j8r0kxyu9tj8.cloudfront.net/files/jIKVzBBKMYuVTNY3vu3SR3o1P7VObZxy5vUC2eQR.jpg" alt="" className="w-8 h-8 rounded-md shrink-0" />
+            <img src="https://d1j8r0kxyu9tj8.cloudfront.net/files/rkm8JsJ7zlX0QvlWP9OaoesMbi9MrN5OGxoedND6.jpg" alt="" className="w-8 h-8 rounded-md shrink-0" />
             <span
               className={cn(
                 "font-semibold text-sidebar-foreground whitespace-nowrap",
