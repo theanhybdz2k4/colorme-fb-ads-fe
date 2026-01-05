@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 
 export const jobsApi = {
   list: (limit?: number) =>
-    apiClient.get('/fb-ads/jobs', { params: { limit } }),
+    apiClient.get('/jobs', { params: { limit } }),
 
-  get: (id: number) => apiClient.get(`/fb-ads/jobs/${id}`),
+  get: (id: number) => apiClient.get(`/jobs/${id}`),
 };

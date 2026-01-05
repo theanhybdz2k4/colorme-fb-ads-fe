@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInsights } from './useInsights';
-import { useAds } from '@/features/ads';
+import { useAds } from '@/features/advertisements';
 import { syncApi } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,13 +25,17 @@ import {
     LoadingState,
     EmptyState,
 } from '@/components/custom';
+import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 
 export function InsightsPage() {
     const queryClient = useQueryClient();
     const [selectedAd, setSelectedAd] = useState<string>('all');
     const [syncing, setSyncing] = useState(false);
-    const today = new Date().toISOString().split('T')[0];
-    const [dateStart, setDateStart] = useState(today);
+    
+    // Use Vietnam timezone (GMT+7) for date defaults
+    const today = getVietnamDateString();
+    const yesterday = getVietnamYesterdayString();
+    const [dateStart, setDateStart] = useState(yesterday);
     const [dateEnd, setDateEnd] = useState(today);
 
     const { data: ads } = useAds({ effectiveStatus: 'ACTIVE' });
@@ -44,25 +48,23 @@ export function InsightsPage() {
     const handleSync = async () => {
         setSyncing(true);
         try {
-            let adIdsToSync: string[] = [];
-
+            // If specific ad selected, sync just that ad
             if (selectedAd !== 'all') {
-                adIdsToSync = [selectedAd];
+                await syncApi.insightsByAd(selectedAd, dateStart, dateEnd, 'all');
+                toast.success('Đã bắt đầu sync Insights', {
+                    description: `Ad: ${selectedAd}`,
+                });
             } else {
-                if (!ads || ads.length === 0) {
-                    toast.error('Không có ads nào đang active');
-                    return;
-                }
-                adIdsToSync = ads.map(a => a.id);
+                // Sync insights for TODAY only:
+                await Promise.all([
+                    syncApi.fullSync(1),      // Daily insights (hôm nay)
+                    syncApi.syncHourlyToday() // Hourly insights (hôm nay)
+                ]);
+                toast.success('Đã bắt đầu sync Insights', {
+                    description: 'Đang sync: Daily + Hourly (hôm nay)',
+                });
             }
-
-            for (const adId of adIdsToSync) {
-                await syncApi.insightsByAd(adId, dateStart, dateEnd, 'all');
-            }
-
-            toast.success(`Đã bắt đầu sync Insights cho ${adIdsToSync.length} ads`, {
-                description: `Từ ${dateStart} đến ${dateEnd}`,
-            });
+            
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['insights'] });
             }, 5000);

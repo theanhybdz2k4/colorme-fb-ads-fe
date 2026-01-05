@@ -103,16 +103,16 @@ export interface HourlyInsight {
 }
 
 export const adDetailApi = {
-    getAd: (adId: string) => apiClient.get<AdDetail>(`/fb-ads/ads/${adId}`),
+    getAd: (adId: string) => apiClient.get<AdDetail>(`/ads/${adId}`),
     getAnalytics: (adId: string, dateStart?: string, dateEnd?: string) => {
         const params = new URLSearchParams();
         if (dateStart) params.append('dateStart', dateStart);
         if (dateEnd) params.append('dateEnd', dateEnd);
         const query = params.toString() ? `?${params.toString()}` : '';
-        return apiClient.get<AdAnalytics>(`/fb-ads/ads/${adId}/analytics${query}`);
+        return apiClient.get<AdAnalytics>(`/ads/${adId}/analytics${query}`);
     },
     getHourly: (adId: string, date?: string) => {
         const query = date ? `?date=${date}` : '';
-        return apiClient.get<HourlyInsight[]>(`/fb-ads/ads/${adId}/hourly${query}`);
+        return apiClient.get<HourlyInsight[]>(`/ads/${adId}/hourly${query}`);
     },
 };

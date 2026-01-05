@@ -55,28 +55,22 @@ export function AdsPage() {
   const handleSyncAllActive = async () => {
     setSyncingAll(true);
     try {
-      let adsetIdsToSync: string[] = [];
-
-      if (selectedAdset !== 'all') {
-        adsetIdsToSync = [selectedAdset];
-      } else {
-        if (!adsets || adsets.length === 0) {
-          toast.error('Không có adset nào đang active');
-          return;
-        }
-        adsetIdsToSync = adsets.map(a => a.id);
+      // Sync ads for each active adset
+      if (!adsets || adsets.length === 0) {
+        toast.error('Không có adsets nào để sync');
+        return;
       }
 
-      for (const adsetId of adsetIdsToSync) {
-        await syncApi.entitiesByAdset(adsetId);
+      for (const adset of adsets) {
+        await syncApi.entitiesByAdset(adset.id);
       }
-      
-      toast.success(`Đã bắt đầu sync Ads cho ${adsetIdsToSync.length} adsets`, {
-        description: 'Kiểm tra Jobs để xem tiến trình',
+
+      toast.success('Đã bắt đầu sync Ads', {
+        description: `Đang sync từ ${adsets.length} adsets`,
       });
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['ads'] });
-      }, 5000);
+      }, 3000);
     } catch {
       toast.error('Lỗi sync');
     } finally {
@@ -88,9 +82,9 @@ export function AdsPage() {
     setSyncingAd(ad.id);
     const today = new Date().toISOString().split('T')[0];
     try {
-      await syncApi.insights(ad.accountId, today, today, 'all');
+      await syncApi.insightsByAd(ad.id, today, today, 'all');
       toast.success('Đã bắt đầu sync Insights', {
-        description: `Account: ${ad.accountId}`,
+        description: `Ad: ${ad.name || ad.id}`,
       });
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['insights'] });

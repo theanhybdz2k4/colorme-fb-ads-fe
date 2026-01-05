@@ -21,6 +21,7 @@ import {
   FileText,
   BarChart3,
   Settings,
+  Clock,
   ChevronLeft,
   LogOut,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ const navItems = [
   { path: ROUTES.ADS, label: 'Ads', icon: FileText },
   { path: ROUTES.INSIGHTS, label: 'Insights', icon: BarChart3 },
   { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
+  { path: ROUTES.SETTINGS, label: 'Cron Settings', icon: Clock },
 ];
 
 export function DashboardLayout() {

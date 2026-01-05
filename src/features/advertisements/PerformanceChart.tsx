@@ -14,6 +14,7 @@ import {
 import type { DailyInsight, HourlyInsight } from './adDetail.api';
 import { useAdHourly } from './useAdDetail';
 import { Button } from '@/components/ui/button';
+import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 
 interface PerformanceChartProps {
   adId: string;
@@ -45,23 +46,14 @@ const formatNumber = (value: number | undefined) => {
   return value.toFixed(0);
 };
 
-const formatLocalDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const getDateForRange = (range: TimeRange): { isHourly: boolean; date?: string; days?: number } => {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
   switch (range) {
     case 'today':
-      return { isHourly: true, date: formatLocalDate(today) };
+      // Always use Vietnam timezone (GMT+7) for today
+      return { isHourly: true, date: getVietnamDateString() };
     case 'yesterday':
-      return { isHourly: true, date: formatLocalDate(yesterday) };
+      // Always use Vietnam timezone (GMT+7) for yesterday
+      return { isHourly: true, date: getVietnamYesterdayString() };
     case '3d':
       return { isHourly: false, days: 3 };
     case '7d':

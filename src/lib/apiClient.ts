@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -20,20 +20,23 @@ apiClient.interceptors.request.use((config) => {
 
 // Token refresh state to prevent race conditions
 let isRefreshing = false;
-let failedQueue: Array<{
+let refreshPromise: Promise<string> | null = null;
+const failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
+  const queue = [...failedQueue];
+  failedQueue.length = 0; // Clear array
+  
+  queue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
       prom.resolve(token!);
     }
   });
-  failedQueue = [];
 };
 
 // Handle token refresh with queue to prevent race conditions
@@ -43,23 +46,34 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If already refreshing, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
+      originalRequest._retry = true;
+
+      // If already refreshing, wait for the existing refresh promise
+      if (isRefreshing && refreshPromise) {
+        try {
+          const token = await refreshPromise;
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          return Promise.reject(refreshError);
+        }
       }
 
-      originalRequest._retry = true;
+      // If not refreshing, start a new refresh
       isRefreshing = true;
-
       const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
+      
+      if (!refreshToken) {
+        isRefreshing = false;
+        refreshPromise = null;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(new Error('No refresh token available'));
+      }
+
+      // Create refresh promise
+      refreshPromise = (async () => {
         try {
           const { data } = await axios.post(`${API_URL}/auth/refresh`, {
             refreshToken,
@@ -69,25 +83,33 @@ apiClient.interceptors.response.use(
           const newAccessToken = result.accessToken;
           const newRefreshToken = result.refreshToken;
 
+          if (!newAccessToken || !newRefreshToken) {
+            throw new Error('Invalid refresh response');
+          }
+
           localStorage.setItem('accessToken', newAccessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
 
           processQueue(null, newAccessToken);
-          isRefreshing = false;
-
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
+          return newAccessToken;
         } catch (refreshError) {
           processQueue(refreshError, null);
-          isRefreshing = false;
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
-          return Promise.reject(refreshError);
+          throw refreshError;
+        } finally {
+          isRefreshing = false;
+          refreshPromise = null;
         }
-      } else {
-        isRefreshing = false;
-        window.location.href = '/login';
+      })();
+
+      try {
+        const token = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
       }
     }
 

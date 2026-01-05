@@ -10,4 +10,6 @@ export const ROUTES = {
     ADS: '/ads',
     INSIGHTS: '/insights',
     JOBS: '/jobs',
+    SETTINGS: '/settings',
 } as const;
+

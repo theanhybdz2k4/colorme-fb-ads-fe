@@ -8,9 +8,10 @@ import { FbAccountsPage } from '@/features/fbAccounts';
 import { AdAccountsPage } from '@/features/adAccounts';
 import { CampaignsPage } from '@/features/campaigns';
 import { AdSetsPage } from '@/features/adSets';
-import { AdsPage, AdDetailPage } from '@/features/ads';
+import { AdsPage, AdDetailPage } from '@/features/advertisements';
 import { InsightsPage } from '@/features/insights';
 import { JobsPage } from '@/features/jobs';
+import { CronSettingsPage } from '@/features/settings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +94,7 @@ function AppRoutes() {
         <Route path="ads/:adId" element={<AdDetailPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="jobs" element={<JobsPage />} />
+        <Route path="settings" element={<CronSettingsPage />} />
       </Route>
     </Routes>
   );
