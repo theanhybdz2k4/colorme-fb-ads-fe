@@ -1,7 +1,22 @@
 import { apiClient } from '@/lib/apiClient';
 
 export const adAccountsApi = {
-    list: () => apiClient.get('/ad-accounts'),
+  list: (params?: { accountStatus?: string; search?: string; branchId?: number | 'all' }) =>
+    apiClient.get('/ad-accounts', { params }),
+
+  get: (id: string) => apiClient.get(`/ad-accounts/${id}`),
+
+  assignBranch: (id: string, branchId: number | null) =>
+    apiClient.put(`/ad-accounts/${id}/branch`, { branchId }),
+};
+
+export const branchesApi = {
+  list: () => apiClient.get('/branches'),
+  create: (payload: { name: string; code?: string }) => apiClient.post('/branches', payload),
+  update: (id: number, payload: { name?: string; code?: string | null }) =>
+    apiClient.put(`/branches/${id}`, payload),
+  delete: (id: number) => apiClient.delete(`/branches/${id}`),
+  rebuildStats: () => apiClient.post('/branches/stats/rebuild'),
 };
 
 export const syncApi = {
@@ -20,11 +35,11 @@ export const syncApi = {
     insightsByAd: (adId: string, dateStart: string, dateEnd: string, breakdown?: string) =>
         apiClient.post('/fb-ads/sync/insights', { adId, dateStart, dateEnd, breakdown }),
 
-    // NEW: Quick sync today's hourly insights (optimized, no Telegram)
+    // Quick sync today's hourly insights (optimized, no Telegram)
     syncHourlyToday: (accountId?: string) =>
         apiClient.post('/fb-ads/sync/hourly', accountId ? { accountId } : {}),
 
-    // NEW: Send Telegram report for current hour (reads from DB)
+    // Send Telegram report for current hour (reads from DB)
     sendTelegramReport: () =>
         apiClient.post('/fb-ads/telegram/send-hour-report'),
 

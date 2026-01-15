@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAds } from './useAds';
 import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from './ads.types';
 import { useAdsets } from '@/features/adSets';
+import { BranchFilter } from '@/features/adAccounts/BranchFilter';
 import { syncApi } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,7 @@ export function AdsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedAdset, setSelectedAdset] = useState<string>('all');
+  const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncingAd, setSyncingAd] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,12 +46,16 @@ export function AdsPage() {
   // View toggle with localStorage persistence
   const [viewMode, setViewMode] = useViewPreference('ads-page', 'grid');
 
-  const { data: adsets } = useAdsets({ effectiveStatus: 'ACTIVE' });
+  const { data: adsets } = useAdsets({
+    effectiveStatus: 'ACTIVE',
+    branchId: selectedBranch === 'all' ? undefined : selectedBranch,
+  });
 
   const { data, isLoading } = useAds({
     adsetId: selectedAdset === 'all' ? undefined : selectedAdset,
     effectiveStatus: statusFilter === 'all' ? undefined : statusFilter,
     search: searchQuery || undefined,
+    branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
   const handleSyncAllActive = async () => {
@@ -100,9 +106,12 @@ export function AdsPage() {
     setSearchQuery('');
     setStatusFilter('all');
     setSelectedAdset('all');
+    setSelectedBranch('all');
   };
 
-  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || selectedAdset !== 'all');
+  const hasActiveFilters = Boolean(
+    searchQuery || statusFilter !== 'all' || selectedAdset !== 'all' || selectedBranch !== 'all',
+  );
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -119,6 +128,7 @@ export function AdsPage() {
         title="Ads"
         description="Danh sách quảng cáo"
       >
+        <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
         <Select value={selectedAdset} onValueChange={setSelectedAdset}>
           <SelectTrigger className="w-52 bg-muted/30 border-border/50">
             <SelectValue placeholder="Chọn Adset" />

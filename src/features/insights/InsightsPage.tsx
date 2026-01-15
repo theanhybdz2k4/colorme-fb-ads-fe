@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInsights } from './useInsights';
 import { useAds } from '@/features/advertisements';
+import { BranchFilter } from '@/features/adAccounts/BranchFilter';
 import { syncApi } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 export function InsightsPage() {
     const queryClient = useQueryClient();
     const [selectedAd, setSelectedAd] = useState<string>('all');
+    const [selectedBranch, setSelectedBranch] = useState<string>('all');
     const [syncing, setSyncing] = useState(false);
     
     // Use Vietnam timezone (GMT+7) for date defaults
@@ -38,11 +40,15 @@ export function InsightsPage() {
     const [dateStart, setDateStart] = useState(yesterday);
     const [dateEnd, setDateEnd] = useState(today);
 
-    const { data: ads } = useAds({ effectiveStatus: 'ACTIVE' });
+    const { data: ads } = useAds({
+        effectiveStatus: 'ACTIVE',
+        branchId: selectedBranch === 'all' ? undefined : selectedBranch,
+    });
 
     const { data, isLoading, refetch } = useInsights({
         dateStart,
         dateEnd,
+        branchId: selectedBranch === 'all' ? undefined : selectedBranch,
     });
 
     const handleSync = async () => {
@@ -82,6 +88,7 @@ export function InsightsPage() {
                 title="Insights"
                 description="Dữ liệu hiệu suất quảng cáo theo ngày"
             >
+                <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
                 <Select value={selectedAd} onValueChange={setSelectedAd}>
                     <SelectTrigger className="w-52 bg-muted/30 border-border/50">
                         <SelectValue placeholder="Chọn Ad" />

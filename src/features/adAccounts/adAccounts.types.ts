@@ -1,3 +1,9 @@
+export interface BranchSummary {
+    id: number;
+    name: string;
+    code?: string | null;
+}
+
 export interface AdAccount {
     id: string;
     name: string | null;
@@ -5,6 +11,7 @@ export interface AdAccount {
     currency: string;
     amountSpent: string | null;
     syncedAt: string;
+    branch?: BranchSummary | null;
 }
 
 export const AD_ACCOUNT_STATUS_MAP: Record<number, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {

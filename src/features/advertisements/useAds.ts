@@ -7,13 +7,14 @@ export interface UseAdsParams {
     adsetId?: string;
     effectiveStatus?: string;
     search?: string;
+    branchId?: string;
 }
 
-export function useAds({ accountId, adsetId, effectiveStatus, search }: UseAdsParams = {}) {
+export function useAds({ accountId, adsetId, effectiveStatus, search, branchId }: UseAdsParams = {}) {
     return useQuery({
-        queryKey: ['ads', accountId, adsetId, effectiveStatus, search],
+        queryKey: ['ads', accountId, adsetId, effectiveStatus, search, branchId],
         queryFn: async () => {
-            const { data } = await adsApi.list(accountId, adsetId, effectiveStatus, search);
+            const { data } = await adsApi.list(accountId, adsetId, effectiveStatus, search, branchId);
             return (data.result || data.data || data || []) as Ad[];
         },
     });

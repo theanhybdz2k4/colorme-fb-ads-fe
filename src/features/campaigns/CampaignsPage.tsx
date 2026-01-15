@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCampaigns } from './useCampaigns';
 import { CAMPAIGN_STATUS_OPTIONS, getCampaignStatusVariant, type Campaign } from './campaigns.types';
 import { useAdAccounts, syncApi } from '@/features/adAccounts';
+import { BranchFilter } from '@/features/adAccounts/BranchFilter';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ import {
 export function CampaignsPage() {
   const queryClient = useQueryClient();
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
+  const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncingCampaign, setSyncingCampaign] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +42,7 @@ export function CampaignsPage() {
     accountId: selectedAccount === 'all' ? undefined : selectedAccount,
     effectiveStatus: statusFilter === 'all' ? undefined : statusFilter,
     search: searchQuery || undefined,
+    branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
   const handleSyncAllActive = async () => {
@@ -88,9 +91,12 @@ export function CampaignsPage() {
     setSearchQuery('');
     setStatusFilter('all');
     setSelectedAccount('all');
+    setSelectedBranch('all');
   };
 
-  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'all' || selectedAccount !== 'all');
+  const hasActiveFilters = Boolean(
+    searchQuery || statusFilter !== 'all' || selectedAccount !== 'all' || selectedBranch !== 'all',
+  );
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -107,6 +113,7 @@ export function CampaignsPage() {
         title="Campaigns"
         description="Danh sách chiến dịch quảng cáo"
       >
+        <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
         <Select value={selectedAccount} onValueChange={setSelectedAccount}>
           <SelectTrigger className="w-48 bg-muted/30 border-border/50">
             <SelectValue placeholder="Chọn Account" />

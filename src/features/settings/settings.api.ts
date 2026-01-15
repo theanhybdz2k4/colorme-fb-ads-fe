@@ -12,11 +12,12 @@ export const cronSettingsApi = {
     },
 
     /**
-     * Create a new cron setting
+     * Create or update a cron setting (upsert)
      */
     createSetting: async (dto: { cronType: string; allowedHours: number[]; enabled?: boolean }): Promise<CronSetting> => {
         const { data } = await apiClient.post('/cron/settings', dto);
-        return data;
+        // Backend wraps response in { result: ... }
+        return data.result || data;
     },
 
     /**
@@ -24,7 +25,8 @@ export const cronSettingsApi = {
      */
     updateSetting: async (cronType: string, dto: UpsertCronSettingDto): Promise<CronSetting> => {
         const { data } = await apiClient.put(`/cron/settings/${cronType}`, dto);
-        return data;
+        // Backend wraps response in { result: ... }
+        return data.result || data;
     },
 
     /**
@@ -32,7 +34,8 @@ export const cronSettingsApi = {
      */
     upsertSetting: async (cronType: string, dto: UpsertCronSettingDto): Promise<CronSetting> => {
         const { data } = await apiClient.put(`/cron/settings/${cronType}`, dto);
-        return data;
+        // Backend wraps response in { result: ... }
+        return data.result || data;
     },
 
     /**
@@ -52,38 +55,10 @@ export const cronSettingsApi = {
     },
 };
 
+// Legacy telegram API routes removed - use userTelegramBotApi instead
 export const telegramApi = {
-    /**
-     * Get all registered Telegram chat IDs
-     */
-    getChatIds: async (): Promise<{ chatIds: string[] }> => {
-        const { data } = await apiClient.get('/telegram/chat-ids');
-        return data;
-    },
-
-    /**
-     * Refresh chat IDs from Telegram getUpdates
-     */
-    refreshChatIds: async (): Promise<{ success: boolean; chatIds: string[] }> => {
-        const { data } = await apiClient.post('/telegram/refresh');
-        return data;
-    },
-
-    /**
-     * Manually add a chat ID
-     */
-    addChatId: async (chatId: string): Promise<{ success: boolean; chatId: string }> => {
-        const { data } = await apiClient.post('/telegram/add-chat', { chatId });
-        return data;
-    },
-
-    /**
-     * Send test message to all subscribers
-     */
-    sendTest: async (): Promise<{ success: boolean; subscriberCount: number }> => {
-        const { data } = await apiClient.post('/telegram/test');
-        return data;
-    },
+    // These routes no longer exist in backend - use userTelegramBotApi methods instead
+    // getChatIds, refreshChatIds, addChatId, sendTest have been replaced with bot-based APIs
 };
 
 export interface UserTelegramBot {
@@ -176,13 +151,7 @@ export const userTelegramBotApi = {
         return data;
     },
 
-    /**
-     * Migrate subscribers from telegram_subscribers to telegram_bot_subscribers
-     */
-    migrateSubscribers: async (botId: number): Promise<{ success: boolean; migrated: number; skipped: number; message: string }> => {
-        const { data } = await apiClient.post(`/telegram/bots/${botId}/migrate-subscribers`);
-        return data;
-    },
+    // migrateSubscribers route removed - migration should be done via backend directly
 
     /**
      * Manually add a subscriber to a bot

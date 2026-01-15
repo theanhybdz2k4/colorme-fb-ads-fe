@@ -7,13 +7,14 @@ export interface UseAdsetsParams {
     campaignId?: string;
     effectiveStatus?: string;
     search?: string;
+    branchId?: string;
 }
 
-export function useAdsets({ accountId, campaignId, effectiveStatus, search }: UseAdsetsParams = {}) {
+export function useAdsets({ accountId, campaignId, effectiveStatus, search, branchId }: UseAdsetsParams = {}) {
     return useQuery({
-        queryKey: ['adsets', accountId, campaignId, effectiveStatus, search],
+        queryKey: ['adsets', accountId, campaignId, effectiveStatus, search, branchId],
         queryFn: async () => {
-            const { data } = await adsetsApi.list(accountId, campaignId, effectiveStatus, search);
+            const { data } = await adsetsApi.list(accountId, campaignId, effectiveStatus, search, branchId);
             return (data.result || data.data || data || []) as Adset[];
         },
     });

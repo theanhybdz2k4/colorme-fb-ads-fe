@@ -6,13 +6,14 @@ export interface UseCampaignsParams {
     accountId?: string;
     effectiveStatus?: string;
     search?: string;
+    branchId?: string;
 }
 
-export function useCampaigns({ accountId, effectiveStatus, search }: UseCampaignsParams = {}) {
+export function useCampaigns({ accountId, effectiveStatus, search, branchId }: UseCampaignsParams = {}) {
     return useQuery({
-        queryKey: ['campaigns', accountId, effectiveStatus, search],
+        queryKey: ['campaigns', accountId, effectiveStatus, search, branchId],
         queryFn: async () => {
-            const { data } = await campaignsApi.list(accountId, effectiveStatus, search);
+            const { data } = await campaignsApi.list(accountId, effectiveStatus, search, branchId);
             return (data.result || data.data || data || []) as Campaign[];
         },
     });

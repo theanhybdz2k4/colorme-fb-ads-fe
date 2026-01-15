@@ -70,11 +70,16 @@ export function useDeleteCronSetting() {
     });
 }
 
-// Telegram hooks
+// Legacy Telegram hooks - DEPRECATED: These routes no longer exist in backend
+// Use UserTelegramBot hooks instead (useUserTelegramBots, useTestBotMessage, etc.)
+// These are kept for backward compatibility but will fail if TelegramSettingsSection is used
 export function useTelegramChatIds() {
     return useQuery({
         queryKey: ['telegram', 'chatIds'],
-        queryFn: telegramApi.getChatIds,
+        queryFn: async () => {
+            throw new Error('Legacy telegram API routes no longer exist. Use UserBotSettingsSection instead.');
+        },
+        enabled: false, // Disabled by default
     });
 }
 
@@ -82,9 +87,8 @@ export function useRefreshTelegramChatIds() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: telegramApi.refreshChatIds,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['telegram', 'chatIds'] });
+        mutationFn: async () => {
+            throw new Error('Legacy telegram API routes no longer exist. Use UserBotSettingsSection instead.');
         },
     });
 }
@@ -93,16 +97,17 @@ export function useAddTelegramChatId() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: telegramApi.addChatId,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['telegram', 'chatIds'] });
+        mutationFn: async () => {
+            throw new Error('Legacy telegram API routes no longer exist. Use UserBotSettingsSection instead.');
         },
     });
 }
 
 export function useSendTelegramTest() {
     return useMutation({
-        mutationFn: telegramApi.sendTest,
+        mutationFn: async () => {
+            throw new Error('Legacy telegram API routes no longer exist. Use UserBotSettingsSection instead.');
+        },
     });
 }
 
@@ -183,13 +188,13 @@ export function useTestBotMessage() {
     });
 }
 
+// migrateSubscribers route removed from backend - migration should be done via backend directly
 export function useMigrateSubscribers() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (botId: number) => userTelegramBotApi.migrateSubscribers(botId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['telegram', 'bots'], refetchType: 'active' });
+        mutationFn: async (botId: number) => {
+            throw new Error('migrateSubscribers route no longer exists. Migration should be done via backend directly.');
         },
     });
 }

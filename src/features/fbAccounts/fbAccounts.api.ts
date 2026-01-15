@@ -3,6 +3,8 @@ import { apiClient } from '@/lib/apiClient';
 export const fbAccountsApi = {
     list: () => apiClient.get('/fb-accounts'),
 
+    get: (id: number) => apiClient.get(`/fb-accounts/${id}`),
+
     add: (accessToken: string, name?: string) =>
         apiClient.post('/fb-accounts', { accessToken, name }),
 
