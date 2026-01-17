@@ -1,9 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useInsights } from '@/hooks/useInsights';
-import { useAds } from '@/hooks/useAds';
-import { useBranches } from '@/hooks/useBranches';
-import { useAdAccounts } from '@/hooks/useAdAccounts';
-import { branchesApi } from '@/api/branches.api'; // Updated import
+
+import { useState, useMemo } from 'react';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { branchesApi } from '@/api/branches.api';
 import {
     PageHeader,
     FloatingCard,
@@ -38,163 +36,36 @@ import { RegionBreakdownList } from '@/features/insights/components/RegionBreakd
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
 export function BranchAnalytics() {
-    const { data: branches, isLoading: loadingBranches } = useBranches();
-    const { data: adAccounts, isLoading: loadingAccounts } = useAdAccounts();
-    const { data: ads, isLoading: loadingAds } = useAds();
-
     // Default to this year
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: new Date(new Date().getFullYear(), 0, 1),
         to: new Date(),
     });
 
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [activePreset, setActivePreset] = useState<string | null>(null);
+    const [syncing, setSyncing] = useState(false);
 
     const dateStart = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
     const dateEnd = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
 
-    const { data: insights, isLoading: loadingInsights, refetch } = useInsights({ dateStart, dateEnd });
+    const { data: dashboardData, isLoading, refetch } = useDashboardStats({ dateStart, dateEnd });
 
-    // Breakdown Data States
-    const [deviceStats, setDeviceStats] = useState<any[]>([]);
-    const [ageGenderStats, setAgeGenderStats] = useState<any[]>([]);
-    const [regionStats, setRegionStats] = useState<any[]>([]);
-    const [loadingBreakdowns, setLoadingBreakdowns] = useState(false);
+    const branches = dashboardData?.branches || [];
+    const breakdowns = dashboardData?.breakdowns || { device: [], ageGender: [], region: [] };
 
-    // Fetch breakdown stats when branches, dates or refreshTrigger changes
-    useEffect(() => {
-        const fetchBreakdowns = async () => {
-            if (!branches || branches.length === 0 || !dateStart || !dateEnd) return;
+    // Derived Metrics from Branches Summary
+    const statsByBranch = useMemo(() => {
+        return [...branches]
+            .map((b: any) => ({ 
+                ...b, 
+                ctrPercent: (b.ctr || 0) * 100 
+            }))
+            .sort((a: any, b: any) => b.totalSpend - a.totalSpend);
+    }, [branches]);
 
-            setLoadingBreakdowns(true);
-            try {
-                // Fetch for all branches and aggregate
-                const devicePromises = branches.map(async b => {
-                    return branchesApi.getDeviceStats(b.id, dateStart, dateEnd);
-                });
-                const ageGenderPromises = branches.map(async b => {
-                    return branchesApi.getAgeGenderStats(b.id, dateStart, dateEnd);
-                });
-                const regionPromises = branches.map(async b => {
-                    return branchesApi.getRegionStats(b.id, dateStart, dateEnd);
-                });
-
-                const [deviceRes, ageGenderRes, regionRes] = await Promise.all([
-                    Promise.all(devicePromises),
-                    Promise.all(ageGenderPromises),
-                    Promise.all(regionPromises)
-                ]);
-
-                // Aggregate Device Stats
-                const aggDevice: Record<string, any> = {};
-                deviceRes.forEach((items: any[]) => {
-                    items.forEach((item: any) => {
-                        const key = item.device;
-                        if (!aggDevice[key]) aggDevice[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
-                        aggDevice[key].spend += item.spend;
-                        aggDevice[key].impressions += item.impressions;
-                        aggDevice[key].clicks += item.clicks;
-                        aggDevice[key].results += item.results;
-                    });
-                });
-                setDeviceStats(Object.values(aggDevice));
-
-                // Aggregate Age/Gender Stats
-                const aggAgeGender: Record<string, any> = {};
-                ageGenderRes.forEach((items: any[]) => {
-                    items.forEach((item: any) => {
-                        const key = `${item.age}-${item.gender}`;
-                        if (!aggAgeGender[key]) aggAgeGender[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
-                        aggAgeGender[key].spend += item.spend;
-                        aggAgeGender[key].impressions += item.impressions;
-                        aggAgeGender[key].clicks += item.clicks;
-                        aggAgeGender[key].results += item.results;
-                    });
-                });
-                setAgeGenderStats(Object.values(aggAgeGender));
-
-                // Aggregate Region Stats
-                const aggRegion: Record<string, any> = {};
-                regionRes.forEach((items: any[]) => {
-                    items.forEach((item: any) => {
-                        // Composite key to separate by country/region
-                        const key = `${item.country}-${item.region}`;
-                        if (!aggRegion[key]) aggRegion[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
-                        aggRegion[key].spend += item.spend;
-                        aggRegion[key].impressions += item.impressions;
-                        aggRegion[key].clicks += item.clicks;
-                        aggRegion[key].results += item.results;
-                    });
-                });
-                setRegionStats(Object.values(aggRegion));
-
-            } catch (error) {
-                console.error("Failed to fetch breakdown stats", error);
-            } finally {
-                setLoadingBreakdowns(false);
-            }
-        };
-
-        fetchBreakdowns();
-    }, [branches, dateStart, dateEnd, refreshTrigger]);
-
-    const isLoading = loadingBranches || loadingAccounts || loadingAds || loadingInsights;
-
-
-
-    const aggregatedData = useMemo(() => {
-        if (!branches || !adAccounts || !ads || !insights) return [];
-
-        // Build accountId -> branch mappings
-        const accountToBranchMap = new Map<string, number>();
-        adAccounts.forEach(acc => {
-            if (acc.branch?.id) {
-                accountToBranchMap.set(acc.id, acc.branch.id);
-            }
-        });
-
-        // Build adId -> branch mapping
-        const adToBranchMap = new Map<string, number>();
-        ads.forEach(ad => {
-            const branchId = accountToBranchMap.get(ad.accountId);
-            if (branchId) {
-                adToBranchMap.set(ad.id, branchId);
-            }
-        });
-
-        // Aggregate by branch
-        const statsByBranch = branches.map(branch => {
-            const branchInsights = insights.filter(ins => adToBranchMap.get(ins.adId) === branch.id);
-
-            const totalSpend = branchInsights.reduce((sum, ins) => sum + Number(ins.spend || 0), 0);
-            const totalImpressions = branchInsights.reduce((sum, ins) => sum + Number(ins.impressions || 0), 0);
-            const totalClicks = branchInsights.reduce((sum, ins) => sum + Number(ins.clicks || 0), 0);
-            
-            // Use database metrics
-            const totalMessages = branchInsights.reduce((sum, ins) => sum + Number(ins.messagingStarted || 0), 0);
-            // Calculate weighted average cost or sum?
-            // Actually, we should sum total messages and then divide total spend by total messages for the branch avg
-            
-            return {
-                id: branch.id,
-                name: branch.name,
-                spend: totalSpend,
-                impressions: totalImpressions,
-                clicks: totalClicks,
-                messages: totalMessages,
-                cpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
-                ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
-                cpm: totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : 0,
-                costPerMessage: totalMessages > 0 ? totalSpend / totalMessages : 0,
-            };
-        });
-
-        return statsByBranch.sort((a, b) => b.spend - a.spend);
-    }, [branches, adAccounts, ads, insights]);
-
-    const totalSpend = aggregatedData.reduce((sum: number, b: any) => sum + b.spend, 0);
-    const totalClicks = aggregatedData.reduce((sum: number, b: any) => sum + b.clicks, 0);
-    const totalMessages = aggregatedData.reduce((sum: number, b: any) => sum + b.messages, 0);
+    const totalSpend = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalSpend || 0), 0);
+    const totalClicks = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalClicks || 0), 0);
+    const totalMessages = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalMessaging || 0), 0);
     const avgCostPerMessage = totalMessages > 0 ? totalSpend / totalMessages : 0;
 
     if (isLoading) return <LoadingState text="Đang thống kê dữ liệu cơ sở..." />;
@@ -226,39 +97,116 @@ export function BranchAnalytics() {
             />
 
             <FloatingCard>
-                <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex flex-wrap gap-4 items-end">
                     <div className="space-y-2">
                         <Label className="text-xs text-muted-foreground">Khoảng thời gian</Label>
-                        <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                        <DatePickerWithRange date={dateRange} setDate={(range) => { setDateRange(range); setActivePreset(null); }} />
+                    </div>
+
+                    {/* Quick Date Presets */}
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            variant={activePreset === 'today' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const today = new Date();
+                                setDateRange({ from: today, to: today });
+                                setActivePreset('today');
+                            }}
+                        >
+                            Hôm nay
+                        </Button>
+                        <Button
+                            variant={activePreset === 'yesterday' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const yesterday = new Date();
+                                yesterday.setDate(yesterday.getDate() - 1);
+                                setDateRange({ from: yesterday, to: yesterday });
+                                setActivePreset('yesterday');
+                            }}
+                        >
+                            Hôm qua
+                        </Button>
+                        <Button
+                            variant={activePreset === '3days' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const today = new Date();
+                                const threeDaysAgo = new Date();
+                                threeDaysAgo.setDate(today.getDate() - 2);
+                                setDateRange({ from: threeDaysAgo, to: today });
+                                setActivePreset('3days');
+                            }}
+                        >
+                            3 ngày
+                        </Button>
+                        <Button
+                            variant={activePreset === '7days' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const today = new Date();
+                                const sevenDaysAgo = new Date();
+                                sevenDaysAgo.setDate(today.getDate() - 6);
+                                setDateRange({ from: sevenDaysAgo, to: today });
+                                setActivePreset('7days');
+                            }}
+                        >
+                            7 ngày
+                        </Button>
+                        <Button
+                            variant={activePreset === 'thisMonth' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const today = new Date();
+                                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                                setDateRange({ from: firstDayOfMonth, to: today });
+                                setActivePreset('thisMonth');
+                            }}
+                        >
+                            Tháng này
+                        </Button>
+                        <Button
+                            variant={activePreset === 'lastMonth' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                                const today = new Date();
+                                const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                                const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                                setDateRange({ from: firstDayLastMonth, to: lastDayLastMonth });
+                                setActivePreset('lastMonth');
+                            }}
+                        >
+                            Tháng trước
+                        </Button>
                     </div>
 
                     <Button
-                        disabled={loadingBreakdowns || !dateRange?.from || !dateRange?.to}
+                        disabled={syncing || !dateRange?.from || !dateRange?.to}
                         onClick={async () => {
-                            if (!branches || branches.length === 0 || !dateRange?.from || !dateRange?.to) return;
+                            if (!dateRange?.from || !dateRange?.to) return;
 
-                            setLoadingBreakdowns(true);
+                            setSyncing(true);
                             try {
                                 const startStr = format(dateRange.from, 'yyyy-MM-dd');
                                 const endStr = format(dateRange.to, 'yyyy-MM-dd');
                                 
-                                // Sync each branch
+                                // Sync branches for the user
                                 for (const branch of branches) {
                                     await branchesApi.syncBranch(branch.id, startStr, endStr);
                                 }
 
                                 // After sync, force refetch
                                 await refetch();
-                                setRefreshTrigger(prev => prev + 1);
                             } catch (error) {
                                 console.error("Sync failed", error);
                             } finally {
-                                setLoadingBreakdowns(false);
+                                setSyncing(false);
                             }
                         }}
-                        className="px-6 self-end"
+                        className="px-6"
                     >
-                        {loadingBreakdowns ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
+                        {syncing ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
                     </Button>
                 </div>
             </FloatingCard>
@@ -311,7 +259,7 @@ export function BranchAnalytics() {
                     </FloatingCardHeader>
                     <FloatingCardContent className="p-4 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <ReBarChart data={aggregatedData} layout="vertical" margin={{ left: 40, right: 30 }}>
+                            <ReBarChart data={statsByBranch} layout="vertical" margin={{ left: 40, right: 30 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis
@@ -324,8 +272,8 @@ export function BranchAnalytics() {
                                     width={100}
                                 />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#1e293b' }} />
-                                <Bar dataKey="spend" name="Chi phí (VND)" radius={[0, 4, 4, 0]}>
-                                    {aggregatedData.map((_entry, index) => (
+                                <Bar dataKey="totalSpend" name="Chi phí (VND)" radius={[0, 4, 4, 0]}>
+                                    {statsByBranch.map((_entry: any, index: number) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={0.8} />
                                     ))}
                                 </Bar>
@@ -343,7 +291,7 @@ export function BranchAnalytics() {
                     </FloatingCardHeader>
                     <FloatingCardContent className="p-4 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <ReBarChart data={aggregatedData}>
+                            <ReBarChart data={statsByBranch}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis
                                     dataKey="name"
@@ -354,8 +302,8 @@ export function BranchAnalytics() {
                                 />
                                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#1e293b' }} />
-                                <Bar dataKey="ctr" name="CTR (%)" radius={[4, 4, 0, 0]}>
-                                    {aggregatedData.map((_entry, index) => (
+                                <Bar dataKey="ctrPercent" name="CTR (%)" radius={[4, 4, 0, 0]}>
+                                    {statsByBranch.map((_entry: any, index: number) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} fillOpacity={0.8} />
                                     ))}
                                 </Bar>
@@ -367,9 +315,9 @@ export function BranchAnalytics() {
 
             {/* CHARTS ROW 2: DETAILED BREAKDOWNS */}
             <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-                <DeviceBreakdownChart data={deviceStats} loading={loadingBreakdowns} />
-                <AgeGenderBreakdownChart data={ageGenderStats} loading={loadingBreakdowns} />
-                <RegionBreakdownList data={regionStats} loading={loadingBreakdowns} />
+                <DeviceBreakdownChart data={breakdowns.device} loading={isLoading} />
+                <AgeGenderBreakdownChart data={breakdowns.ageGender} loading={isLoading} />
+                <RegionBreakdownList data={breakdowns.region} loading={isLoading} />
             </div>
 
             {/* DATA TABLE */}
@@ -397,20 +345,20 @@ export function BranchAnalytics() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {aggregatedData.map((row) => (
+                                {statsByBranch.map((row: any) => (
                                     <TableRow key={row.id} className="border-border/30 hover:bg-muted/30 transition-colors">
                                         <TableCell className="font-semibold text-slate-200">{row.name}</TableCell>
                                         <TableCell className="text-right text-orange-400 font-mono font-medium">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(row.spend)}
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(row.totalSpend)}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-slate-400">{row.impressions.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-slate-400">{row.clicks.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono font-bold text-pink-400">{row.messages.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-slate-400">{row.totalImpressions.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-slate-400">{row.totalClicks.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-bold text-pink-400">{row.totalMessaging.toLocaleString()}</TableCell>
                                         <TableCell className="text-right font-mono text-slate-300">
                                             {new Intl.NumberFormat('vi-VN').format(Math.round(row.costPerMessage))}đ
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-medium text-emerald-400">
-                                            {row.ctr.toFixed(2)}%
+                                            {row.ctrPercent.toFixed(2)}%
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-slate-300">
                                             {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpc))}đ
@@ -420,7 +368,7 @@ export function BranchAnalytics() {
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {aggregatedData.length === 0 && (
+                                {statsByBranch.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={9} className="h-32">
                                             <EmptyState

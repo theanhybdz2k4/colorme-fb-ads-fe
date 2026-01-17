@@ -17,6 +17,11 @@ export const branchesApi = {
         return response.data.result || response.data;
     },
 
+    async getDashboardStats(dateStart: string, dateEnd: string) {
+        const response = await apiClient.get('/branches/stats/dashboard', { params: { dateStart, dateEnd } });
+        return response.data.result || response.data;
+    },
+
     async syncBranch(id: number, dateStart: string, dateEnd: string) {
         const response = await apiClient.post(`/branches/${id}/sync`, { dateStart, dateEnd });
         return response.data;
