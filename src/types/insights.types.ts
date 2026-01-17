@@ -11,4 +11,8 @@ export interface Insight {
     };
     actions?: any[];
     action_values?: any[];
+    messagingStarted?: number | string | null;
+    costPerMessaging?: number | string | null;
+    results?: number | string | null;
+    costPerResult?: number | string | null;
 }

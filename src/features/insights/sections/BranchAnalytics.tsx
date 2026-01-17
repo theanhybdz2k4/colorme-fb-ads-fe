@@ -14,8 +14,11 @@ import {
     EmptyState,
 } from '@/components/custom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePickerWithRange } from '../components/DatePickerWithRange';
+import type { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+
 import { Button } from '@/components/ui/button';
 import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 import { TrendingUp, LayoutDashboard, BarChart, Activity } from 'lucide-react';
@@ -36,43 +39,46 @@ import { RegionBreakdownList } from '@/features/insights/components/RegionBreakd
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
 export function BranchAnalytics() {
-    const today = getVietnamDateString();
-    const yesterday = getVietnamYesterdayString();
-    const [dateStart, setDateStart] = useState(yesterday);
-    const [dateEnd, setDateEnd] = useState(today);
-
     const { data: branches, isLoading: loadingBranches } = useBranches();
     const { data: adAccounts, isLoading: loadingAccounts } = useAdAccounts();
     const { data: ads, isLoading: loadingAds } = useAds();
-    const { data: insights, isLoading: loadingInsights, refetch } = useInsights({
-        dateStart,
-        dateEnd,
+
+    // Default to this year
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: new Date(new Date().getFullYear(), 0, 1),
+        to: new Date(),
     });
+
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const dateStart = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
+    const dateEnd = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
+
+    const { data: insights, isLoading: loadingInsights, refetch } = useInsights({ dateStart, dateEnd });
 
     // Breakdown Data States
     const [deviceStats, setDeviceStats] = useState<any[]>([]);
     const [ageGenderStats, setAgeGenderStats] = useState<any[]>([]);
     const [regionStats, setRegionStats] = useState<any[]>([]);
     const [loadingBreakdowns, setLoadingBreakdowns] = useState(false);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     // Fetch breakdown stats when branches, dates or refreshTrigger changes
     useEffect(() => {
         const fetchBreakdowns = async () => {
-            if (!branches || branches.length === 0) return;
+            if (!branches || branches.length === 0 || !dateStart || !dateEnd) return;
 
             setLoadingBreakdowns(true);
             try {
                 // Fetch for all branches and aggregate
-                const devicePromises = branches.map(b =>
-                    branchesApi.getDeviceStats(b.id, dateStart, dateEnd)
-                );
-                const ageGenderPromises = branches.map(b =>
-                    branchesApi.getAgeGenderStats(b.id, dateStart, dateEnd)
-                );
-                const regionPromises = branches.map(b =>
-                    branchesApi.getRegionStats(b.id, dateStart, dateEnd)
-                );
+                const devicePromises = branches.map(async b => {
+                    return branchesApi.getDeviceStats(b.id, dateStart, dateEnd);
+                });
+                const ageGenderPromises = branches.map(async b => {
+                    return branchesApi.getAgeGenderStats(b.id, dateStart, dateEnd);
+                });
+                const regionPromises = branches.map(async b => {
+                    return branchesApi.getRegionStats(b.id, dateStart, dateEnd);
+                });
 
                 const [deviceRes, ageGenderRes, regionRes] = await Promise.all([
                     Promise.all(devicePromises),
@@ -135,22 +141,7 @@ export function BranchAnalytics() {
 
     const isLoading = loadingBranches || loadingAccounts || loadingAds || loadingInsights;
 
-    const getMessagingStats = (actions: any[]) => {
-        if (!actions || !Array.isArray(actions)) return 0;
-        const messagingTypes = [
-            'onsite_conversion.messaging_conversation_started_7d',
-            'onsite_conversion.messaging_first_reply',
-            'lead',
-            'omni_complete_registration',
-        ];
 
-        return actions.reduce((sum, action) => {
-            if (messagingTypes.includes(action.action_type)) {
-                return sum + Number(action.value || 0);
-            }
-            return sum;
-        }, 0);
-    };
 
     const aggregatedData = useMemo(() => {
         if (!branches || !adAccounts || !ads || !insights) return [];
@@ -179,8 +170,12 @@ export function BranchAnalytics() {
             const totalSpend = branchInsights.reduce((sum, ins) => sum + Number(ins.spend || 0), 0);
             const totalImpressions = branchInsights.reduce((sum, ins) => sum + Number(ins.impressions || 0), 0);
             const totalClicks = branchInsights.reduce((sum, ins) => sum + Number(ins.clicks || 0), 0);
-            const totalMessages = branchInsights.reduce((sum, ins) => sum + getMessagingStats(ins.actions || []), 0);
-
+            
+            // Use database metrics
+            const totalMessages = branchInsights.reduce((sum, ins) => sum + Number(ins.messagingStarted || 0), 0);
+            // Calculate weighted average cost or sum?
+            // Actually, we should sum total messages and then divide total spend by total messages for the branch avg
+            
             return {
                 id: branch.id,
                 name: branch.name,
@@ -232,37 +227,25 @@ export function BranchAnalytics() {
             />
 
             <FloatingCard>
-                <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex flex-wrap gap-4 items-center">
                     <div className="space-y-2">
-                        <Label htmlFor="dateStart" className="text-xs text-muted-foreground">Từ ngày</Label>
-                        <Input
-                            id="dateStart"
-                            type="date"
-                            value={dateStart}
-                            onChange={(e) => setDateStart(e.target.value)}
-                            className="w-44 bg-muted/30 border-border/50"
-                        />
+                        <Label className="text-xs text-muted-foreground">Khoảng thời gian</Label>
+                        <DatePickerWithRange date={dateRange} setDate={setDateRange} />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="dateEnd" className="text-xs text-muted-foreground">Đến ngày</Label>
-                        <Input
-                            id="dateEnd"
-                            type="date"
-                            value={dateEnd}
-                            onChange={(e) => setDateEnd(e.target.value)}
-                            className="w-44 bg-muted/30 border-border/50"
-                        />
-                    </div>
+
                     <Button
-                        disabled={loadingBreakdowns}
+                        disabled={loadingBreakdowns || !dateRange?.from || !dateRange?.to}
                         onClick={async () => {
-                            if (!branches || branches.length === 0) return;
+                            if (!branches || branches.length === 0 || !dateRange?.from || !dateRange?.to) return;
 
                             setLoadingBreakdowns(true);
                             try {
+                                const startStr = format(dateRange.from, 'yyyy-MM-dd');
+                                const endStr = format(dateRange.to, 'yyyy-MM-dd');
+                                
                                 // Sync each branch
                                 for (const branch of branches) {
-                                    await branchesApi.syncBranch(branch.id, dateStart, dateEnd);
+                                    await branchesApi.syncBranch(branch.id, startStr, endStr);
                                 }
 
                                 // After sync, force refetch
@@ -274,7 +257,7 @@ export function BranchAnalytics() {
                                 setLoadingBreakdowns(false);
                             }
                         }}
-                        className="px-6"
+                        className="px-6 self-end"
                     >
                         {loadingBreakdowns ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
                     </Button>
