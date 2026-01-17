@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useInsights } from '@/hooks/useInsights';
 import { useAds } from '@/hooks/useAds';
 import { useBranches } from '@/hooks/useBranches';
 import { useAdAccounts } from '@/hooks/useAdAccounts';
+import { branchesApi } from '@/api/branches.api'; // Updated import
 import {
     PageHeader,
     FloatingCard,
@@ -28,6 +29,9 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
+import { DeviceBreakdownChart } from '@/features/insights/components/DeviceBreakdownChart';
+import { AgeGenderBreakdownChart } from '@/features/insights/components/AgeGenderBreakdownChart';
+import { RegionBreakdownList } from '@/features/insights/components/RegionBreakdownList';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 
@@ -44,6 +48,90 @@ export function BranchAnalytics() {
         dateStart,
         dateEnd,
     });
+
+    // Breakdown Data States
+    const [deviceStats, setDeviceStats] = useState<any[]>([]);
+    const [ageGenderStats, setAgeGenderStats] = useState<any[]>([]);
+    const [regionStats, setRegionStats] = useState<any[]>([]);
+    const [loadingBreakdowns, setLoadingBreakdowns] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Fetch breakdown stats when branches, dates or refreshTrigger changes
+    useEffect(() => {
+        const fetchBreakdowns = async () => {
+            if (!branches || branches.length === 0) return;
+
+            setLoadingBreakdowns(true);
+            try {
+                // Fetch for all branches and aggregate
+                const devicePromises = branches.map(b =>
+                    branchesApi.getDeviceStats(b.id, dateStart, dateEnd)
+                );
+                const ageGenderPromises = branches.map(b =>
+                    branchesApi.getAgeGenderStats(b.id, dateStart, dateEnd)
+                );
+                const regionPromises = branches.map(b =>
+                    branchesApi.getRegionStats(b.id, dateStart, dateEnd)
+                );
+
+                const [deviceRes, ageGenderRes, regionRes] = await Promise.all([
+                    Promise.all(devicePromises),
+                    Promise.all(ageGenderPromises),
+                    Promise.all(regionPromises)
+                ]);
+
+                // Aggregate Device Stats
+                const aggDevice: Record<string, any> = {};
+                deviceRes.forEach((items: any[]) => {
+                    items.forEach((item: any) => {
+                        const key = item.device;
+                        if (!aggDevice[key]) aggDevice[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
+                        aggDevice[key].spend += item.spend;
+                        aggDevice[key].impressions += item.impressions;
+                        aggDevice[key].clicks += item.clicks;
+                        aggDevice[key].results += item.results;
+                    });
+                });
+                setDeviceStats(Object.values(aggDevice));
+
+                // Aggregate Age/Gender Stats
+                const aggAgeGender: Record<string, any> = {};
+                ageGenderRes.forEach((items: any[]) => {
+                    items.forEach((item: any) => {
+                        const key = `${item.age}-${item.gender}`;
+                        if (!aggAgeGender[key]) aggAgeGender[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
+                        aggAgeGender[key].spend += item.spend;
+                        aggAgeGender[key].impressions += item.impressions;
+                        aggAgeGender[key].clicks += item.clicks;
+                        aggAgeGender[key].results += item.results;
+                    });
+                });
+                setAgeGenderStats(Object.values(aggAgeGender));
+
+                // Aggregate Region Stats
+                const aggRegion: Record<string, any> = {};
+                regionRes.forEach((items: any[]) => {
+                    items.forEach((item: any) => {
+                        // Composite key to separate by country/region
+                        const key = `${item.country}-${item.region}`;
+                        if (!aggRegion[key]) aggRegion[key] = { ...item, spend: 0, impressions: 0, clicks: 0, results: 0 };
+                        aggRegion[key].spend += item.spend;
+                        aggRegion[key].impressions += item.impressions;
+                        aggRegion[key].clicks += item.clicks;
+                        aggRegion[key].results += item.results;
+                    });
+                });
+                setRegionStats(Object.values(aggRegion));
+
+            } catch (error) {
+                console.error("Failed to fetch breakdown stats", error);
+            } finally {
+                setLoadingBreakdowns(false);
+            }
+        };
+
+        fetchBreakdowns();
+    }, [branches, dateStart, dateEnd, refreshTrigger]);
 
     const isLoading = loadingBranches || loadingAccounts || loadingAds || loadingInsights;
 
@@ -90,8 +178,8 @@ export function BranchAnalytics() {
         return statsByBranch.sort((a, b) => b.spend - a.spend);
     }, [branches, adAccounts, ads, insights]);
 
-    const totalSpend = aggregatedData.reduce((sum, b) => sum + b.spend, 0);
-    const totalClicks = aggregatedData.reduce((sum, b) => sum + b.clicks, 0);
+    const totalSpend = aggregatedData.reduce((sum: number, b: any) => sum + b.spend, 0);
+    const totalClicks = aggregatedData.reduce((sum: number, b: any) => sum + b.clicks, 0);
 
     if (isLoading) return <LoadingState text="Đang thống kê dữ liệu cơ sở..." />;
 
@@ -102,7 +190,7 @@ export function BranchAnalytics() {
                     <p className="text-sm font-medium text-slate-200 mb-1">{label}</p>
                     {payload.map((entry: any, index: number) => (
                         <p key={index} className="text-xs" style={{ color: entry.color }}>
-                            {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC') 
+                            {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC')
                                 ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(entry.value)
                                 : entry.value.toLocaleString()}
                             {entry.name.includes('CTR') ? '%' : ''}
@@ -118,7 +206,7 @@ export function BranchAnalytics() {
         <div className="space-y-6 animate-float-up pb-10">
             <PageHeader
                 title="Phân tích cơ sở"
-                description="Tổng quan hiệu suất quảng cáo gom theo chi nhánh"
+                description="Tổng quan hiệu suất quảng cáo gom theo chi nhánh. Tự động gom nhóm dựa trên tài khoản quảng cáo của cơ sở."
             />
 
             <FloatingCard>
@@ -143,12 +231,35 @@ export function BranchAnalytics() {
                             className="w-44 bg-muted/30 border-border/50"
                         />
                     </div>
-                    <Button onClick={() => refetch()} className="px-6">
-                        Cập nhật dữ liệu
+                    <Button 
+                        disabled={loadingBreakdowns}
+                        onClick={async () => {
+                            if (!branches || branches.length === 0) return;
+                            
+                            setLoadingBreakdowns(true);
+                            try {
+                                // Sync each branch
+                                for (const branch of branches) {
+                                    await branchesApi.syncBranch(branch.id, dateStart, dateEnd);
+                                }
+                                
+                                // After sync, force refetch
+                                await refetch();
+                                setRefreshTrigger(prev => prev + 1);
+                            } catch (error) {
+                                console.error("Sync failed", error);
+                            } finally {
+                                setLoadingBreakdowns(false);
+                            }
+                        }} 
+                        className="px-6"
+                    >
+                        {loadingBreakdowns ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
                     </Button>
                 </div>
             </FloatingCard>
 
+            {/* TOP METRICS */}
             <div className="grid gap-4 md:grid-cols-4">
                 <FloatingCard className="bg-linear-to-br from-indigo-500/10 to-transparent">
                     <div className="space-y-1">
@@ -180,6 +291,7 @@ export function BranchAnalytics() {
                 </FloatingCard>
             </div>
 
+            {/* CHARTS ROW 1: Spend & CTR */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <FloatingCard padding="none">
                     <FloatingCardHeader className="p-4 border-b border-border/30 flex justify-between items-center">
@@ -193,11 +305,11 @@ export function BranchAnalytics() {
                             <ReBarChart data={aggregatedData} layout="vertical" margin={{ left: 40, right: 30 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
                                 <XAxis type="number" hide />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    stroke="#94a3b8" 
-                                    fontSize={12} 
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    stroke="#94a3b8"
+                                    fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
                                     width={100}
@@ -224,10 +336,10 @@ export function BranchAnalytics() {
                         <ResponsiveContainer width="100%" height="100%">
                             <ReBarChart data={aggregatedData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis 
-                                    dataKey="name" 
-                                    stroke="#94a3b8" 
-                                    fontSize={12} 
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#94a3b8"
+                                    fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
                                 />
@@ -244,6 +356,14 @@ export function BranchAnalytics() {
                 </FloatingCard>
             </div>
 
+            {/* CHARTS ROW 2: DETAILED BREAKDOWNS */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+                <DeviceBreakdownChart data={deviceStats} loading={loadingBreakdowns} />
+                <AgeGenderBreakdownChart data={ageGenderStats} loading={loadingBreakdowns} />
+                <RegionBreakdownList data={regionStats} loading={loadingBreakdowns} />
+            </div>
+
+            {/* DATA TABLE */}
             <FloatingCard padding="none">
                 <FloatingCardHeader className="p-4 border-b border-border/30">
                     <FloatingCardTitle className="text-sm font-medium flex items-center gap-2">
