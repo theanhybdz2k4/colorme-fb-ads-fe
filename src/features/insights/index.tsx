@@ -1,4 +1,5 @@
 export { BranchAnalytics } from './sections/BranchAnalytics';
+import { AdAnalyticsDetail } from './sections/AdAnalyticsDetail';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInsights } from '@/hooks/useInsights';
@@ -33,7 +34,8 @@ export function InsightsPage() {
     const [selectedAd, setSelectedAd] = useState<string>('all');
     const [selectedBranch, setSelectedBranch] = useState<string>('all');
     const [syncing, setSyncing] = useState(false);
-    
+    const [detailAd, setDetailAd] = useState<{ id: string; name?: string } | null>(null);
+
     // Use Vietnam timezone (GMT+7) for date defaults
     const today = getVietnamDateString();
     const yesterday = getVietnamYesterdayString();
@@ -70,7 +72,7 @@ export function InsightsPage() {
                     description: 'Đang sync: Daily + Hourly (hôm nay)',
                 });
             }
-            
+
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['insights'] });
             }, 5000);
@@ -167,6 +169,7 @@ export function InsightsPage() {
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Reach</TableHead>
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Clicks</TableHead>
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Spend</TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -180,6 +183,16 @@ export function InsightsPage() {
                                             <TableCell className="text-right font-medium">{insight.reach || '0'}</TableCell>
                                             <TableCell className="text-right font-medium">{insight.clicks || '0'}</TableCell>
                                             <TableCell className="text-right font-medium">{insight.spend || '0'}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={() => setDetailAd({ id: insight.adId, name: insight.ad?.name || undefined })}
+                                                >
+                                                    <BarChart3 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -188,6 +201,15 @@ export function InsightsPage() {
                     )}
                 </FloatingCardContent>
             </FloatingCard>
+
+            {/* Ad Detail Modal */}
+            <AdAnalyticsDetail
+                adId={detailAd?.id || null}
+                adName={detailAd?.name}
+                dateStart={dateStart}
+                dateEnd={dateEnd}
+                onClose={() => setDetailAd(null)}
+            />
         </div>
     );
 }

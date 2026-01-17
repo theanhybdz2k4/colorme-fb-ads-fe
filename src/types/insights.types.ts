@@ -5,4 +5,8 @@ export interface Insight {
     clicks: string | null;
     spend: string | null;
     reach: string | null;
+    ad?: {
+        id: string;
+        name: string | null;
+    };
 }
