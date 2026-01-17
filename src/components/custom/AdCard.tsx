@@ -11,8 +11,13 @@ interface AdCardProps {
     effectiveStatus?: string | null;
     syncedAt: string;
     accountId: string;
-    // Optional creative data
     thumbnailUrl?: string | null;
+    metrics?: {
+      results: number;
+      costPerResult: number;
+      messagingStarted: number;
+      costPerMessaging: number;
+    };
   };
   statusVariant: "default" | "secondary" | "destructive" | "outline";
   onSyncInsights: () => void;
@@ -20,6 +25,18 @@ interface AdCardProps {
   isSyncing: boolean;
   className?: string;
 }
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('vi-VN').format(value);
+};
 
 export function AdCard({
   ad,
@@ -30,7 +47,7 @@ export function AdCard({
   className,
 }: AdCardProps) {
   const status = ad.effectiveStatus || ad.status || 'UNKNOWN';
-  
+
   return (
     <div
       className={cn(
@@ -69,13 +86,27 @@ export function AdCard({
       {/* Content */}
       <div className="p-4 space-y-3">
         {/* Title */}
-        <div>
-          <h3 className="font-medium text-foreground line-clamp-2 leading-tight">
+        <div className="min-h-[3rem]">
+          <h3 className="font-medium text-foreground line-clamp-2 leading-tight" title={ad.name || ''}>
             {ad.name || 'Untitled Ad'}
           </h3>
           <p className="text-xs text-muted-foreground mt-1 font-mono">
             {ad.id}
           </p>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 gap-2 py-2 border-t border-b border-border/30">
+          <div className="space-y-0.5">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Result</p>
+            <p className="text-sm font-semibold">{formatNumber(ad.metrics?.results || 0)}</p>
+            <p className="text-[10px] text-muted-foreground">{formatCurrency(ad.metrics?.costPerResult || 0)}/res</p>
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Msg</p>
+            <p className="text-sm font-semibold">{formatNumber(ad.metrics?.messagingStarted || 0)}</p>
+            <p className="text-[10px] text-muted-foreground">{formatCurrency(ad.metrics?.costPerMessaging || 0)}/msg</p>
+          </div>
         </div>
 
         {/* Meta */}
@@ -87,7 +118,10 @@ export function AdCard({
         <Button
           size="sm"
           variant="outline"
-          onClick={onSyncInsights}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSyncInsights();
+          }}
           disabled={isSyncing}
           className="w-full bg-muted/30 border-border/50 hover:bg-muted/50"
         >

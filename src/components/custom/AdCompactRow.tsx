@@ -12,12 +12,30 @@ interface AdCompactRowProps {
         syncedAt: string;
         accountId: string;
         thumbnailUrl?: string | null;
+        metrics?: {
+            results: number;
+            costPerResult: number;
+            messagingStarted: number;
+            costPerMessaging: number;
+        };
     };
     statusVariant: "default" | "secondary" | "destructive" | "outline";
     onSyncInsights: () => void;
     isSyncing: boolean;
     className?: string;
 }
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0,
+    }).format(value);
+};
+
+const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('vi-VN').format(value);
+};
 
 export function AdCompactRow({
     ad,
@@ -54,19 +72,35 @@ export function AdCompactRow({
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-foreground truncate">
-                        {ad.name || 'Untitled Ad'}
-                    </h3>
-                    <Badge variant={statusVariant} className="text-xs shrink-0">
-                        {status}
-                    </Badge>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                <div className="min-w-[200px] max-w-[300px] space-y-1">
+                    <div className="flex items-start gap-2">
+                        <h3 className="font-medium text-foreground truncate" title={ad.name || ''}>
+                            {ad.name || 'Untitled Ad'}
+                        </h3>
+                        <Badge variant={statusVariant} className="text-xs shrink-0">
+                            {status}
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-mono">{ad.id}</span>
+                        <span>•</span>
+                        <span>{new Date(ad.syncedAt).toLocaleDateString('vi-VN')}</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="font-mono">{ad.id}</span>
-                    <span>•</span>
-                    <span>Synced: {new Date(ad.syncedAt).toLocaleDateString('vi-VN')}</span>
+
+                {/* Metrics */}
+                <div className="flex-1 flex justify-end items-center gap-8 px-4">
+                    <div className="text-right">
+                        <p className="text-[10px] text-muted-foreground uppercase">Results</p>
+                        <p className="text-sm font-semibold">{formatNumber(ad.metrics?.results || 0)}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatCurrency(ad.metrics?.costPerResult || 0)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] text-muted-foreground uppercase">Messages</p>
+                        <p className="text-sm font-semibold">{formatNumber(ad.metrics?.messagingStarted || 0)}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatCurrency(ad.metrics?.costPerMessaging || 0)}</p>
+                    </div>
                 </div>
             </div>
 
@@ -74,7 +108,10 @@ export function AdCompactRow({
             <Button
                 size="sm"
                 variant="outline"
-                onClick={onSyncInsights}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onSyncInsights();
+                }}
                 disabled={isSyncing}
                 className="shrink-0 bg-muted/30 border-border/50 hover:bg-muted/50"
             >

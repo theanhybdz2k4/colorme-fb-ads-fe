@@ -6,7 +6,14 @@ export interface Ad {
     accountId: string;
     adsetId: string;
     syncedAt: string;
+    creative?: any;
     thumbnailUrl?: string | null;
+    metrics?: {
+        results: number;
+        costPerResult: number;
+        messagingStarted: number;
+        costPerMessaging: number;
+    };
 }
 
 export const AD_STATUS_OPTIONS = [
