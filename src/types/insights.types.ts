@@ -9,4 +9,6 @@ export interface Insight {
         id: string;
         name: string | null;
     };
+    actions?: any[];
+    action_values?: any[];
 }

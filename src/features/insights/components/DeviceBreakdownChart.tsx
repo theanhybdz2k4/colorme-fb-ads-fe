@@ -16,6 +16,7 @@ interface DeviceStats {
     impressions: number;
     clicks: number;
     results: number;
+    [key: string]: any;
 }
 
 interface Props {
@@ -88,6 +89,7 @@ export function DeviceBreakdownChart({ data, loading }: Props) {
                                 outerRadius={120}
                                 fill="#8884d8"
                                 dataKey="spend"
+                                nameKey="device"
                             >
                                 {chartData.map((_entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0.2)" />

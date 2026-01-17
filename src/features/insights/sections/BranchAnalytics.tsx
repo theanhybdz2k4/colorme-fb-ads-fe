@@ -135,6 +135,23 @@ export function BranchAnalytics() {
 
     const isLoading = loadingBranches || loadingAccounts || loadingAds || loadingInsights;
 
+    const getMessagingStats = (actions: any[]) => {
+        if (!actions || !Array.isArray(actions)) return 0;
+        const messagingTypes = [
+            'onsite_conversion.messaging_conversation_started_7d',
+            'onsite_conversion.messaging_first_reply',
+            'lead',
+            'omni_complete_registration',
+        ];
+
+        return actions.reduce((sum, action) => {
+            if (messagingTypes.includes(action.action_type)) {
+                return sum + Number(action.value || 0);
+            }
+            return sum;
+        }, 0);
+    };
+
     const aggregatedData = useMemo(() => {
         if (!branches || !adAccounts || !ads || !insights) return [];
 
@@ -162,6 +179,7 @@ export function BranchAnalytics() {
             const totalSpend = branchInsights.reduce((sum, ins) => sum + Number(ins.spend || 0), 0);
             const totalImpressions = branchInsights.reduce((sum, ins) => sum + Number(ins.impressions || 0), 0);
             const totalClicks = branchInsights.reduce((sum, ins) => sum + Number(ins.clicks || 0), 0);
+            const totalMessages = branchInsights.reduce((sum, ins) => sum + getMessagingStats(ins.actions || []), 0);
 
             return {
                 id: branch.id,
@@ -169,9 +187,11 @@ export function BranchAnalytics() {
                 spend: totalSpend,
                 impressions: totalImpressions,
                 clicks: totalClicks,
+                messages: totalMessages,
                 cpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
                 ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
                 cpm: totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : 0,
+                costPerMessage: totalMessages > 0 ? totalSpend / totalMessages : 0,
             };
         });
 
@@ -180,6 +200,8 @@ export function BranchAnalytics() {
 
     const totalSpend = aggregatedData.reduce((sum: number, b: any) => sum + b.spend, 0);
     const totalClicks = aggregatedData.reduce((sum: number, b: any) => sum + b.clicks, 0);
+    const totalMessages = aggregatedData.reduce((sum: number, b: any) => sum + b.messages, 0);
+    const avgCostPerMessage = totalMessages > 0 ? totalSpend / totalMessages : 0;
 
     if (isLoading) return <LoadingState text="Đang thống kê dữ liệu cơ sở..." />;
 
@@ -190,7 +212,7 @@ export function BranchAnalytics() {
                     <p className="text-sm font-medium text-slate-200 mb-1">{label}</p>
                     {payload.map((entry: any, index: number) => (
                         <p key={index} className="text-xs" style={{ color: entry.color }}>
-                            {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC')
+                            {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC') || entry.name.includes('Cost')
                                 ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(entry.value)
                                 : entry.value.toLocaleString()}
                             {entry.name.includes('CTR') ? '%' : ''}
@@ -231,18 +253,18 @@ export function BranchAnalytics() {
                             className="w-44 bg-muted/30 border-border/50"
                         />
                     </div>
-                    <Button 
+                    <Button
                         disabled={loadingBreakdowns}
                         onClick={async () => {
                             if (!branches || branches.length === 0) return;
-                            
+
                             setLoadingBreakdowns(true);
                             try {
                                 // Sync each branch
                                 for (const branch of branches) {
                                     await branchesApi.syncBranch(branch.id, dateStart, dateEnd);
                                 }
-                                
+
                                 // After sync, force refetch
                                 await refetch();
                                 setRefreshTrigger(prev => prev + 1);
@@ -251,7 +273,7 @@ export function BranchAnalytics() {
                             } finally {
                                 setLoadingBreakdowns(false);
                             }
-                        }} 
+                        }}
                         className="px-6"
                     >
                         {loadingBreakdowns ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
@@ -283,10 +305,15 @@ export function BranchAnalytics() {
                         </p>
                     </div>
                 </FloatingCard>
-                <FloatingCard className="bg-linear-to-br from-cyan-500/10 to-transparent">
+                <FloatingCard className="bg-linear-to-br from-pink-500/10 to-transparent">
                     <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Số lượng cơ sở</p>
-                        <p className="text-2xl font-bold text-cyan-400">{aggregatedData.length}</p>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold">Tin nhắn mới</p>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-2xl font-bold text-pink-400">{totalMessages.toLocaleString()}</p>
+                            <span className="text-xs text-muted-foreground">
+                                ({new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(avgCostPerMessage)}đ / tin)
+                            </span>
+                        </div>
                     </div>
                 </FloatingCard>
             </div>
@@ -380,6 +407,8 @@ export function BranchAnalytics() {
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí (VND)</TableHead>
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Hiển thị</TableHead>
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Click</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Tin nhắn mới</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí/Tin</TableHead>
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CTR</TableHead>
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPC</TableHead>
                                     <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPM</TableHead>
@@ -394,6 +423,10 @@ export function BranchAnalytics() {
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-slate-400">{row.impressions.toLocaleString()}</TableCell>
                                         <TableCell className="text-right font-mono text-slate-400">{row.clicks.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-bold text-pink-400">{row.messages.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-slate-300">
+                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.costPerMessage))}đ
+                                        </TableCell>
                                         <TableCell className="text-right font-mono font-medium text-emerald-400">
                                             {row.ctr.toFixed(2)}%
                                         </TableCell>
@@ -407,7 +440,7 @@ export function BranchAnalytics() {
                                 ))}
                                 {aggregatedData.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="h-32">
+                                        <TableCell colSpan={9} className="h-32">
                                             <EmptyState
                                                 icon={<LayoutDashboard className="h-8 w-8 text-muted-foreground/30" />}
                                                 title="Không có dữ liệu"
