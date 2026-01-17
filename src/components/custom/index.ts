@@ -11,6 +11,6 @@ export { DataTable, DataTableWrapper } from "./DataTable";
 
 // View toggle system
 export { ViewToggle } from "./ViewToggle";
-export { useViewPreference } from "./useViewPreference";
+export { useViewPreference } from "@/hooks/useViewPreference";
 export { AdCard, AdCardGrid } from "./AdCard";
 export { AdCompactRow, AdCompactList } from "./AdCompactRow";

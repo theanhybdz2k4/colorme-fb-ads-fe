@@ -24,6 +24,7 @@ import {
   Clock,
   ChevronLeft,
   LogOut,
+  PieChart,
 } from 'lucide-react';
 
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
   { path: ROUTES.ADSETS, label: 'Ad Sets', icon: FolderOpen },
   { path: ROUTES.ADS, label: 'Ads', icon: FileText },
   { path: ROUTES.INSIGHTS, label: 'Insights', icon: BarChart3 },
+  { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
   { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
   { path: ROUTES.SETTINGS, label: 'Cron Settings', icon: Clock },
 ];

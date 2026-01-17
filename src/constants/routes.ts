@@ -9,7 +9,8 @@ export const ROUTES = {
     ADSETS: '/adsets',
     ADS: '/ads',
     INSIGHTS: '/insights',
+    BRANCH_ANALYTICS: '/branch-analytics',
     JOBS: '/jobs',
     SETTINGS: '/settings',
-} as const;
+};
 
