@@ -7,8 +7,7 @@ import {
     CartesianGrid,
     Tooltip,
     Legend,
-    ResponsiveContainer,
-    Cell
+    ResponsiveContainer
 } from 'recharts';
 import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom';
 import { Users } from 'lucide-react';

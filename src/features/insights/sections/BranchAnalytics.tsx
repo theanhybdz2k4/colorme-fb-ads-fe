@@ -20,7 +20,6 @@ import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
-import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 import { TrendingUp, LayoutDashboard, BarChart, Activity } from 'lucide-react';
 import {
     BarChart as ReBarChart,

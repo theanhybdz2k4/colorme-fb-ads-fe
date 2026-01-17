@@ -8,19 +8,19 @@ export interface CronSetting {
     updatedAt: string;
 }
 
-export type CronType = 
-    | 'insight' 
-    | 'insight_daily' 
-    | 'insight_device' 
-    | 'insight_placement' 
-    | 'insight_age_gender' 
-    | 'insight_region' 
-    | 'insight_hourly' 
-    | 'ads' 
-    | 'adset' 
-    | 'campaign' 
+export type CronType =
+    | 'insight'
+    | 'insight_daily'
+    | 'insight_device'
+    | 'insight_placement'
+    | 'insight_age_gender'
+    | 'insight_region'
+    | 'insight_hourly'
+    | 'ads'
+    | 'adset'
+    | 'campaign'
     | 'creative'
-    | 'ad_account' 
+    | 'ad_account'
     | 'full';
 
 export interface CronSettingsResponse {
@@ -41,7 +41,7 @@ export interface UpsertCronSettingDto {
 }
 
 export const CRON_TYPES: { value: CronType; label: string; description: string }[] = [
-    { value: 'insight', label: 'Quick Insights', description: 'Sync nhanh insights theo giờ + Telegram notification' },
+    { value: 'insight', label: 'Quick Insights', description: 'Sync nhanh insights theo giờ + Telegram notification (chi tiết theo ad)' },
     { value: 'insight_daily', label: 'Insights Daily', description: 'Sync dữ liệu insights hàng ngày (chi tiết spend, results)' },
     { value: 'insight_device', label: 'Insights Device', description: 'Sync insights theo thiết bị (mobile, desktop)' },
     { value: 'insight_placement', label: 'Insights Placement', description: 'Sync insights theo vị trí hiển thị (feed, story)' },
