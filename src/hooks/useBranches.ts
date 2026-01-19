@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { branchesApi } from '@/api/adAccounts.api';
+import { branchesApi } from '@/api/branches.api';
 import type { BranchSummary } from '@/types/adAccounts.types';
 
 export function useBranches() {

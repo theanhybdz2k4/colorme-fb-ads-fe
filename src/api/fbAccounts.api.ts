@@ -1,17 +1,19 @@
 import { apiClient } from '@/lib/apiClient';
+import { accountsApi } from './accounts.api';
 
 export const fbAccountsApi = {
-    list: () => apiClient.get('/fb-accounts'),
+    list: () => accountsApi.listIdentities(),
 
-    get: (id: number) => apiClient.get(`/fb-accounts/${id}`),
+    get: (id: number) => apiClient.get(`/accounts/identities/${id}`),
 
     add: (accessToken: string, name?: string) =>
-        apiClient.post('/fb-accounts', { accessToken, name }),
+        accountsApi.connect('facebook', accessToken, name),
 
-    delete: (id: number) => apiClient.delete(`/fb-accounts/${id}`),
+    delete: (id: number) => apiClient.delete(`/accounts/identities/${id}`),
 
-    sync: (id: number) => apiClient.post(`/fb-accounts/${id}/sync`),
+    sync: (id: number) => accountsApi.syncSubAccounts(id),
 
+    // Tokens management - needs separate unified logic if needed
     addToken: (id: number, accessToken: string, name?: string, isDefault?: boolean) =>
-        apiClient.post(`/fb-accounts/${id}/tokens`, { accessToken, name, isDefault }),
+        apiClient.post(`/accounts/identities/${id}/tokens`, { accessToken, name, isDefault }),
 };

@@ -77,7 +77,7 @@ export function FilterBar({
                     >
                         <SelectTrigger
                             className={cn(
-                                "bg-muted/30 border-border/50",
+                                "bg-muted/30 border-border/50 cursor-pointer",
                                 "focus:bg-muted/50 transition-colors",
                                 filter.width || "w-40"
                             )}
@@ -86,7 +86,7 @@ export function FilterBar({
                         </SelectTrigger>
                         <SelectContent>
                             {filter.options.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem color="primary" className="cursor-pointer" key={option.value} value={option.value}>
                                     {option.label}
                                 </SelectItem>
                             ))}

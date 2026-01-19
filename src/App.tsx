@@ -9,7 +9,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 const LoginPage = lazy(() => import('@/features/auth').then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('@/features/auth').then(m => ({ default: m.RegisterPage })));
 const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
-const FbAccountsPage = lazy(() => import('@/features/fbAccounts').then(m => ({ default: m.FbAccountsPage })));
+const AccountsPage = lazy(() => import('@/features/accounts').then(m => ({ default: m.AccountsPage })));
 const AdAccountsPage = lazy(() => import('@/features/adAccounts').then(m => ({ default: m.AdAccountsPage })));
 const CampaignsPage = lazy(() => import('@/features/campaigns').then(m => ({ default: m.CampaignsPage })));
 const AdSetsPage = lazy(() => import('@/features/adSets').then(m => ({ default: m.AdSetsPage })));
@@ -101,7 +101,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="fb-accounts" element={<FbAccountsPage />} />
+          <Route path="accounts" element={<AccountsPage />} />
           <Route path="ad-accounts" element={<AdAccountsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="adsets" element={<AdSetsPage />} />

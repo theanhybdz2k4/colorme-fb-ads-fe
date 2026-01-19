@@ -3,8 +3,11 @@ import { AdAnalyticsDetail } from './sections/AdAnalyticsDetail';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInsights } from '@/hooks/useInsights';
-import { useAds } from '@/features/advertisements';
-import { BranchFilter, syncApi } from '@/features/adAccounts';
+import { useAds } from '@/hooks/useAds';
+import { useAdAccounts } from '@/hooks/useAdAccounts';
+import { usePlatform } from '@/contexts';
+import { BranchFilter } from '@/features/adAccounts';
+import { insightsApi } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,21 +21,21 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, BarChart3 } from 'lucide-react';
-import {
-    PageHeader,
-    FloatingCard,
-    FloatingCardHeader,
-    FloatingCardTitle,
-    FloatingCardContent,
-    LoadingState,
-    EmptyState,
-} from '@/components/custom';
+import { PageHeader } from '@/components/custom/PageHeader';
+import { FilterBar } from '@/components/custom/FilterBar';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
+import { LoadingState, LoadingPage } from '@/components/custom/LoadingState';
+import { EmptyState } from '@/components/custom/EmptyState';
+import { PlatformIcon } from '@/components/custom/PlatformIcon';
 import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
+
+// Platform filter moved to global PlatformContext (header tabs)
 
 export function InsightsPage() {
     const queryClient = useQueryClient();
     const [selectedAd, setSelectedAd] = useState<string>('all');
     const [selectedBranch, setSelectedBranch] = useState<string>('all');
+    const { activePlatform } = usePlatform();
     const [syncing, setSyncing] = useState(false);
     const [detailAd, setDetailAd] = useState<{ id: string; name?: string } | null>(null);
 
@@ -53,23 +56,41 @@ export function InsightsPage() {
         branchId: selectedBranch === 'all' ? undefined : selectedBranch,
     });
 
+    const { data: adAccounts } = useAdAccounts();
+
+    const filteredData = data?.filter(insight => {
+        if (activePlatform === 'all') return true;
+        return (insight as any).ad?.account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(insight as any).ad?.account?.platform);
+    });
+
     const handleSync = async () => {
         setSyncing(true);
         try {
-            // If specific ad selected, sync just that ad
+            // If specific ad selected -> sync its account
             if (selectedAd !== 'all') {
-                await syncApi.insightsByAd(selectedAd, dateStart, dateEnd, 'all');
-                toast.success('Đã bắt đầu sync Insights', {
-                    description: `Ad: ${selectedAd}`,
+                const ad = ads?.find(a => a.id === selectedAd);
+                if (ad) {
+                    await insightsApi.syncAccount(ad.accountId, dateStart, dateEnd);
+                    toast.success('Đã bắt đầu sync Insights', {
+                        description: `Account: ${ad.accountId}, Ad: ${selectedAd}`,
+                    });
+                }
+            } else if (selectedBranch !== 'all') {
+                // Sync branch
+                await insightsApi.syncBranch(Number(selectedBranch), dateStart, dateEnd);
+                toast.success('Đã bắt đầu sync Insights cho cơ sở', {
+                    description: `Branch: ${selectedBranch}`,
                 });
             } else {
-                // Sync insights for TODAY only:
-                await Promise.all([
-                    syncApi.fullSync(1),      // Daily insights (hôm nay)
-                    syncApi.syncHourlyToday() // Hourly insights (hôm nay)
-                ]);
+                // Sync all active accounts
+                const activeAccounts = adAccounts?.filter(acc => acc.accountStatus === 'ACTIVE') || [];
+                if (activeAccounts.length === 0) {
+                    toast.error('Không có ad accounts nào active');
+                    return;
+                }
+                await Promise.all(activeAccounts.map(acc => insightsApi.syncAccount(acc.id, dateStart, dateEnd)));
                 toast.success('Đã bắt đầu sync Insights', {
-                    description: 'Đang sync: Daily + Hourly (hôm nay)',
+                    description: `Đang sync ${activeAccounts.length} accounts`,
                 });
             }
 
@@ -146,7 +167,7 @@ export function InsightsPage() {
             {/* Table */}
             <FloatingCard padding="none">
                 <FloatingCardHeader className="p-4">
-                    <FloatingCardTitle>Kết quả ({data?.length || 0})</FloatingCardTitle>
+                    <FloatingCardTitle>Kết quả ({filteredData?.length || 0})</FloatingCardTitle>
                 </FloatingCardHeader>
                 <FloatingCardContent className="p-0">
                     {isLoading ? (
@@ -163,6 +184,7 @@ export function InsightsPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-border/30 hover:bg-transparent">
+                                        <TableHead className="w-[50px]"></TableHead>
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">Ngày</TableHead>
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">Ad ID</TableHead>
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Impressions</TableHead>
@@ -173,8 +195,11 @@ export function InsightsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {data?.map((insight, idx) => (
+                                    {filteredData?.map((insight, idx) => (
                                         <TableRow key={idx} className="border-border/30 hover:bg-muted/30 transition-colors">
+                                            <TableCell>
+                                                <PlatformIcon platformCode={(insight as any).ad?.account?.platform?.code || 'facebook'} />
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {new Date(insight.date).toLocaleDateString('vi-VN')}
                                             </TableCell>
@@ -184,9 +209,9 @@ export function InsightsPage() {
                                             <TableCell className="text-right font-medium">{insight.clicks || '0'}</TableCell>
                                             <TableCell className="text-right font-medium">{insight.spend || '0'}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm" 
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
                                                     className="h-8 w-8 p-0"
                                                     onClick={() => setDetailAd({ id: insight.adId, name: insight.ad?.name || undefined })}
                                                 >

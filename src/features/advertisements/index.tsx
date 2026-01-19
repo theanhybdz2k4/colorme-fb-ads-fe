@@ -1,12 +1,12 @@
-export { AdDetailPage } from './sections/AdDetailPage';
-export { useAds } from '@/hooks/useAds';
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAds } from '@/hooks/useAds';
+import { adsApi, adDetailApi } from '@/api';
 import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from '@/types/ads.types';
+import { usePlatform } from '@/contexts';
 import { useAdsets } from '@/features/adSets';
-import { BranchFilter, syncApi } from '@/features/adAccounts';
+import { BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -17,22 +17,21 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, FileText } from 'lucide-react';
-import {
-  PageHeader,
-  FilterBar,
-  FloatingCard,
-  FloatingCardHeader,
-  FloatingCardTitle,
-  FloatingCardContent,
-  LoadingPage,
-  EmptyState,
-  ViewToggle,
-  useViewPreference,
-  AdCard,
-  AdCardGrid,
-  AdCompactRow,
-  AdCompactList,
-} from '@/components/custom';
+import { PageHeader } from '@/components/custom/PageHeader';
+import { FilterBar } from '@/components/custom/FilterBar';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
+import { LoadingPage } from '@/components/custom/LoadingState';
+import { EmptyState } from '@/components/custom/EmptyState';
+import { ViewToggle } from '@/components/custom/ViewToggle';
+import { useViewPreference } from '@/hooks/useViewPreference';
+import { AdCard, AdCardGrid } from '@/components/custom/AdCard';
+import { AdCompactRow, AdCompactList } from '@/components/custom/AdCompactRow';
+import { PlatformIcon } from '@/components/custom/PlatformIcon';
+import { getVietnamDateString } from '@/lib/utils';
+
+// Platform filter moved to global PlatformContext (header tabs)
+
+export { AdDetailPage } from './sections/AdDetailPage';
 
 export function AdsPage() {
   const navigate = useNavigate();
@@ -43,6 +42,7 @@ export function AdsPage() {
   const [syncingAd, setSyncingAd] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const { activePlatform } = usePlatform();
 
   // View toggle with localStorage persistence
   const [viewMode, setViewMode] = useViewPreference('ads-page', 'grid');
@@ -59,23 +59,24 @@ export function AdsPage() {
     branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
+  const filteredData = data?.filter(ad => {
+    if (activePlatform === 'all') return true;
+    return (ad as any).account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(ad as any).account?.platform);
+  });
+
   const handleSyncAllActive = async () => {
-      setSyncingAll(true);
-      try {
-        // Sync ads for each active adset
-        if (!adsets || adsets.length === 0) {
-          toast.error('Không có adsets nào để sync');
-          return;
-        }
+    setSyncingAll(true);
+    try {
+      if (!adsets || adsets.length === 0) {
+        toast.error('Không có adsets nào để sync');
+        return;
+      }
 
-        await Promise.all(adsets.map(adset => syncApi.entitiesByAdset(adset.id)));
+      const accountIds = Array.from(new Set(adsets.map(a => a.accountId)));
+      await Promise.all(accountIds.map(accountId => adsApi.syncAccount(accountId)));
 
-        toast.success('Đã bắt đầu sync Ads', {
-        description: `Đang sync từ ${adsets.length} adsets`,
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['ads'] });
-      }, 3000);
+      toast.success(`Đã hoàn thành sync Ads cho ${accountIds.length} tài khoản`);
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
     } catch {
       toast.error('Lỗi sync');
     } finally {
@@ -85,15 +86,12 @@ export function AdsPage() {
 
   const handleSyncInsights = async (ad: Ad) => {
     setSyncingAd(ad.id);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getVietnamDateString();
     try {
-      await syncApi.insightsByAd(ad.id, today, today, 'all');
-      toast.success('Đã bắt đầu sync Insights', {
-        description: `Ad: ${ad.name || ad.id}`,
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['insights'] });
-      }, 3000);
+      // Use targeted ad sync instead of account sync
+      await adDetailApi.syncInsights(ad.id, today, today, 'DAILY');
+      toast.success('Đã cập nhật insights cho Ad');
+      queryClient.invalidateQueries({ queryKey: ['ad-analytics', ad.id] });
     } catch {
       toast.error('Lỗi sync Insights');
     } finally {
@@ -181,7 +179,7 @@ export function AdsPage() {
           <FloatingCardTitle>Ads ({data?.length || 0})</FloatingCardTitle>
         </FloatingCardHeader>
         <FloatingCardContent className="p-4">
-          {data?.length === 0 ? (
+          {filteredData?.length === 0 ? (
             <EmptyState
               icon={<FileText className="h-8 w-8" />}
               title={hasActiveFilters ? 'Không tìm thấy ads' : 'Chưa có ads'}
@@ -190,28 +188,36 @@ export function AdsPage() {
           ) : viewMode === 'grid' ? (
             // Grid View
             <AdCardGrid>
-              {data?.map((ad) => (
-                <AdCard
-                  key={ad.id}
-                  ad={ad}
-                  statusVariant={getAdStatusVariant(ad.effectiveStatus || ad.status)}
-                  onSyncInsights={() => handleSyncInsights(ad)}
-                  onClick={() => navigate(`/ads/${ad.id}`)}
-                  isSyncing={syncingAd === ad.id}
-                />
+              {filteredData?.map((ad) => (
+                <div key={ad.id} className="relative">
+                  <div className="absolute top-2 left-2 z-10">
+                    <PlatformIcon platformCode={(ad as any).account?.platform?.code || 'facebook'} />
+                  </div>
+                  <AdCard
+                    ad={ad}
+                    statusVariant={getAdStatusVariant(ad.status)}
+                    onSyncInsights={() => handleSyncInsights(ad)}
+                    onClick={() => navigate(`/ads/${ad.id}`)}
+                    isSyncing={syncingAd === ad.id}
+                  />
+                </div>
               ))}
             </AdCardGrid>
           ) : (
             // List View
             <AdCompactList>
-              {data?.map((ad) => (
-                <AdCompactRow
-                  key={ad.id}
-                  ad={ad}
-                  statusVariant={getAdStatusVariant(ad.effectiveStatus || ad.status)}
-                  onSyncInsights={() => handleSyncInsights(ad)}
-                  isSyncing={syncingAd === ad.id}
-                />
+              {filteredData?.map((ad) => (
+                <div key={ad.id} className="flex items-center gap-2">
+                  <div className="pl-2">
+                    <PlatformIcon platformCode={(ad as any).account?.platform?.code || 'facebook'} />
+                  </div>
+                  <AdCompactRow
+                    ad={ad}
+                    statusVariant={getAdStatusVariant(ad.status)}
+                    onSyncInsights={() => handleSyncInsights(ad)}
+                    isSyncing={syncingAd === ad.id}
+                  />
+                </div>
               ))}
             </AdCompactList>
           )}

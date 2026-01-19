@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAdDetail, useAdAnalytics, useSyncAdInsights } from '@/hooks/useAdDetail';
 import { PerformanceChart } from '../components/PerformanceChart';
 import type { DailyInsight, DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from '@/api/adDetail.api';
@@ -37,6 +38,7 @@ const formatPercent = (value: number) => {
 };
 
 export function AdDetailPage() {
+  const queryClient = useQueryClient();
   const { adId } = useParams<{ adId: string }>();
   const navigate = useNavigate();
   const [syncingSection, setSyncingSection] = useState<string | null>(null);
@@ -57,31 +59,23 @@ export function AdDetailPage() {
 
   const handleSync = async (section: string) => {
     if (!adId) return;
-    
+
     setSyncingSection(section);
     try {
       const { dateStart, dateEnd } = getDateRange7Days();
       // Luôn sync tất cả insights (bao gồm hourly và các breakdowns khác) trong 7 ngày
       const result = await syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' });
-      
+
       toast.success('Sync insights thành công!', {
         description: `Đã sync ${result || 0} insights từ ${dateStart} đến ${dateEnd}`,
       });
-      
-      // Đợi một chút để đảm bảo backend đã lưu xong, sau đó refetch ngay lập tức
-      setTimeout(async () => {
-        try {
-          // Refetch analytics với force refresh
-          await refetchAnalytics();
-          
-          // Refetch lại sau 1 giây nữa để đảm bảo có dữ liệu
-          setTimeout(async () => {
-            await refetchAnalytics();
-          }, 1000);
-        } catch (error) {
-          console.error('Error refetching data:', error);
-        }
-      }, 2000);
+
+      // Re-trigger analytics fetch
+      await refetchAnalytics();
+
+      // Specifically invalidate by adId to be safe
+      queryClient.invalidateQueries({ queryKey: ['ad-analytics', adId] });
+      queryClient.invalidateQueries({ queryKey: ['ad-hourly', adId] });
     } catch (error: any) {
       console.error('Sync failed:', error);
       toast.error('Sync insights thất bại', {

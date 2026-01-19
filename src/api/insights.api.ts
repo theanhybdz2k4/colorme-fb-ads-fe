@@ -1,22 +1,44 @@
 import { apiClient } from '@/lib/apiClient';
 
 export const insightsApi = {
-  list: (accountId?: string, dateStart?: string, dateEnd?: string, branchId?: string) =>
-    apiClient.get('/insights', {
-      params: {
-        accountId,
-        dateStart,
-        dateEnd,
-        branchId: branchId === 'all' ? undefined : branchId,
-      },
-    }),
+  /**
+   * Query unified insights with filters
+   */
+  list: (params: { 
+    accountId?: number; 
+    branchId?: number; 
+    dateStart?: string; 
+    dateEnd?: string; 
+  }) =>
+    apiClient.get('/insights', { params }),
   
+  /**
+   * Get ad-level analytics (detailed metrics)
+   */
   getAdAnalytics: (adId: string, dateStart?: string, dateEnd?: string) =>
     apiClient.get(`/insights/ads/${adId}/analytics`, { params: { dateStart, dateEnd } }),
   
+  /**
+   * Get ad hourly insights (normalized)
+   */
   getAdHourly: (adId: string, date?: string) =>
     apiClient.get(`/insights/ads/${adId}/hourly`, { params: { date } }),
   
-  sync: (dto: { accountId?: string; adId?: string; dateStart: string; dateEnd: string; breakdown?: string }) =>
-    apiClient.post('/insights/sync', dto),
+  /**
+   * Manually trigger insight sync for a platform account
+   */
+  syncAccount: (accountId: number, dateStart: string, dateEnd: string, granularity: 'DAILY' | 'HOURLY' = 'DAILY') =>
+    apiClient.post(`/insights/sync/account/${accountId}`, { dateStart, dateEnd, granularity }),
+
+  /**
+   * Manually trigger full branch sync (Entities + Insights)
+   */
+  syncBranch: (branchId: number, dateStart: string, dateEnd: string, granularity: 'DAILY' | 'HOURLY' = 'DAILY') =>
+    apiClient.post(`/insights/sync/branch/${branchId}`, { dateStart, dateEnd, granularity }),
+
+  /**
+   * Cleanup old hourly insights (older than yesterday)
+   */
+  cleanupHourlyInsights: () =>
+    apiClient.post('/insights/cleanup-hourly'),
 };

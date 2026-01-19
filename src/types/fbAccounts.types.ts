@@ -1,11 +1,24 @@
-export interface FbAccount {
+export interface PlatformIdentity {
   id: number;
+  userId: number;
+  platformId: number;
+  externalId: string;
   name: string | null;
-  fbUserId: string | null;
   isValid: boolean;
-  _count: { adAccounts: number; tokens: number };
-  tokens: FbToken[];
+  platform: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  _count: {
+    accounts: number;
+    credentials: number;
+  };
+  fbUserId?: string | null;
 }
+
+// Compatibility alias
+export type FbAccount = PlatformIdentity;
 
 export interface FbToken {
   id: number;
@@ -15,6 +28,7 @@ export interface FbToken {
 }
 
 export interface AddFbAccountParams {
+  platformCode: string;
   accessToken: string;
   name?: string;
 }

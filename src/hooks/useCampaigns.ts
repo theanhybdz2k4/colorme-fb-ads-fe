@@ -9,11 +9,15 @@ export interface UseCampaignsParams {
     branchId?: string;
 }
 
-export function useCampaigns({ accountId, effectiveStatus, search, branchId }: UseCampaignsParams = {}) {
+export function useCampaigns(params: UseCampaignsParams = {}) {
     return useQuery({
-        queryKey: ['campaigns', accountId, effectiveStatus, search, branchId],
+        queryKey: ['campaigns', params],
         queryFn: async () => {
-            const { data } = await campaignsApi.list(accountId, effectiveStatus, search, branchId);
+            const { data } = await campaignsApi.list({
+                ...params,
+                accountId: params.accountId ? Number(params.accountId) : undefined,
+                status: params.effectiveStatus
+            });
             return (data.result || data.data || data || []) as Campaign[];
         },
     });

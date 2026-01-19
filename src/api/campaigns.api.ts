@@ -1,15 +1,26 @@
 import { apiClient } from '@/lib/apiClient';
 
 export const campaignsApi = {
-  list: (accountId?: string, effectiveStatus?: string, search?: string, branchId?: string) =>
-    apiClient.get('/campaigns', {
-      params: {
-        accountId,
-        effectiveStatus,
-        search,
-        branchId: branchId === 'all' ? undefined : branchId,
-      },
-    }),
+  /**
+   * List campaigns with filters
+   */
+  list: (params?: { accountId?: number; status?: string; search?: string; branchId?: string }) =>
+    apiClient.get('/campaigns', { params }),
 
+  /**
+   * List campaigns by unified account ID
+   */
+  listByAccount: (accountId: number) =>
+    apiClient.get(`/campaigns/by-account/${accountId}`),
+
+  /**
+   * Get single campaign detail
+   */
   get: (id: string) => apiClient.get(`/campaigns/${id}`),
+
+  /**
+   * Manually trigger campaign sync for a platform account
+   */
+  syncAccount: (accountId: number) =>
+    apiClient.post(`/campaigns/sync/account/${accountId}`),
 };
