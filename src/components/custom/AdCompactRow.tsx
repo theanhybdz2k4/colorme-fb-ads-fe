@@ -10,7 +10,7 @@ interface AdCompactRowProps {
         status?: string | null;
         effectiveStatus?: string | null;
         syncedAt: string;
-        accountId: string;
+        accountId: string | number;
         thumbnailUrl?: string | null;
         metrics?: {
             results: number;

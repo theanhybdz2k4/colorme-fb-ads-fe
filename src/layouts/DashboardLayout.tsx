@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ROUTES } from '@/constants';
 import { cn } from '@/lib/utils';
+import { PlatformProvider, usePlatform, type PlatformCode } from '@/contexts';
 import {
   LayoutDashboard,
   Users,
@@ -29,7 +30,7 @@ import {
 
 const navItems = [
   { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-  { path: ROUTES.FB_ACCOUNTS, label: 'Tài khoản FB', icon: Users },
+  { path: ROUTES.ACCOUNTS, label: 'Accounts', icon: Users },
   { path: ROUTES.AD_ACCOUNTS, label: 'Ad Accounts', icon: CreditCard },
   { path: ROUTES.CAMPAIGNS, label: 'Campaigns', icon: Megaphone },
   { path: ROUTES.ADSETS, label: 'Ad Sets', icon: FolderOpen },
@@ -40,7 +41,47 @@ const navItems = [
   { path: ROUTES.SETTINGS, label: 'Cron Settings', icon: Clock },
 ];
 
-export function DashboardLayout() {
+// Platform tab config with colors
+const PLATFORM_TABS: { code: PlatformCode; label: string; icon: string; color: string; bgColor: string }[] = [
+  { code: 'all', label: 'Tất cả', icon: '∞', color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  { code: 'facebook', label: 'Facebook', icon: 'F', color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
+  { code: 'tiktok', label: 'TikTok', icon: 'T', color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
+  { code: 'google', label: 'Google', icon: 'G', color: 'text-red-400', bgColor: 'bg-red-500/20' },
+];
+
+function PlatformTabs() {
+  const { activePlatform, setActivePlatform } = usePlatform();
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-1 bg-muted/30 rounded-lg">
+      {PLATFORM_TABS.map((tab) => {
+        const isActive = activePlatform === tab.code;
+        return (
+          <button
+            key={tab.code}
+            onClick={() => setActivePlatform(tab.code)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
+              isActive
+                ? `${tab.bgColor} ${tab.color}`
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <span className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
+              isActive ? tab.bgColor : "bg-muted"
+            )}>
+              {tab.icon}
+            </span>
+            <span className="hidden sm:inline">{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DashboardContent() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -147,7 +188,11 @@ export function DashboardLayout() {
       >
         {/* Header */}
         <header className="sticky top-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border/50">
-          <div className="h-full px-6 flex items-center justify-end">
+          <div className="h-full px-6 flex items-center justify-between">
+            {/* Platform Tabs */}
+            <PlatformTabs />
+
+            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -188,3 +233,12 @@ export function DashboardLayout() {
     </div>
   );
 }
+
+export function DashboardLayout() {
+  return (
+    <PlatformProvider>
+      <DashboardContent />
+    </PlatformProvider>
+  );
+}
+

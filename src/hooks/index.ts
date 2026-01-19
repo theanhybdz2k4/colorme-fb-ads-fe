@@ -6,7 +6,7 @@ export * from './useAds';
 export * from './useAdDetail';
 export * from './useAuth';
 export * from './useCampaigns';
-export * from './useFbAccounts';
+export * from './useAccounts';
 export * from './useInsights';
 export * from './useJobs';
 export * from './useCronSettings';

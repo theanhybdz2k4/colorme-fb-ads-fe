@@ -1,12 +1,13 @@
 export interface Ad {
     id: string;
+    externalId: string;
+    accountId: number;
+    adGroupId: string;
     name: string | null;
-    status: string;
+    status: string; // UnifiedStatus: ACTIVE, PAUSED, DELETED, etc.
+    creativeData?: any;
     effectiveStatus: string | null;
-    accountId: string;
-    adsetId: string;
     syncedAt: string;
-    creative?: any;
     thumbnailUrl?: string | null;
     metrics?: {
         results: number;
@@ -14,6 +15,8 @@ export interface Ad {
         messagingStarted: number;
         costPerMessaging: number;
     };
+    // For compatibility
+    adsetId?: string;
 }
 
 export const AD_STATUS_OPTIONS = [

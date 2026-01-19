@@ -1,14 +1,18 @@
-export interface Adset {
+export interface AdGroup {
   id: string;
-  name: string | null;
-  status: string;
-  effectiveStatus: string | null;
-  dailyBudget: string | null;
-  optimizationGoal: string | null;
-  accountId: string;
+  externalId: string;
+  accountId: number;
   campaignId: string;
+  name: string | null;
+  status: string; // UnifiedStatus: ACTIVE, PAUSED, DELETED, etc.
+  dailyBudget: string | null;
+  optimizationGoal?: string | null;
+  effectiveStatus: string | null;
   syncedAt: string;
 }
+
+// For compatibility during migration
+export type Adset = AdGroup;
 
 export const ADSET_STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },

@@ -10,7 +10,7 @@ interface AdCardProps {
     status?: string | null;
     effectiveStatus?: string | null;
     syncedAt: string;
-    accountId: string;
+    accountId: string | number;
     thumbnailUrl?: string | null;
     metrics?: {
       results: number;
@@ -59,7 +59,7 @@ export function AdCard({
       )}
     >
       {/* Thumbnail / Preview - Clickable */}
-      <div 
+      <div
         className="relative aspect-video bg-muted/30 rounded-t-lg overflow-hidden cursor-pointer"
         onClick={onClick}
       >
@@ -74,7 +74,7 @@ export function AdCard({
             <ImageIcon className="h-12 w-12 opacity-30" />
           </div>
         )}
-        
+
         {/* Status Badge - Overlay */}
         <div className="absolute top-2 left-2">
           <Badge variant={statusVariant} className="text-xs">

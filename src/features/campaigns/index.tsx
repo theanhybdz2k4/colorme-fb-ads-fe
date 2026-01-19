@@ -1,10 +1,11 @@
-export { useCampaigns } from '@/hooks/useCampaigns';
-export { campaignsApi } from '@/api/campaigns.api';
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCampaigns } from '@/hooks/useCampaigns';
+export { useCampaigns } from '@/hooks/useCampaigns';
+import { campaignsApi, adsApi } from '@/api';
 import { CAMPAIGN_STATUS_OPTIONS, getCampaignStatusVariant, type Campaign } from '@/types/campaigns.types';
-import { useAdAccounts, syncApi, BranchFilter } from '@/features/adAccounts';
+import { usePlatform } from '@/contexts';
+import { useAdAccounts, BranchFilter } from '@/features/adAccounts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,16 +18,14 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, Megaphone } from 'lucide-react';
-import {
-  PageHeader,
-  FilterBar,
-  FloatingCard,
-  FloatingCardHeader,
-  FloatingCardTitle,
-  FloatingCardContent,
-  LoadingPage,
-  EmptyState,
-} from '@/components/custom';
+import { PageHeader } from '@/components/custom/PageHeader';
+import { FilterBar } from '@/components/custom/FilterBar';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
+import { LoadingPage } from '@/components/custom/LoadingState';
+import { EmptyState } from '@/components/custom/EmptyState';
+import { PlatformIcon } from '@/components/custom/PlatformIcon';
+
+// Platform filter moved to global PlatformContext (header tabs)
 
 export function CampaignsPage() {
   const queryClient = useQueryClient();
@@ -36,6 +35,7 @@ export function CampaignsPage() {
   const [syncingCampaign, setSyncingCampaign] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const { activePlatform } = usePlatform();
 
   const { data: accounts } = useAdAccounts();
 
@@ -46,6 +46,12 @@ export function CampaignsPage() {
     branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
+  const filteredData = data?.filter(campaign => {
+    if (activePlatform === 'all') return true;
+    // Filter by platform from global context
+    return (campaign as any).account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(campaign as any).account?.platform);
+  });
+
   const handleSyncAllActive = async () => {
     if (!accounts || accounts.length === 0) {
       toast.error('Không có tài khoản nào');
@@ -53,13 +59,9 @@ export function CampaignsPage() {
     }
     setSyncingAll(true);
     try {
-      await Promise.all(accounts.map(account => syncApi.entities(account.id, 'campaigns')));
-      toast.success(`Đã bắt đầu sync Campaigns cho ${accounts.length} tài khoản`, {
-        description: 'Kiểm tra Jobs để xem tiến trình',
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      }, 5000);
+      await Promise.all(accounts.map(account => campaignsApi.syncAccount(account.id)));
+      toast.success(`Đã hoàn thành sync Campaigns cho ${accounts.length} tài khoản`);
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     } catch {
       toast.error('Lỗi sync');
     } finally {
@@ -70,17 +72,16 @@ export function CampaignsPage() {
   const handleSyncCampaign = async (campaign: Campaign) => {
     setSyncingCampaign(campaign.id);
     try {
+      // For a specific campaign, we might not have a direct "sync campaign by id" in the backend yet
+      // but we can sync the whole account's ads/ad groups
       await Promise.all([
-        syncApi.entities(campaign.accountId, 'adsets'),
-        syncApi.entities(campaign.accountId, 'ads')
+        campaignsApi.syncAccount(campaign.accountId),
+        adsApi.syncAccount(campaign.accountId)
       ]);
-      toast.success('Đã bắt đầu sync Adsets & Ads', {
-        description: `Account: ${campaign.accountId}`,
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['adsets'] });
-        queryClient.invalidateQueries({ queryKey: ['ads'] });
-      }, 3000);
+      toast.success('Đã hoàn thành sync dữ liệu chiến dịch');
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['adsets'] });
+      queryClient.invalidateQueries({ queryKey: ['ads'] });
     } catch {
       toast.error('Lỗi sync');
     } finally {
@@ -122,7 +123,7 @@ export function CampaignsPage() {
           <SelectContent>
             <SelectItem value="all">Tất cả Accounts</SelectItem>
             {accounts?.map((acc) => (
-              <SelectItem key={acc.id} value={acc.id}>
+              <SelectItem key={acc.id} value={String(acc.id)}>
                 {acc.name || acc.id}
               </SelectItem>
             ))}
@@ -163,7 +164,7 @@ export function CampaignsPage() {
           <FloatingCardTitle>Campaigns ({data?.length || 0})</FloatingCardTitle>
         </FloatingCardHeader>
         <FloatingCardContent className="p-0">
-          {data?.length === 0 ? (
+          {filteredData?.length === 0 ? (
             <EmptyState
               icon={<Megaphone className="h-8 w-8" />}
               title={hasActiveFilters ? 'Không tìm thấy campaign' : 'Chưa có campaign'}
@@ -175,6 +176,7 @@ export function CampaignsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30 hover:bg-transparent">
+                    <TableHead className="w-[50px]"></TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground uppercase">Tên</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground uppercase">Trạng thái</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground uppercase">Mục tiêu</TableHead>
@@ -184,12 +186,19 @@ export function CampaignsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.map((campaign) => (
+                  {filteredData?.map((campaign) => (
                     <TableRow key={campaign.id} className="border-border/30 hover:bg-muted/30 transition-colors">
-                      <TableCell className="font-medium">{campaign.name || campaign.id}</TableCell>
                       <TableCell>
-                        <Badge variant={getCampaignStatusVariant(campaign.effectiveStatus || campaign.status)}>
-                          {campaign.effectiveStatus || campaign.status}
+                        <PlatformIcon platformCode={(campaign as any).account?.platform?.code || 'facebook'} />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {(campaign.name || campaign.id).length > 30
+                          ? (campaign.name || campaign.id).slice(0, 30) + "..."
+                          : (campaign.name || campaign.id)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getCampaignStatusVariant(campaign.status)}>
+                          {campaign.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{campaign.objective || '-'}</TableCell>

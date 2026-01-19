@@ -3,7 +3,7 @@ export const ROUTES = {
     LOGIN: '/login',
     REGISTER: '/register',
     DASHBOARD: '/',
-    FB_ACCOUNTS: '/fb-accounts',
+    ACCOUNTS: '/accounts',
     AD_ACCOUNTS: '/ad-accounts',
     CAMPAIGNS: '/campaigns',
     ADSETS: '/adsets',

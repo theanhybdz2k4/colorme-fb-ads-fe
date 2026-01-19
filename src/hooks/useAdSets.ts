@@ -10,11 +10,15 @@ export interface UseAdsetsParams {
     branchId?: string;
 }
 
-export function useAdsets({ accountId, campaignId, effectiveStatus, search, branchId }: UseAdsetsParams = {}) {
+export function useAdsets(params: UseAdsetsParams = {}) {
     return useQuery({
-        queryKey: ['adsets', accountId, campaignId, effectiveStatus, search, branchId],
+        queryKey: ['adsets', params],
         queryFn: async () => {
-            const { data } = await adsetsApi.list(accountId, campaignId, effectiveStatus, search, branchId);
+            const { data } = await adsetsApi.list({
+                ...params,
+                accountId: params.accountId ? Number(params.accountId) : undefined,
+                status: params.effectiveStatus
+            });
             return (data.result || data.data || data || []) as Adset[];
         },
     });

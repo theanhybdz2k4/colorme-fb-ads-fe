@@ -1,14 +1,4 @@
-import { apiClient } from '@/lib/apiClient';
+import { adGroupsApi } from './adGroups.api';
 
-export const adsetsApi = {
-    list: (accountId?: string, campaignId?: string, effectiveStatus?: string, search?: string, branchId?: string) =>
-        apiClient.get('/adsets', {
-            params: {
-                accountId,
-                campaignId,
-                effectiveStatus,
-                search,
-                branchId: branchId === 'all' ? undefined : branchId,
-            },
-        }),
-};
+// Export adGroupsApi as adsetsApi for backward compatibility during migration
+export const adsetsApi = adGroupsApi;

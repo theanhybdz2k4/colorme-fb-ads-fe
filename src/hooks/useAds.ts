@@ -10,11 +10,16 @@ export interface UseAdsParams {
     branchId?: string;
 }
 
-export function useAds({ accountId, adsetId, effectiveStatus, search, branchId }: UseAdsParams = {}) {
+export function useAds(params: UseAdsParams = {}) {
     return useQuery({
-        queryKey: ['ads', accountId, adsetId, effectiveStatus, search, branchId],
+        queryKey: ['ads', params],
         queryFn: async () => {
-            const { data } = await adsApi.list(accountId, adsetId, effectiveStatus, search, branchId);
+            const { data } = await adsApi.list({
+                ...params,
+                accountId: params.accountId ? Number(params.accountId) : undefined,
+                status: params.effectiveStatus,
+                adGroupId: params.adsetId
+            });
             return (data.result || data.data || data || []) as Ad[];
         },
     });

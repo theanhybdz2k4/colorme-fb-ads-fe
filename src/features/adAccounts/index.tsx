@@ -1,11 +1,11 @@
-export { BranchFilter } from './components/BranchFilter';
-export { syncApi, adAccountsApi, branchesApi } from '@/api/adAccounts.api';
 export { useAdAccounts } from '@/hooks/useAdAccounts';
+export { BranchFilter } from './components/BranchFilter';
 import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdAccounts } from '@/hooks/useAdAccounts';
-import { syncApi, adAccountsApi, branchesApi } from '@/api/adAccounts.api';
-import { AD_ACCOUNT_STATUS_MAP, AD_ACCOUNT_STATUS_OPTIONS } from '@/types/adAccounts.types';
+import { adAccountsApi, campaignsApi, adsApi, insightsApi, branchesApi } from '@/api';
+import { PLATFORM_ACCOUNT_STATUS_MAP, AD_ACCOUNT_STATUS_OPTIONS } from '@/types/adAccounts.types';
+import { usePlatform } from '@/contexts';
 import { useBranches } from '@/hooks/useBranches';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,16 +15,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, CreditCard, Image, Trash2 } from 'lucide-react';
-import {
-  PageHeader,
-  FilterBar,
-  FloatingCard,
-  FloatingCardHeader,
-  FloatingCardTitle,
-  FloatingCardContent,
-  LoadingPage,
-  EmptyState,
-} from '@/components/custom';
+import { PageHeader } from '@/components/custom/PageHeader';
+import { FilterBar } from '@/components/custom/FilterBar';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
+import { LoadingPage } from '@/components/custom/LoadingState';
+import { EmptyState } from '@/components/custom/EmptyState';
+import { PlatformIcon } from '@/components/custom/PlatformIcon';
+
+// Platform filter moved to global PlatformContext (header tabs)
 
 export function AdAccountsPage() {
   const queryClient = useQueryClient();
@@ -32,7 +30,8 @@ export function AdAccountsPage() {
   const [syncingCreatives, setSyncingCreatives] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('1');
+  const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const { activePlatform } = usePlatform();
   const [branchFilter, setBranchFilter] = useState<'all' | number>('all');
   const [assigningBranchFor, setAssigningBranchFor] = useState<string | null>(null);
   const [newBranchName, setNewBranchName] = useState('');
@@ -54,19 +53,28 @@ export function AdAccountsPage() {
     branchId: branchFilter === 'all' ? undefined : branchFilter,
   });
 
-  const filteredData = useMemo(() => data || [], [data]);
+  const filteredData = useMemo(() => {
+    let result = data || [];
+    if (activePlatform !== 'all') {
+      result = result.filter(acc => (acc as any).platform?.code === activePlatform || (activePlatform === 'facebook' && !(acc as any).platform));
+    }
+    return result;
+  }, [data, activePlatform]);
 
   const activeAccounts = useMemo(() => {
-    return data?.filter(acc => acc.accountStatus === 1) || [];
+    return data?.filter(acc => acc.accountStatus === 'ACTIVE') || [];
   }, [data]);
 
-  const handleSyncAll = async (accountId: string) => {
-    setSyncingAccount(accountId);
+  const handleSyncAll = async (accountId: number) => {
+    setSyncingAccount(String(accountId));
     try {
-      await syncApi.entities(accountId, 'all');
-      toast.success('Đã bắt đầu sync tất cả entities', {
-        description: `Account: ${accountId}`,
-      });
+      await campaignsApi.syncAccount(accountId);
+      await adsApi.syncAccount(accountId);
+      const today = new Date().toISOString().split('T')[0];
+      await insightsApi.syncAccount(accountId, today, today);
+
+      toast.success('Đã hoàn thành sync dữ liệu tài khoản');
+      queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
     } catch {
       toast.error('Lỗi sync');
     } finally {
@@ -74,15 +82,14 @@ export function AdAccountsPage() {
     }
   };
 
-  const handleSyncCreatives = async (accountId: string) => {
-    setSyncingCreatives(accountId);
+  const handleSyncCreatives = async (accountId: number) => {
+    setSyncingCreatives(String(accountId));
     try {
-      await syncApi.entities(accountId, 'creatives');
-      toast.success('Đã bắt đầu sync Creatives', {
-        description: `Account: ${accountId}`,
-      });
+      await adsApi.syncAccount(accountId);
+      toast.success('Đã cập nhật dữ liệu quảng cáo');
+      queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
     } catch {
-      toast.error('Lỗi sync creatives');
+      toast.error('Lỗi sync quảng cáo');
     } finally {
       setSyncingCreatives(null);
     }
@@ -95,15 +102,10 @@ export function AdAccountsPage() {
     }
     setSyncingAll(true);
     try {
-      await Promise.all(activeAccounts.map(account => syncApi.entities(account.id, 'all')));
-      toast.success(`Đã bắt đầu sync ${activeAccounts.length} tài khoản Active`, {
-        description: 'Kiểm tra Jobs để xem tiến trình',
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
-      }, 5000);
+      await Promise.all(activeAccounts.map(account => handleSyncAll(account.id)));
+      toast.success(`Đã hoàn thành sync ${activeAccounts.length} tài khoản Active`);
     } catch {
-      toast.error('Lỗi sync');
+      toast.error('Lỗi sync hàng loạt');
     } finally {
       setSyncingAll(false);
     }
@@ -111,20 +113,20 @@ export function AdAccountsPage() {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setStatusFilter('1');
+    setStatusFilter('ACTIVE');
     setBranchFilter('all');
   };
 
-  const hasActiveFilters = Boolean(searchQuery || statusFilter !== '1');
+  const hasActiveFilters = Boolean(searchQuery || statusFilter !== 'ACTIVE' || branchFilter !== 'all');
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
 
-  const handleAssignBranch = async (accountId: string, branchId: number | 'none') => {
-    setAssigningBranchFor(accountId);
+  const handleAssignBranch = async (accountId: number, branchId: number | 'none') => {
+    setAssigningBranchFor(String(accountId));
     try {
-      await adAccountsApi.assignBranch(accountId, branchId === 'none' ? null : branchId);
+      await adAccountsApi.assignBranch(String(accountId), branchId === 'none' ? null : branchId);
       toast.success('Đã cập nhật cơ sở cho ad account');
       queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
       queryClient.invalidateQueries({ queryKey: ['branches'] });
@@ -244,7 +246,7 @@ export function AdAccountsPage() {
 
     setCleaningUp(true);
     try {
-      const { data } = await syncApi.cleanupHourlyInsights();
+      const { data } = await insightsApi.cleanupHourlyInsights();
       toast.success(`Đã xóa ${data.deletedCount || 0} bản ghi cũ`, {
         description: 'Hourly insights cleanup thành công',
       });
@@ -343,7 +345,7 @@ export function AdAccountsPage() {
               },
             ]}
             hasActiveFilters={Boolean(
-              searchQuery || statusFilter !== '1' || branchFilter !== 'all',
+              searchQuery || statusFilter !== 'ACTIVE' || branchFilter !== 'all',
             )}
             onClear={clearFilters}
           />
@@ -365,6 +367,7 @@ export function AdAccountsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-border/30 hover:bg-transparent">
+                        <TableHead className="w-[50px]"></TableHead>
                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">ID</TableHead>
                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">Tên</TableHead>
                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">Trạng thái</TableHead>
@@ -378,11 +381,14 @@ export function AdAccountsPage() {
                     <TableBody>
                       {filteredData.map((account) => (
                         <TableRow key={account.id} className="border-border/30 hover:bg-muted/30 transition-colors">
-                          <TableCell className="font-mono text-xs text-muted-foreground">{account.id}</TableCell>
+                          <TableCell>
+                            <PlatformIcon platformCode={(account as any).platform?.code || 'facebook'} />
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">{account.externalId}</TableCell>
                           <TableCell className="font-medium">{account.name || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={AD_ACCOUNT_STATUS_MAP[account.accountStatus]?.variant || 'secondary'}>
-                              {AD_ACCOUNT_STATUS_MAP[account.accountStatus]?.label || 'Unknown'}
+                            <Badge variant={PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.variant || 'secondary'}>
+                              {PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.label || account.accountStatus}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
@@ -391,7 +397,7 @@ export function AdAccountsPage() {
                           <TableCell className="text-muted-foreground">{account.currency}</TableCell>
                           <TableCell className="text-muted-foreground">{account.amountSpent || '0'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">
-                            {new Date(account.syncedAt).toLocaleString('vi-VN')}
+                            {account.syncedAt ? new Date(account.syncedAt).toLocaleString('vi-VN') : 'Chưa đồng bộ'}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -404,7 +410,7 @@ export function AdAccountsPage() {
                                     e.target.value === 'none' ? 'none' : Number(e.target.value),
                                   )
                                 }
-                                disabled={assigningBranchFor === account.id}
+                                disabled={assigningBranchFor === String(account.id)}
                               >
                                 <option value="none">Chưa gán cơ sở</option>
                                 {(branches || []).map((b) => (
@@ -417,11 +423,11 @@ export function AdAccountsPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleSyncCreatives(account.id)}
-                                disabled={syncingCreatives === account.id}
+                                disabled={syncingCreatives === String(account.id)}
                                 className="bg-muted/30 border-border/50 hover:bg-muted/50"
                                 title="Sync Creatives để lấy thumbnail"
                               >
-                                {syncingCreatives === account.id ? (
+                                {syncingCreatives === String(account.id) ? (
                                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                                 ) : (
                                   <Image className="h-4 w-4 mr-1" />
@@ -432,10 +438,10 @@ export function AdAccountsPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleSyncAll(account.id)}
-                                disabled={syncingAccount === account.id}
+                                disabled={syncingAccount === String(account.id)}
                                 className="bg-muted/30 border-border/50 hover:bg-muted/50"
                               >
-                                {syncingAccount === account.id ? (
+                                {syncingAccount === String(account.id) ? (
                                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                                 ) : (
                                   <RefreshCw className="h-4 w-4 mr-1" />

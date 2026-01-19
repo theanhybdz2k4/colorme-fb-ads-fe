@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth';
 import { Badge } from '@/components/ui/badge';
-import { adAccountsApi } from '@/features/adAccounts';
-import { campaignsApi } from '@/features/campaigns';
-import { jobsApi } from '@/features/jobs';
+import { adAccountsApi, campaignsApi } from '@/api';
 import {
   PageHeader,
   StatsCard,
@@ -36,19 +34,10 @@ export function DashboardPage() {
     },
   });
 
-  const { data: jobs, isLoading: loadingJobs } = useQuery({
-    queryKey: ['jobs'],
-    queryFn: async () => {
-      try {
-        const { data } = await jobsApi.list(10);
-        return data.result || data.data || data || [];
-      } catch {
-        return [];
-      }
-    },
-  });
+  // Jobs API endpoint doesn't exist on backend, using placeholder
+  const jobs: never[] = [];
 
-  const isLoading = loadingAccounts || loadingCampaigns || loadingJobs;
+  const isLoading = loadingAccounts || loadingCampaigns;
   const activeCampaigns = campaigns?.filter((c: { status: string }) => c.status === 'ACTIVE')?.length || 0;
 
   if (isLoading) {
@@ -67,7 +56,7 @@ export function DashboardPage() {
       <StatsGrid columns={4}>
         <StatsCard
           title="Tài khoản FB"
-          value={user?.fbAccounts?.length || 0}
+          value={user?.identities?.filter((i: any) => i.platform?.code === 'facebook')?.length || 0}
           subtitle="Đã kết nối"
           icon={<Users className="h-4 w-4" />}
         />
@@ -108,12 +97,12 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {adAccounts?.slice(0, 5).map((account: { id: string; name: string; accountStatus: number }) => (
-                  <div 
-                    key={account.id} 
+                  <div
+                    key={account.id}
                     className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/30 transition-colors"
                   >
                     <span className="text-sm text-foreground">{account.name || account.id}</span>
-                    <Badge 
+                    <Badge
                       variant={account.accountStatus === 1 ? 'default' : 'secondary'}
                       className="text-xs"
                     >
@@ -141,8 +130,8 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {jobs?.slice(0, 5).map((job: { id: number; jobType: string; status: string }) => (
-                  <div 
-                    key={job.id} 
+                  <div
+                    key={job.id}
                     className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/30 transition-colors"
                   >
                     <span className="text-sm text-foreground font-mono">{job.jobType}</span>

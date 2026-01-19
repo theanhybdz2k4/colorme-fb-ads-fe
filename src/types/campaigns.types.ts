@@ -1,11 +1,15 @@
 export interface Campaign {
   id: string;
+  externalId: string;
+  accountId: number;
   name: string | null;
-  status: string;
-  effectiveStatus: string | null;
+  status: string; // UnifiedStatus: ACTIVE, PAUSED, DELETED, etc.
   objective: string | null;
   dailyBudget: string | null;
-  accountId: string;
+  lifetimeBudget: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  effectiveStatus: string | null;
   syncedAt: string;
 }
 

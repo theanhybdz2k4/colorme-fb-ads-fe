@@ -3,12 +3,13 @@ export interface User {
   email: string;
   name: string | null;
   isActive: boolean;
-  fbAccounts: {
+  identities: {
     id: number;
     name: string | null;
-    fbUserId: string | null;
+    externalId: string | null;
     isValid: boolean;
-    _count: { adAccounts: number; tokens: number };
+    platform: { name: string; code: string };
+    _count: { accounts: number; credentials: number };
   }[];
 }
 

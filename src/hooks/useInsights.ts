@@ -13,7 +13,12 @@ export function useInsights({ accountId, dateStart, dateEnd, branchId }: UseInsi
     return useQuery({
         queryKey: ['insights', accountId, dateStart, dateEnd, branchId],
         queryFn: async () => {
-            const { data } = await insightsApi.list(accountId, dateStart, dateEnd, branchId);
+            const { data } = await insightsApi.list({
+                accountId: accountId ? Number(accountId) : undefined,
+                branchId: branchId ? Number(branchId) : undefined,
+                dateStart,
+                dateEnd
+            });
             return (data.result || data.data || data || []) as Insight[];
         },
         enabled: !!dateStart && !!dateEnd,
