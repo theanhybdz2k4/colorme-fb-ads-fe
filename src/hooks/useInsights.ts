@@ -19,7 +19,9 @@ export function useInsights({ accountId, dateStart, dateEnd, branchId }: UseInsi
                 dateStart,
                 dateEnd
             });
-            return (data.result || data.data || data || []) as Insight[];
+            const result = data.result || data.data || data || [];
+            if (Array.isArray(result)) return result;
+            return (result.data || []) as Insight[];
         },
         enabled: !!dateStart && !!dateEnd,
     });

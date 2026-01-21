@@ -18,7 +18,9 @@ export function useCampaigns(params: UseCampaignsParams = {}) {
                 accountId: params.accountId ? Number(params.accountId) : undefined,
                 status: params.effectiveStatus
             });
-            return (data.result || data.data || data || []) as Campaign[];
+            const result = data.result || data.data || data || [];
+            if (Array.isArray(result)) return result;
+            return (result.data || []) as Campaign[];
         },
     });
 }

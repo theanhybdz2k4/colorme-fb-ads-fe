@@ -10,7 +10,9 @@ export function useAccounts() {
             // Assuming listIdentities is the generic endpoint
             // Adjust if backend needs changes, but for now we reuse the existing endpoint
             const { data } = await apiClient.get('/accounts/identities');
-            return (data.result || data.data || data || []) as PlatformIdentity[];
+            const result = data.result || data.data || data || [];
+            if (Array.isArray(result)) return result;
+            return (result.data || []) as PlatformIdentity[];
         },
     });
 }

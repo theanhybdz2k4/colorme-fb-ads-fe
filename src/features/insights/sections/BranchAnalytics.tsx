@@ -101,10 +101,24 @@ export function BranchAnalytics() {
     // Derived Metrics from Branches Summary
     const statsByBranch = useMemo(() => {
         return [...branches]
-            .map((b: any) => ({
-                ...b,
-                ctrPercent: (b.ctr || 0) * 100
-            }))
+            .map((b: any) => {
+                const spend = Number(b.totalSpend || 0);
+                const impressions = Number(b.totalImpressions || 0);
+                const clicks = Number(b.totalClicks || 0);
+                const messaging = Number(b.totalMessaging || 0);
+
+                return {
+                    ...b,
+                    totalSpend: spend,
+                    totalImpressions: impressions,
+                    totalClicks: clicks,
+                    totalMessaging: messaging,
+                    costPerMessage: messaging > 0 ? spend / messaging : 0,
+                    ctrPercent: impressions > 0 ? (clicks / impressions) * 100 : 0,
+                    cpc: clicks > 0 ? spend / clicks : 0,
+                    cpm: impressions > 0 ? (spend / (impressions / 1000)) : 0,
+                };
+            })
             .sort((a: any, b: any) => b.totalSpend - a.totalSpend);
     }, [branches]);
 

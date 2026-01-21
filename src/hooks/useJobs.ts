@@ -8,7 +8,9 @@ export function useJobs(limit: number = 50) {
         queryFn: async () => {
             try {
                 const { data } = await jobsApi.list(limit);
-                return (data.result || data.data || data || []) as Job[];
+                const result = data.result || data.data || data || [];
+                if (Array.isArray(result)) return result;
+                return (result.data || []) as Job[];
             } catch {
                 return [] as Job[];
             }

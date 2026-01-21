@@ -8,7 +8,8 @@ export function useBranches() {
     queryFn: async () => {
       const { data } = await branchesApi.list();
       // API /branches trả về danh sách branches; ưu tiên field result/data nếu có
-      const list = (data.result || data.data || data || []) as Array<
+      const result = data.result || data.data || data || [];
+      const list = (Array.isArray(result) ? result : result.data || []) as Array<
         BranchSummary & { _count?: { adAccounts?: number } }
       >;
 

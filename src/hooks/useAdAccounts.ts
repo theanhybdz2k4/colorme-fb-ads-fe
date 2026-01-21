@@ -7,7 +7,9 @@ export function useAdAccounts(filters?: { accountStatus?: string; search?: strin
     queryKey: ['ad-accounts', filters],
     queryFn: async () => {
       const { data } = await adAccountsApi.list(filters);
-      return (data.result || data.data || data || []) as AdAccount[];
+      const result = data.result || data.data || data || [];
+      if (Array.isArray(result)) return result;
+      return (result.data || []) as AdAccount[];
     },
   });
 }

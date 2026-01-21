@@ -19,7 +19,9 @@ export function useAdsets(params: UseAdsetsParams = {}) {
                 accountId: params.accountId ? Number(params.accountId) : undefined,
                 status: params.effectiveStatus
             });
-            return (data.result || data.data || data || []) as Adset[];
+            const result = data.result || data.data || data || [];
+            if (Array.isArray(result)) return result;
+            return (result.data || []) as Adset[];
         },
     });
 }

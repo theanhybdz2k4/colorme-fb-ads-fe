@@ -20,7 +20,9 @@ export function useAds(params: UseAdsParams = {}) {
                 status: params.effectiveStatus,
                 adGroupId: params.adsetId
             });
-            return (data.result || data.data || data || []) as Ad[];
+            const result = data.result || data.data || data || [];
+            if (Array.isArray(result)) return result;
+            return (result.data || []) as Ad[];
         },
     });
 }
