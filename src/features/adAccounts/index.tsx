@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, CreditCard, Image, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, CreditCard, Image } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FilterBar } from '@/components/custom/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
@@ -42,8 +42,7 @@ export function AdAccountsPage() {
   const [editingBranchCode, setEditingBranchCode] = useState('');
   const [savingBranch, setSavingBranch] = useState(false);
   const [deletingBranchId, setDeletingBranchId] = useState<number | null>(null);
-  const [rebuildingBranchStats, setRebuildingBranchStats] = useState(false);
-  const [cleaningUp, setCleaningUp] = useState(false);
+
 
   const { data: branches } = useBranches();
 
@@ -216,46 +215,7 @@ export function AdAccountsPage() {
     }
   };
 
-  const handleRebuildBranchStats = async () => {
-    const confirmed = window.confirm(
-      'Cập nhật lại dữ liệu thống kê cho tất cả cơ sở từ toàn bộ lịch sử insights?\n\nThao tác này có thể mất vài phút nếu dữ liệu nhiều.',
-    );
-    if (!confirmed) return;
 
-    setRebuildingBranchStats(true);
-    try {
-      const { data } = await branchesApi.rebuildStats();
-      const result = data.result || data;
-      toast.success('Đã bắt đầu cập nhật dữ liệu cơ sở', {
-        description: result?.dates
-          ? `Đã xử lý ${result.dates} ngày cho ${result.branches} cơ sở.`
-          : undefined,
-      });
-    } catch {
-      toast.error('Lỗi cập nhật dữ liệu cơ sở');
-    } finally {
-      setRebuildingBranchStats(false);
-    }
-  };
-
-  const handleCleanupHourlyInsights = async () => {
-    const confirmed = window.confirm(
-      'Xóa tất cả hourly insights cũ hơn ngày hôm qua?\nDữ liệu này không cần thiết và chiếm dung lượng database.',
-    );
-    if (!confirmed) return;
-
-    setCleaningUp(true);
-    try {
-      const { data } = await insightsApi.cleanupHourlyInsights();
-      toast.success(`Đã xóa ${data.deletedCount || 0} bản ghi cũ`, {
-        description: 'Hourly insights cleanup thành công',
-      });
-    } catch {
-      toast.error('Lỗi cleanup hourly insights');
-    } finally {
-      setCleaningUp(false);
-    }
-  };
 
   if (isLoading) {
     return <LoadingPage />;
@@ -268,29 +228,6 @@ export function AdAccountsPage() {
         description="Quản lý tài khoản quảng cáo và cơ sở"
       >
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCleanupHourlyInsights}
-            disabled={cleaningUp}
-            className="text-orange-400 hover:text-orange-300 border-orange-500/50 hover:border-orange-500"
-          >
-            {cleaningUp ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4 mr-2" />
-            )}
-            Dọn Hourly Insights
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleRebuildBranchStats}
-            disabled={rebuildingBranchStats}
-          >
-            {rebuildingBranchStats ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
-            Cập nhật dữ liệu cơ sở
-          </Button>
           <Button onClick={handleSyncAllActive} disabled={syncingAll || activeAccounts.length === 0}>
             {syncingAll ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

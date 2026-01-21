@@ -5,7 +5,7 @@ import { useAdsets } from '@/hooks/useAdSets';
 import { adsApi, campaignsApi } from '@/api';
 import { ADSET_STATUS_OPTIONS, getAdsetStatusVariant, type Adset } from '@/types/adSets.types';
 import { usePlatform } from '@/contexts';
-import { useCampaigns } from '@/features/campaigns';
+import { useCampaigns } from '@/hooks/useCampaigns';
 import { BranchFilter } from '@/features/adAccounts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

@@ -6,6 +6,8 @@ export { EmptyState } from "./EmptyState";
 export { EnergyBar, EnergyBarGroup } from "./EnergyBar";
 export { EmotionTag, EmotionTags } from "./EmotionTags";
 export { StatsCard, StatsGrid } from "./StatsCard";
+export { MetricCard } from "./MetricCard";
+export { PlatformIcon } from "./PlatformIcon";
 export { FilterBar, FilterPanel } from "./FilterBar";
 export { DataTable, DataTableWrapper } from "./DataTable";
 

@@ -1,5 +1,5 @@
 
-import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom';
+import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom/FloatingCard';
 import { MapPin } from 'lucide-react';
 
 

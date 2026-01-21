@@ -7,7 +7,7 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom';
+import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom/FloatingCard';
 import { Smartphone } from 'lucide-react';
 
 interface DeviceStats {

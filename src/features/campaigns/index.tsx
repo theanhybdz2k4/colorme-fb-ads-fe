@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCampaigns } from '@/hooks/useCampaigns';
-export { useCampaigns } from '@/hooks/useCampaigns';
+import { useAdsets } from '@/hooks/useAdSets';
+import { useAds } from '@/hooks/useAds';
 import { campaignsApi, adsApi } from '@/api';
-import { CAMPAIGN_STATUS_OPTIONS, getCampaignStatusVariant, type Campaign } from '@/types/campaigns.types';
+import { CAMPAIGN_STATUS_OPTIONS, getCampaignStatusVariant } from '@/types/campaigns.types';
 import { usePlatform } from '@/contexts';
 import { useAdAccounts, BranchFilter } from '@/features/adAccounts';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -15,17 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Megaphone } from 'lucide-react';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { FilterBar } from '@/components/custom/FilterBar';
-import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
-import { LoadingPage } from '@/components/custom/LoadingState';
-import { EmptyState } from '@/components/custom/EmptyState';
-import { PlatformIcon } from '@/components/custom/PlatformIcon';
-
-// Platform filter moved to global PlatformContext (header tabs)
+import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
 
 export function CampaignsPage() {
   const queryClient = useQueryClient();
@@ -35,20 +27,21 @@ export function CampaignsPage() {
   const [syncingCampaign, setSyncingCampaign] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
+  const [expandedAdSet, setExpandedAdSet] = useState<string | null>(null);
   const { activePlatform } = usePlatform();
 
   const { data: accounts } = useAdAccounts();
 
-  const { data, isLoading } = useCampaigns({
+  const { data: campaigns, isLoading } = useCampaigns({
     accountId: selectedAccount === 'all' ? undefined : selectedAccount,
     effectiveStatus: statusFilter === 'all' ? undefined : statusFilter,
     search: searchQuery || undefined,
     branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
-  const filteredData = data?.filter(campaign => {
+  const filteredData = campaigns?.filter(campaign => {
     if (activePlatform === 'all') return true;
-    // Filter by platform from global context
     return (campaign as any).account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(campaign as any).account?.platform);
   });
 
@@ -69,11 +62,9 @@ export function CampaignsPage() {
     }
   };
 
-  const handleSyncCampaign = async (campaign: Campaign) => {
+  const handleSyncCampaign = async (campaign: any) => {
     setSyncingCampaign(campaign.id);
     try {
-      // For a specific campaign, we might not have a direct "sync campaign by id" in the backend yet
-      // but we can sync the whole account's ads/ad groups
       await Promise.all([
         campaignsApi.syncAccount(campaign.accountId),
         adsApi.syncAccount(campaign.accountId)
@@ -89,147 +80,189 @@ export function CampaignsPage() {
     }
   };
 
-  const clearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('all');
-    setSelectedAccount('all');
-    setSelectedBranch('all');
+  const getStatusColor = (status: string) => {
+    const s = status?.toUpperCase();
+    if (s === 'ACTIVE') return 'bg-green-500/10 text-green-500 border-green-500/20';
+    if (s === 'PAUSED') return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+    if (s === 'ARCHIVED') return 'bg-red-500/10 text-red-500 border-red-500/20';
+    return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
   };
-
-  const hasActiveFilters = Boolean(
-    searchQuery || statusFilter !== 'all' || selectedAccount !== 'all' || selectedBranch !== 'all',
-  );
-
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchQuery(value);
-  }, []);
 
   if (isLoading) {
     return <LoadingPage />;
   }
 
   return (
-    <div className="space-y-6 animate-float-up">
-      {/* Header */}
-      <PageHeader
-        title="Campaigns"
-        description="Danh sách chiến dịch quảng cáo"
-      >
-        <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
-        <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-          <SelectTrigger className="w-48 bg-muted/30 border-border/50">
-            <SelectValue placeholder="Chọn Account" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả Accounts</SelectItem>
-            {accounts?.map((acc) => (
-              <SelectItem key={acc.id} value={String(acc.id)}>
-                {acc.name || acc.id}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={handleSyncAllActive} disabled={syncingAll || !accounts?.length}>
-          {syncingAll ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Sync All Accounts
-        </Button>
-      </PageHeader>
+    <div className="p-8 space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+            Campaign Manager
+          </h1>
+          <p className="text-slate-600">Quản lý và tối ưu campaigns với drill-down analysis</p>
+        </div>
+        <div className="flex gap-3">
+           <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
+           <Button variant="outline" onClick={handleSyncAllActive} disabled={syncingAll || !accounts?.length}>
+              {syncingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Sync All
+           </Button>
+        </div>
+      </div>
 
-      {/* Filters */}
-      <FilterBar
-        searchValue={searchQuery}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Tìm kiếm theo tên hoặc ID..."
-        filters={[
-          {
-            key: 'status',
-            label: 'Trạng thái',
-            options: CAMPAIGN_STATUS_OPTIONS,
-            value: statusFilter,
-            onChange: setStatusFilter,
-            width: 'w-40',
-          },
-        ]}
-        hasActiveFilters={hasActiveFilters}
-        onClear={clearFilters}
-      />
+      {/* Custom Filters section could be simplified here for brevity or kept as is */}
 
-      {/* Table */}
-      <FloatingCard padding="none">
-        <FloatingCardHeader className="p-4">
-          <FloatingCardTitle>Campaigns ({data?.length || 0})</FloatingCardTitle>
-        </FloatingCardHeader>
-        <FloatingCardContent className="p-0">
-          {filteredData?.length === 0 ? (
-            <EmptyState
-              icon={<Megaphone className="h-8 w-8" />}
-              title={hasActiveFilters ? 'Không tìm thấy campaign' : 'Chưa có campaign'}
-              description={hasActiveFilters ? 'Thử thay đổi bộ lọc' : 'Hãy chạy sync campaigns'}
-              className="py-12"
+      <div className="space-y-4">
+        {filteredData?.length === 0 ? (
+           <EmptyState
+            icon={<Megaphone className="h-8 w-8" />}
+            title="Không tìm thấy campaign"
+            description="Hãy chạy sync hoặc thay đổi bộ lọc"
+            className="py-12"
+          />
+        ) : (
+          filteredData?.map((campaign: any) => (
+            <CampaignRow 
+              key={campaign.id} 
+              campaign={campaign} 
+              isExpanded={expandedCampaign === campaign.id}
+              onToggle={() => setExpandedCampaign(expandedCampaign === campaign.id ? null : campaign.id)}
+              getStatusColor={getStatusColor}
+              handleSync={handleSyncCampaign}
+              isSyncing={syncingCampaign === campaign.id}
+              expandedAdSet={expandedAdSet}
+              setExpandedAdSet={setExpandedAdSet}
             />
-          ) : (
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/30 hover:bg-transparent">
-                    <TableHead className="w-[50px]"></TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Tên</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Trạng thái</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Mục tiêu</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Ngân sách/ngày</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Sync lần cuối</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Hành động</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredData?.map((campaign) => (
-                    <TableRow key={campaign.id} className="border-border/30 hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <PlatformIcon platformCode={(campaign as any).account?.platform?.code || 'facebook'} />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {(campaign.name || campaign.id).length > 30
-                          ? (campaign.name || campaign.id).slice(0, 30) + "..."
-                          : (campaign.name || campaign.id)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getCampaignStatusVariant(campaign.status)}>
-                          {campaign.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{campaign.objective || '-'}</TableCell>
-                      <TableCell className="text-muted-foreground">{campaign.dailyBudget || '-'}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(campaign.syncedAt).toLocaleString('vi-VN')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSyncCampaign(campaign)}
-                          disabled={syncingCampaign === campaign.id}
-                          className="bg-muted/30 border-border/50 hover:bg-muted/50"
-                        >
-                          {syncingCampaign === campaign.id ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                          )}
-                          Sync Adsets
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CampaignRow({ campaign, isExpanded, onToggle, getStatusColor, handleSync, isSyncing, expandedAdSet, setExpandedAdSet }: any) {
+  const { data: adSets, isLoading: loadingAdSets } = useAdsets({ campaignId: campaign.id });
+  
+  return (
+    <div className="bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-lg transition-all">
+      <div className="p-6">
+        <div className="flex items-start gap-4">
+          <button onClick={onToggle} className="p-2 hover:bg-muted/50 rounded-lg transition-colors shrink-0">
+            {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          </button>
+
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shadow-sm shrink-0">
+            <PlatformIcon platformCode={campaign.account?.platform?.code || 'facebook'} size={24} />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h3 className="font-bold text-lg mb-1">{campaign.name}</h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(campaign.status)}`}>
+                    {campaign.status}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-muted/50 text-muted-foreground uppercase">
+                    {campaign.objective}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Synced: {new Date(campaign.syncedAt).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <Button size="icon" variant="ghost" onClick={() => handleSync(campaign)} disabled={isSyncing}>
+                {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </Button>
             </div>
-          )}
-        </FloatingCardContent>
-      </FloatingCard>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+               <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Budget</p>
+                  <p className="font-bold">{campaign.dailyBudget || 'N/A'}</p>
+               </div>
+               <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Status</p>
+                  <p className="font-bold">{campaign.effectiveStatus || campaign.status}</p>
+               </div>
+               <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Account</p>
+                  <p className="font-medium text-xs truncate">{campaign.account?.name || campaign.accountId}</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-border/50 bg-muted/20 p-6">
+          <h4 className="font-semibold mb-4 flex items-center gap-2 text-sm text-foreground/80">
+            <SlidersHorizontal className="w-4 h-4" />
+            Ad Sets {loadingAdSets ? <Loader2 className="w-3 h-3 animate-spin" /> : `(${adSets?.length || 0})`}
+          </h4>
+          <div className="space-y-3">
+            {adSets?.map((adSet: any) => (
+              <AdSetRow 
+                key={adSet.id} 
+                adSet={adSet} 
+                isExpanded={expandedAdSet === adSet.id}
+                onToggle={() => setExpandedAdSet(expandedAdSet === adSet.id ? null : adSet.id)}
+                getStatusColor={getStatusColor}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdSetRow({ adSet, isExpanded, onToggle, getStatusColor }: any) {
+  const { data: ads, isLoading: loadingAds } = useAds({ adsetId: adSet.id });
+
+  return (
+    <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <button onClick={onToggle} className="p-1.5 hover:bg-muted/50 rounded-lg transition-colors shrink-0">
+            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+
+          <div className="flex-1">
+             <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h5 className="font-semibold text-sm">{adSet.name}</h5>
+                   <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${getStatusColor(adSet.status)} mt-1`}>
+                    {adSet.status}
+                  </span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-border/50 bg-muted/10 p-4">
+          <h6 className="font-medium mb-3 text-xs text-muted-foreground flex items-center gap-2">
+            Ads {loadingAds ? <Loader2 className="w-3 h-3 animate-spin" /> : `(${ads?.length || 0})`}
+          </h6>
+          <div className="space-y-2">
+            {ads?.map((ad: any) => (
+              <div key={ad.id} className="bg-muted/30 rounded-lg border border-border/30 p-3">
+                 <div className="flex items-start justify-between">
+                    <div>
+                       <h6 className="font-medium text-xs">{ad.name}</h6>
+                       <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">{ad.status}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getStatusColor(ad.status)}`}>
+                      {ad.status}
+                    </span>
+                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

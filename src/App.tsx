@@ -3,12 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider, useAuth } from '@/features/auth';
+import { ThemeProvider } from "@/components/theme-provider"
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 
 // Lazy load feature components
 const LoginPage = lazy(() => import('@/features/auth').then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('@/features/auth').then(m => ({ default: m.RegisterPage })));
-const DashboardPage = lazy(() => import('@/features/dashboard').then(m => ({ default: m.DashboardPage })));
+const DashboardPage = lazy(() => import('@/features/dashboard/index').then(m => ({ default: m.DashboardPage })));
 const AccountsPage = lazy(() => import('@/features/accounts').then(m => ({ default: m.AccountsPage })));
 const AdAccountsPage = lazy(() => import('@/features/adAccounts').then(m => ({ default: m.AdAccountsPage })));
 const CampaignsPage = lazy(() => import('@/features/campaigns').then(m => ({ default: m.CampaignsPage })));
@@ -120,12 +121,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-          <Toaster position="top-right" />
-        </AuthProvider>
-      </BrowserRouter>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+            <Toaster position="top-right" />
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

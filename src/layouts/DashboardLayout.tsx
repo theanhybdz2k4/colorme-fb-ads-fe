@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/features/auth';
+import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -190,7 +191,10 @@ function DashboardContent() {
         <header className="sticky top-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border/50">
           <div className="h-full px-6 flex items-center justify-between">
             {/* Platform Tabs */}
-            <PlatformTabs />
+            <div className="flex items-center gap-2">
+              <PlatformTabs />
+              <ModeToggle />
+            </div>
 
             {/* User Menu */}
             <DropdownMenu>

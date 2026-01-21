@@ -5,7 +5,7 @@ import { useAds } from '@/hooks/useAds';
 import { adsApi, adDetailApi } from '@/api';
 import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from '@/types/ads.types';
 import { usePlatform } from '@/contexts';
-import { useAdsets } from '@/features/adSets';
+import { useAdsets } from '@/hooks/useAdSets';
 import { BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import {
@@ -89,7 +89,7 @@ export function AdsPage() {
     const today = getVietnamDateString();
     try {
       // Use targeted ad sync instead of account sync
-      await adDetailApi.syncInsights(ad.id, today, today, 'DAILY');
+      await adDetailApi.syncInsights(ad.id, today, today, 'all');
       toast.success('Đã cập nhật insights cho Ad');
       queryClient.invalidateQueries({ queryKey: ['ad-analytics', ad.id] });
     } catch {

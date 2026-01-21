@@ -5,6 +5,7 @@ interface PlatformIconProps {
     showName?: boolean;
     className?: string;
     variant?: 'icon' | 'badge';
+    size?: number | string;
 }
 
 const PLATFORM_CONFIG: Record<string, { icon: string; color: string; name: string }> = {
@@ -14,7 +15,7 @@ const PLATFORM_CONFIG: Record<string, { icon: string; color: string; name: strin
     default: { icon: 'P', color: 'bg-gray-100 text-gray-600', name: 'Platform' },
 };
 
-export function PlatformIcon({ platformCode, showName = false, className = '', variant = 'icon' }: PlatformIconProps) {
+export function PlatformIcon({ platformCode, showName = false, className = '', variant = 'icon', size }: PlatformIconProps) {
     const code = (platformCode || 'default').toLowerCase();
     const config = PLATFORM_CONFIG[code] || PLATFORM_CONFIG.default;
 
@@ -29,7 +30,8 @@ export function PlatformIcon({ platformCode, showName = false, className = '', v
     return (
         <div className={`flex items-center gap-2 ${className}`}>
             <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${config.color}`}
+                className={`flex items-center justify-center rounded-full text-[10px] font-bold ${config.color}`}
+                style={{ width: size ? (typeof size === 'number' ? `${size}px` : size) : '20px', height: size ? (typeof size === 'number' ? `${size}px` : size) : '20px' }}
                 title={config.name}
             >
                 {config.icon}

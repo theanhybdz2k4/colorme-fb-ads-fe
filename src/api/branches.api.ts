@@ -30,32 +30,32 @@ export const branchesApi = {
     /**
      * Get device breakdown stats for a branch
      */
-    async getDeviceStats(branchId: number, dateStart: string, dateEnd: string) {
-        const response = await apiClient.get(`/branches/${branchId}/stats/device`, { params: { dateStart, dateEnd } });
+    async getDeviceStats(branchId: number, dateStart: string, dateEnd: string, platformCode?: string) {
+        const response = await apiClient.get(`/branches/${branchId}/stats/device`, { params: { dateStart, dateEnd, platformCode } });
         return response.data.result || [];
     },
 
     /**
      * Get age/gender breakdown stats for a branch
      */
-    async getAgeGenderStats(branchId: number, dateStart: string, dateEnd: string) {
-        const response = await apiClient.get(`/branches/${branchId}/stats/age-gender`, { params: { dateStart, dateEnd } });
+    async getAgeGenderStats(branchId: number, dateStart: string, dateEnd: string, platformCode?: string) {
+        const response = await apiClient.get(`/branches/${branchId}/stats/age-gender`, { params: { dateStart, dateEnd, platformCode } });
         return response.data.result || [];
     },
 
     /**
      * Get region breakdown stats for a branch
      */
-    async getRegionStats(id: number, dateStart: string, dateEnd: string) {
-        const response = await apiClient.get(`/branches/${id}/stats/region`, { params: { dateStart, dateEnd } });
+    async getRegionStats(id: number, dateStart: string, dateEnd: string, platformCode?: string) {
+        const response = await apiClient.get(`/branches/${id}/stats/region`, { params: { dateStart, dateEnd, platformCode } });
         return response.data.result || response.data;
     },
 
     /**
      * Get dashboard summary for all branches
      */
-    async getDashboardStats(dateStart: string, dateEnd: string) {
-        const response = await apiClient.get('/branches/stats/dashboard', { params: { dateStart, dateEnd } });
+    async getDashboardStats(dateStart: string, dateEnd: string, platformCode?: string) {
+        const response = await apiClient.get('/branches/stats/dashboard', { params: { dateStart, dateEnd, platformCode } });
         return response.data.result || response.data;
     },
 

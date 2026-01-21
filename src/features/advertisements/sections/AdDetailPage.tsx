@@ -47,14 +47,10 @@ export function AdDetailPage() {
   const { data: analytics, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useAdAnalytics(adId || '');
   const syncInsightsMutation = useSyncAdInsights(adId || '');
 
-  // Tính toán 7 ngày từ hôm nay
-  const getDateRange7Days = () => {
+  // Mặc định chỉ sync cho ngày hôm nay để tối ưu tốc độ và dữ liệu realtime
+  const getDateRangeToday = () => {
     const today = getVietnamDateString();
-    const [year, month, day] = today.split('-').map(Number);
-    const startDate = new Date(year, month - 1, day);
-    startDate.setDate(startDate.getDate() - 6); // 7 ngày bao gồm cả hôm nay
-    const dateStart = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-    return { dateStart, dateEnd: today };
+    return { dateStart: today, dateEnd: today };
   };
 
   const handleSync = async (section: string) => {
@@ -62,8 +58,8 @@ export function AdDetailPage() {
 
     setSyncingSection(section);
     try {
-      const { dateStart, dateEnd } = getDateRange7Days();
-      // Luôn sync tất cả insights (bao gồm hourly và các breakdowns khác) trong 7 ngày
+      const { dateStart, dateEnd } = getDateRangeToday();
+      // Luôn sync tất cả insights (bao gồm hourly và các breakdowns khác) cho hôm nay
       const result = await syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' });
 
       toast.success('Sync insights thành công!', {

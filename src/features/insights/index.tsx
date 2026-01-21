@@ -69,15 +69,21 @@ export function InsightsPage() {
             if (selectedAd !== 'all') {
                 const ad = ads?.find(a => a.id === selectedAd);
                 if (ad) {
+                    toast.info('Đang sync daily insights...');
                     await insightsApi.syncAccount(ad.accountId, dateStart, dateEnd);
-                    toast.success('Đã bắt đầu sync Insights', {
+                    toast.info('Đang sync hourly insights...');
+                    await insightsApi.syncAccount(ad.accountId, dateStart, dateEnd, 'HOURLY');
+                    toast.success('Đã hoàn tất sync Insights (Daily + Hourly)', {
                         description: `Account: ${ad.accountId}, Ad: ${selectedAd}`,
                     });
                 }
             } else if (selectedBranch !== 'all') {
                 // Sync branch
+                toast.info('Đang sync daily insights data cho cơ sở...');
                 await insightsApi.syncBranch(Number(selectedBranch), dateStart, dateEnd);
-                toast.success('Đã bắt đầu sync Insights cho cơ sở', {
+                toast.info('Đang sync hourly insights data cho cơ sở...');
+                await insightsApi.syncBranch(Number(selectedBranch), dateStart, dateEnd, 'HOURLY');
+                toast.success('Đã hoàn tất sync Insights cho cơ sở (Daily + Hourly)', {
                     description: `Branch: ${selectedBranch}`,
                 });
             } else {
@@ -87,9 +93,15 @@ export function InsightsPage() {
                     toast.error('Không có ad accounts nào active');
                     return;
                 }
+                
+                toast.info(`Đang sync daily insights cho ${activeAccounts.length} accounts...`);
                 await Promise.all(activeAccounts.map(acc => insightsApi.syncAccount(acc.id, dateStart, dateEnd)));
-                toast.success('Đã bắt đầu sync Insights', {
-                    description: `Đang sync ${activeAccounts.length} accounts`,
+                
+                toast.info(`Đang sync hourly insights cho ${activeAccounts.length} accounts...`);
+                await Promise.all(activeAccounts.map(acc => insightsApi.syncAccount(acc.id, dateStart, dateEnd, 'HOURLY')));
+                
+                toast.success('Đã hoàn tất sync Insights (Daily + Hourly)', {
+                    description: `Đã sync ${activeAccounts.length} accounts`,
                 });
             }
 

@@ -9,7 +9,7 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts';
-import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom';
+import { FloatingCard, FloatingCardContent, FloatingCardHeader, FloatingCardTitle } from '@/components/custom/FloatingCard';
 import { Users } from 'lucide-react';
 
 interface AgeGenderStats {
