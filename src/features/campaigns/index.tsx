@@ -14,12 +14,12 @@ import { LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
 
 export function CampaignsPage() {
   const queryClient = useQueryClient();
-  const [selectedAccount, setSelectedAccount] = useState<string>('all');
+  const [selectedAccount] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [syncingAll, setSyncingAll] = useState(false);
   const [syncingCampaign, setSyncingCampaign] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const [searchQuery] = useState('');
+  const [statusFilter] = useState('ACTIVE');
   const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
   const [expandedAdSet, setExpandedAdSet] = useState<string | null>(null);
   const [selectedAdForHourly, setSelectedAdForHourly] = useState<{ id: string, name: string } | null>(null);
@@ -227,8 +227,20 @@ function AdSetRow({ adSet, isExpanded, onToggle, getStatusColor, onViewHourly }:
 
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-      <div className="p-4">
-        {/* ... existing header ... */}
+      <div className="p-4 flex items-center gap-3">
+        <button onClick={onToggle} className="p-1.5 hover:bg-muted/50 rounded-lg transition-colors shrink-0">
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+
+        <div className="flex-1">
+           <div className="flex items-center justify-between mb-2">
+             <h4 className="font-semibold text-sm">{adSet.name}</h4>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(adSet.status)}`}>
+                {adSet.status}
+              </span>
+           </div>
+           <MetricsDisplay stats={adSet.stats} compact />
+        </div>
       </div>
 
       {isExpanded && (

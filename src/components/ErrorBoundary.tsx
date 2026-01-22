@@ -1,4 +1,4 @@
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -35,12 +35,12 @@ export class ErrorBoundary extends Component<Props, State> {
                                 {this.state.error?.toString()}
                             </code>
                         </div>
-                        <button
+                        <Button
                             onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 transition-colors"
+                            className="w-full sm:w-auto"
                         >
                             Reload Page
-                        </button>
+                        </Button>
                     </div>
                 </div>
             );
