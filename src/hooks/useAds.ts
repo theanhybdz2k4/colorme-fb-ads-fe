@@ -8,6 +8,8 @@ export interface UseAdsParams {
     effectiveStatus?: string;
     search?: string;
     branchId?: string;
+    dateStart?: string;
+    dateEnd?: string;
 }
 
 export function useAds(params: UseAdsParams = {}) {
@@ -28,5 +30,6 @@ export function useAds(params: UseAdsParams = {}) {
         staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        placeholderData: (previousData) => previousData,
     });
 }

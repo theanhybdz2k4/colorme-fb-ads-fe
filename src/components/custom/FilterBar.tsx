@@ -1,6 +1,5 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -9,7 +8,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Search, X, Filter } from "lucide-react";
+import { PremiumSearch } from "./PremiumSearch";
+import { X, Filter } from "lucide-react";
 
 interface FilterOption {
     value: string;
@@ -32,6 +32,7 @@ interface FilterBarProps {
     filters?: FilterConfig[];
     onClear?: () => void;
     hasActiveFilters?: boolean;
+    isLoading?: boolean;
     className?: string;
     children?: React.ReactNode;
 }
@@ -43,6 +44,7 @@ export function FilterBar({
     filters = [],
     onClear,
     hasActiveFilters,
+    isLoading,
     className,
     children,
 }: FilterBarProps) {
@@ -57,13 +59,13 @@ export function FilterBar({
             <div className="flex flex-wrap items-center gap-3">
                 {/* Search */}
                 {onSearchChange && (
-                    <div className="relative flex-1 min-w-[200px] max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
+                    <div className="flex-1 min-w-[240px] max-w-md">
+                        <PremiumSearch
                             value={searchValue}
                             onChange={(e) => onSearchChange(e.target.value)}
+                            onClear={searchValue ? () => onSearchChange('') : undefined}
                             placeholder={searchPlaceholder}
-                            className="pl-9 bg-muted/30 border-border/50 focus:bg-muted/50 transition-colors"
+                            isLoading={isLoading}
                         />
                     </div>
                 )}

@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAds } from '@/hooks/useAds';
+import { useAds, useDebounce } from '@/hooks';
 import { adsApi, adDetailApi } from '@/api';
 import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from '@/types/ads.types';
 import { usePlatform } from '@/contexts';
 import { useAdsets } from '@/hooks/useAdSets';
 import { BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
+import { DateRangeFilter } from '@/components/custom/DateRangeFilter';
 import {
   Select,
   SelectContent,
@@ -42,7 +45,14 @@ export function AdsPage() {
   const [syncingAd, setSyncingAd] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
+  const [activePreset, setActivePreset] = useState<string | null>('today');
   const { activePlatform } = usePlatform();
+  
+  const debouncedSearch = useDebounce(searchQuery, 600);
 
   // View toggle with localStorage persistence
   const [viewMode, setViewMode] = useViewPreference('ads-page', 'grid');
@@ -52,11 +62,13 @@ export function AdsPage() {
     branchId: selectedBranch === 'all' ? undefined : selectedBranch,
   });
 
-  const { data, isLoading } = useAds({
+  const { data, isLoading, isFetching } = useAds({
     adsetId: selectedAdset === 'all' ? undefined : selectedAdset,
     effectiveStatus: statusFilter === 'all' ? undefined : statusFilter,
-    search: searchQuery || undefined,
+    search: debouncedSearch || undefined,
     branchId: selectedBranch === 'all' ? undefined : selectedBranch,
+    dateStart: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+    dateEnd: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
   });
 
   const filteredData = data?.filter(ad => {
@@ -104,17 +116,19 @@ export function AdsPage() {
     setStatusFilter('all');
     setSelectedAdset('all');
     setSelectedBranch('all');
+    setDateRange({ from: new Date(), to: new Date() });
+    setActivePreset('today');
   };
 
   const hasActiveFilters = Boolean(
-    searchQuery || statusFilter !== 'all' || selectedAdset !== 'all' || selectedBranch !== 'all',
+    searchQuery || statusFilter !== 'all' || selectedAdset !== 'all' || selectedBranch !== 'all' || activePreset !== 'today',
   );
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return <LoadingPage />;
   }
 
@@ -148,6 +162,15 @@ export function AdsPage() {
           Sync Ads
         </Button>
       </PageHeader>
+      
+      <FloatingCard>
+        <DateRangeFilter 
+          dateRange={dateRange} 
+          setDateRange={setDateRange} 
+          activePreset={activePreset} 
+          onPresetChange={setActivePreset}
+        />
+      </FloatingCard>
 
       {/* Filters + View Toggle */}
       <div className="flex items-center gap-4">
@@ -155,6 +178,7 @@ export function AdsPage() {
           <FilterBar
             searchValue={searchQuery}
             onSearchChange={handleSearchChange}
+            isLoading={isFetching}
             searchPlaceholder="Tìm kiếm theo tên hoặc ID..."
             filters={[
               {

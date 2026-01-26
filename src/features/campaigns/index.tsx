@@ -332,7 +332,7 @@ const AdRow = memo(function AdRowComponent({ ad, getStatusColor, onViewHourly }:
 
   // Fetch insights only when expanded
   const adInsights = useInsights({
-    accountId: ad.platform_account_id,
+    accountId: ad.accountId?.toString(),
     dateStart: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 7 days
     dateEnd: new Date().toISOString().split('T')[0],
     enabled: isExpanded
@@ -340,7 +340,7 @@ const AdRow = memo(function AdRowComponent({ ad, getStatusColor, onViewHourly }:
 
   const adDailyData = useMemo(() => {
     if (!adInsights.data || !isExpanded) return [];
-    return (adInsights.data as any[]).filter(i => i.unified_ad_id === ad.id);
+    return (adInsights.data as any[]).filter(i => (i.adId || i.unified_ad_id) === ad.id);
   }, [adInsights.data, ad.id, isExpanded]);
 
   return (

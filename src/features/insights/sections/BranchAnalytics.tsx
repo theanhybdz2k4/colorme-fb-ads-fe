@@ -8,8 +8,7 @@ import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardConten
 import { LoadingState } from '@/components/custom/LoadingState';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
-import { DatePickerWithRange } from '../components/DatePickerWithRange';
+import { DateRangeFilter } from '@/components/custom';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -183,90 +182,14 @@ export function BranchAnalytics() {
             </PageHeader>
 
             <FloatingCard>
-                <div className="flex flex-wrap gap-4 items-end">
-                    <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">Khoảng thời gian</Label>
-                        <DatePickerWithRange date={dateRange} setDate={(range) => { setDateRange(range); setActivePreset(null); }} />
-                    </div>
-
-                    {/* Quick Date Presets */}
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            variant={activePreset === 'today' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const today = new Date();
-                                setDateRange({ from: today, to: today });
-                                setActivePreset('today');
-                            }}
-                        >
-                            Hôm nay
-                        </Button>
-                        <Button
-                            variant={activePreset === 'yesterday' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const yesterday = new Date();
-                                yesterday.setDate(yesterday.getDate() - 1);
-                                setDateRange({ from: yesterday, to: yesterday });
-                                setActivePreset('yesterday');
-                            }}
-                        >
-                            Hôm qua
-                        </Button>
-                        <Button
-                            variant={activePreset === '3days' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const today = new Date();
-                                const threeDaysAgo = new Date();
-                                threeDaysAgo.setDate(today.getDate() - 2);
-                                setDateRange({ from: threeDaysAgo, to: today });
-                                setActivePreset('3days');
-                            }}
-                        >
-                            3 ngày
-                        </Button>
-                        <Button
-                            variant={activePreset === '7days' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const today = new Date();
-                                const sevenDaysAgo = new Date();
-                                sevenDaysAgo.setDate(today.getDate() - 6);
-                                setDateRange({ from: sevenDaysAgo, to: today });
-                                setActivePreset('7days');
-                            }}
-                        >
-                            7 ngày
-                        </Button>
-                        <Button
-                            variant={activePreset === 'thisMonth' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const today = new Date();
-                                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                                setDateRange({ from: firstDayOfMonth, to: today });
-                                setActivePreset('thisMonth');
-                            }}
-                        >
-                            Tháng này
-                        </Button>
-                        <Button
-                            variant={activePreset === 'lastMonth' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => {
-                                const today = new Date();
-                                const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                                const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                                setDateRange({ from: firstDayLastMonth, to: lastDayLastMonth });
-                                setActivePreset('lastMonth');
-                            }}
-                        >
-                            Tháng trước
-                        </Button>
-                    </div>
-
+                <div className="flex flex-wrap items-end gap-4">
+                    <DateRangeFilter 
+                      dateRange={dateRange} 
+                      setDateRange={setDateRange} 
+                      activePreset={activePreset} 
+                      onPresetChange={setActivePreset}
+                      className="flex-1"
+                    />
                     <Button
                         disabled={syncing || !dateRange?.from || !dateRange?.to}
                         onClick={async () => {
@@ -305,7 +228,7 @@ export function BranchAnalytics() {
                                 setSyncing(false);
                             }
                         }}
-                        className="px-6"
+                        className="px-6 h-9"
                     >
                         {syncing ? 'Đang đồng bộ...' : 'Cập nhật dữ liệu'}
                     </Button>

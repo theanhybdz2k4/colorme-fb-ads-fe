@@ -9,7 +9,10 @@ export { StatsCard, StatsGrid } from "./StatsCard";
 export { MetricCard } from "./MetricCard";
 export { PlatformIcon } from "./PlatformIcon";
 export { FilterBar, FilterPanel } from "./FilterBar";
+export { PremiumSearch } from "./PremiumSearch";
 export { DataTable, DataTableWrapper } from "./DataTable";
+export { DatePickerWithRange } from "./DatePickerWithRange";
+export { DateRangeFilter } from "./DateRangeFilter";
 
 // View toggle system
 export { ViewToggle } from "./ViewToggle";

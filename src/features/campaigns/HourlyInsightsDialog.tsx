@@ -48,7 +48,7 @@ export function HourlyInsightsDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[90vw]">
                 <DialogHeader>
                     <DialogTitle>Hourly Insights - {adName}</DialogTitle>
                 </DialogHeader>
@@ -98,7 +98,7 @@ export function HourlyInsightsDialog({
 
 function ChartSection({ title, data }: { title: string, data: any[] }) {
     return (
-        <div className="h-80 w-full mb-8">
+        <div className="h-[500px] w-full mb-8">
             <h4 className="text-sm font-medium mb-4">{title}</h4>
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
