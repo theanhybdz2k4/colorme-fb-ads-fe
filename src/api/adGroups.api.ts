@@ -4,7 +4,7 @@ export const adGroupsApi = {
     /**
      * List ad groups (adsets) with filters
      */
-    list: (params?: { accountId?: number; campaignId?: string; status?: string; search?: string; branchId?: string }) =>
+    list: (params?: { accountId?: number; campaignId?: string; status?: string; search?: string; branchId?: string; limit?: number }) =>
         apiClient.get('/ad-groups', { params }),
 
     /**

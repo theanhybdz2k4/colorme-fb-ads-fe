@@ -102,7 +102,7 @@ export function AdAnalyticsDetail({ adId, adName, dateStart, dateEnd, onClose }:
 
     return (
         <Dialog open={!!adId} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-border/50">
+            <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-border/50">
                 <DialogHeader className="p-6 border-b border-border/50 shrink-0">
                     <div className="flex justify-between items-center">
                         <div>

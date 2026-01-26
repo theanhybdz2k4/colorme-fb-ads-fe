@@ -4,7 +4,7 @@ export const adsApi = {
     /**
      * List ads with filters
      */
-    list: (params?: { accountId?: number; adGroupId?: string; status?: string; search?: string; branchId?: string }) =>
+    list: (params?: { accountId?: number; adGroupId?: string; status?: string; search?: string; branchId?: string; limit?: number }) =>
         apiClient.get('/ads', { params }),
 
     /**

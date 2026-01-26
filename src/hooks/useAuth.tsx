@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/api/auth.api';
-import type { User, AuthContextType } from '@/types/auth.types';
+import type { AuthContextType } from '@/types/auth.types';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
