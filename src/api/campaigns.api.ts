@@ -4,7 +4,7 @@ export const campaignsApi = {
   /**
    * List campaigns with filters
    */
-  list: (params?: { accountId?: number; status?: string; search?: string; branchId?: string }) =>
+  list: (params?: { accountId?: number; status?: string; search?: string; branchId?: string; dateStart?: string; dateEnd?: string; page?: number; limit?: number }) =>
     apiClient.get('/campaigns', { params }),
 
   /**

@@ -32,8 +32,10 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const hasToken = !!localStorage.getItem('accessToken');
 
-  if (isLoading) {
+  // If we have a token, we show the app layout immediately even if /me is still loading
+  if (isLoading && !hasToken) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -41,7 +43,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hasToken) {
     return <Navigate to="/login" replace />;
   }
 

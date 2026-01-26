@@ -25,7 +25,7 @@ import { EmptyState } from '@/components/custom/EmptyState';
 import { ViewToggle } from '@/components/custom/ViewToggle';
 import { useViewPreference } from '@/hooks/useViewPreference';
 import { AdCard, AdCardGrid } from '@/components/custom/AdCard';
-import { AdCompactRow, AdCompactList } from '@/components/custom/AdCompactRow';
+import { AdTable, AdTableRow } from '@/components/custom/AdTableRow';
 import { PlatformIcon } from '@/components/custom/PlatformIcon';
 import { getVietnamDateString } from '@/lib/utils';
 
@@ -134,7 +134,7 @@ export function AdsPage() {
             <SelectItem value="all">Tất cả Adsets</SelectItem>
             {adsets?.map((adset) => (
               <SelectItem key={adset.id} value={adset.id} title={adset.name || adset.id}>
-                <span className="block max-w-[180px] truncate">{adset.name || adset.id}</span>
+                <span className="block max-w-45 truncate">{adset.name || adset.id}</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -204,22 +204,18 @@ export function AdsPage() {
               ))}
             </AdCardGrid>
           ) : (
-            // List View
-            <AdCompactList>
+            // List View (Table)
+            <AdTable>
               {filteredData?.map((ad) => (
-                <div key={ad.id} className="flex items-center gap-2">
-                  <div className="pl-2">
-                    <PlatformIcon platformCode={(ad as any).account?.platform?.code || 'facebook'} />
-                  </div>
-                  <AdCompactRow
-                    ad={ad}
-                    statusVariant={getAdStatusVariant(ad.status)}
-                    onSyncInsights={() => handleSyncInsights(ad)}
-                    isSyncing={syncingAd === ad.id}
-                  />
-                </div>
+                <AdTableRow
+                  key={ad.id}
+                  ad={ad}
+                  statusVariant={getAdStatusVariant(ad.status)}
+                  onSyncInsights={() => handleSyncInsights(ad)}
+                  isSyncing={syncingAd === ad.id}
+                />
               ))}
-            </AdCompactList>
+            </AdTable>
           )}
         </FloatingCardContent>
       </FloatingCard>

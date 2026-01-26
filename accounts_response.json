@@ -1,0 +1,1 @@
+{"success":true,"result":[{"id":2,"user_id":1,"platform_id":1,"external_id":"2723870874469102","name":"ColorME ADS","is_valid":true,"error_message":null,"created_at":"2026-01-20T09:41:50.829","updated_at":"2026-01-20T09:41:50.829","deleted_at":null,"platform":{"code":"facebook","name":"Facebook Ads"},"accounts":[{"count":9}],"_count":{"accounts":9}}]}

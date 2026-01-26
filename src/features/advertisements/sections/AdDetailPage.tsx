@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAdDetail, useAdAnalytics, useSyncAdInsights } from '@/hooks/useAdDetail';
-import { PerformanceChart } from '../components/PerformanceChart';
+import { useAdDetail, useAdAnalytics, useSyncAdInsights, useAdHourly } from '@/hooks/useAdDetail';
+import { PerformanceChart, AdInsightsViewer } from '../components';
 import type { DailyInsight, DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from '@/api/adDetail.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,8 @@ const formatNumber = (value: number) => {
   return new Intl.NumberFormat('vi-VN').format(value);
 };
 
-const formatPercent = (value: number) => {
+const formatPercent = (value: number | null | undefined) => {
+  if (value == null || isNaN(value)) return '0.00%';
   return `${value.toFixed(2)}%`;
 };
 
@@ -42,9 +43,11 @@ export function AdDetailPage() {
   const { adId } = useParams<{ adId: string }>();
   const navigate = useNavigate();
   const [syncingSection, setSyncingSection] = useState<string | null>(null);
+  const [selectedHourlyDate, setSelectedHourlyDate] = useState<string>('');
 
   const { data: ad, isLoading: isLoadingAd } = useAdDetail(adId || '');
   const { data: analytics, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useAdAnalytics(adId || '');
+  const { data: hourlyData, isLoading: isLoadingHourly } = useAdHourly(adId || '', selectedHourlyDate);
   const syncInsightsMutation = useSyncAdInsights(adId || '');
 
   // Mặc định chỉ sync cho ngày hôm nay để tối ưu tốc độ và dữ liệu realtime
@@ -286,6 +289,14 @@ export function AdDetailPage() {
         </FloatingCard>
       )}
 
+      {/* Comprehensive Insights Viewer */}
+      {analytics && (
+        <AdInsightsViewer
+          adId={ad.id}
+          currency={currency}
+        />
+      )}
+
       {/* Daily Insights */}
       {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
         <FloatingCard>
@@ -342,6 +353,93 @@ export function AdDetailPage() {
                 </TableBody>
               </Table>
             </div>
+          </FloatingCardContent>
+        </FloatingCard>
+      )}
+
+      {/* Hourly Insights */}
+      {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
+        <FloatingCard>
+          <FloatingCardHeader>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex-1">
+                <FloatingCardTitle>Insights theo giờ</FloatingCardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={selectedHourlyDate}
+                  onChange={(e) => setSelectedHourlyDate(e.target.value)}
+                  className="px-3 py-1 border border-border rounded text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSync('hourly')}
+                  disabled={syncingSection === 'hourly' || !selectedHourlyDate}
+                  className="h-8"
+                >
+                  {syncingSection === 'hourly' ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
+                      Đang sync...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-2" />
+                      Sync
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Chọn ngày để xem insights theo giờ của ngày đó
+            </p>
+          </FloatingCardHeader>
+          <FloatingCardContent>
+            {!selectedHourlyDate ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Chọn ngày ở trên để xem insights theo giờ
+              </div>
+            ) : isLoadingHourly ? (
+              <div className="text-center py-8">Đang tải...</div>
+            ) : hourlyData && hourlyData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/30 hover:bg-transparent">
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase">Giờ</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Chi tiêu</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Impressions</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Clicks</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CTR</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Results</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CPR</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {hourlyData.map((hour: any) => (
+                      <TableRow key={`${hour.dateStart}-${hour.hour}`} className="border-border/30 hover:bg-muted/30">
+                        <TableCell className="font-mono">
+                          {String(hour.hour).padStart(2, '0')}:00
+                        </TableCell>
+                        <TableCell className="text-right font-mono">{formatCurrency(hour.spend, currency)}</TableCell>
+                        <TableCell className="text-right font-mono">{formatNumber(hour.impressions)}</TableCell>
+                        <TableCell className="text-right font-mono">{formatNumber(hour.clicks)}</TableCell>
+                        <TableCell className="text-right font-mono">{formatPercent(hour.ctr)}</TableCell>
+                        <TableCell className="text-right font-mono">{formatNumber(hour.results)}</TableCell>
+                        <TableCell className="text-right font-mono">{formatCurrency(hour.costPerResult, currency)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Không có dữ liệu hourly insights cho ngày này
+              </div>
+            )}
           </FloatingCardContent>
         </FloatingCard>
       )}

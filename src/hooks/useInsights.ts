@@ -7,9 +7,10 @@ export interface UseInsightsParams {
     dateStart?: string;
     dateEnd?: string;
     branchId?: string;
+    enabled?: boolean;
 }
 
-export function useInsights({ accountId, dateStart, dateEnd, branchId }: UseInsightsParams) {
+export function useInsights({ accountId, dateStart, dateEnd, branchId, enabled = true }: UseInsightsParams) {
     return useQuery({
         queryKey: ['insights', accountId, dateStart, dateEnd, branchId],
         queryFn: async () => {
@@ -23,6 +24,6 @@ export function useInsights({ accountId, dateStart, dateEnd, branchId }: UseInsi
             if (Array.isArray(result)) return result;
             return (result.data || []) as Insight[];
         },
-        enabled: !!dateStart && !!dateEnd,
+        enabled: enabled && !!dateStart && !!dateEnd,
     });
 }

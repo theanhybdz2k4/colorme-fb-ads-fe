@@ -14,6 +14,9 @@ interface AdCompactRowProps {
         thumbnailUrl?: string | null;
         metrics?: {
             results: number;
+            spend: number;
+            impressions: number;
+            clicks: number;
             costPerResult: number;
             messagingStarted: number;
             costPerMessaging: number;

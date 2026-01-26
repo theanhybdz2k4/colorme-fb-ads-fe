@@ -39,7 +39,7 @@ export function AccountsPage() {
 
     const filteredData = useMemo(() => {
         if (activeTab === 'all') return data;
-        return data?.filter(account => account.platform.code === activeTab);
+        return data?.filter(account => account.platform?.code === activeTab);
     }, [data, activeTab]);
 
     const handleAdd = () => {
@@ -176,7 +176,7 @@ export function AccountsPage() {
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredData.map((account) => {
-                        const config = getPlatformConfig(account.platform.code);
+                        const config = getPlatformConfig(account.platform?.code);
                         return (
                             <FloatingCard key={account.id}>
                                 <div className="p-4 space-y-4">

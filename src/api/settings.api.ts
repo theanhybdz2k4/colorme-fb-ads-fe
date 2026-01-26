@@ -6,8 +6,8 @@ export const cronSettingsApi = {
      * Get all cron settings for current user
      */
     getSettings: async (): Promise<CronSettingsResponse> => {
-        const { data } = await apiClient.get('/cron/settings');
-        // Backend wraps response in { result: ... }
+        const { data } = await apiClient.get('/fb-settings');
+        // Edge Function wraps response in { result: ... } to match NestJS format
         return data.result || data;
     },
 
@@ -15,17 +15,15 @@ export const cronSettingsApi = {
      * Create or update a cron setting (upsert)
      */
     createSetting: async (dto: { cronType: string; allowedHours: number[]; enabled?: boolean }): Promise<CronSetting> => {
-        const { data } = await apiClient.post('/cron/settings', dto);
-        // Backend wraps response in { result: ... }
+        const { data } = await apiClient.post('/fb-settings', dto);
         return data.result || data;
     },
 
     /**
-     * Update an existing cron setting
+     * Update an existing cron setting (uses upsert logic)
      */
     updateSetting: async (cronType: string, dto: UpsertCronSettingDto): Promise<CronSetting> => {
-        const { data } = await apiClient.put(`/cron/settings/${cronType}`, dto);
-        // Backend wraps response in { result: ... }
+        const { data } = await apiClient.post('/fb-settings', { ...dto, cronType });
         return data.result || data;
     },
 
@@ -33,8 +31,7 @@ export const cronSettingsApi = {
      * Create or update a cron setting (backward compatibility)
      */
     upsertSetting: async (cronType: string, dto: UpsertCronSettingDto): Promise<CronSetting> => {
-        const { data } = await apiClient.put(`/cron/settings/${cronType}`, dto);
-        // Backend wraps response in { result: ... }
+        const { data } = await apiClient.post('/fb-settings', { ...dto, cronType });
         return data.result || data;
     },
 
@@ -42,15 +39,14 @@ export const cronSettingsApi = {
      * Delete a cron setting
      */
     deleteSetting: async (cronType: string): Promise<void> => {
-        await apiClient.delete(`/cron/settings/${cronType}`);
+        await apiClient.delete(`/fb-settings?type=${cronType}`);
     },
 
     /**
      * Get estimated API calls for current configuration
      */
     getEstimate: async (): Promise<EstimatedApiCalls> => {
-        const { data } = await apiClient.get('/cron/settings/estimated-calls');
-        // Backend wraps response in { result: ... }
+        const { data } = await apiClient.get('/fb-settings?estimate=true');
         return data.result || data;
     },
 };

@@ -22,6 +22,8 @@ import { LoadingPage } from '@/components/custom/LoadingState';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { PlatformIcon } from '@/components/custom/PlatformIcon';
 
+import { getVietnamDateString } from '@/lib/utils';
+
 // Platform filter moved to global PlatformContext (header tabs)
 
 export function AdAccountsPage() {
@@ -69,8 +71,8 @@ export function AdAccountsPage() {
     try {
       await campaignsApi.syncAccount(accountId);
       await adsApi.syncAccount(accountId);
-      const today = new Date().toISOString().split('T')[0];
-      await insightsApi.syncAccount(accountId, today, today);
+      const today = getVietnamDateString();
+      await insightsApi.syncAccount(accountId, today, today, 'BOTH');
 
       toast.success('Đã hoàn thành sync dữ liệu tài khoản');
       queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });

@@ -1,0 +1,1 @@
+{"success":true,"data":{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3NjkxNDY4MzEsImV4cCI6MTc2OTE1MDQzMX0.wlWFzZrXrV81fo46KbkQfKXSHa7aCTz4FFfZma65GDQ","refreshToken":"9434c2a4-aaa9-4e34-b90f-7ec9ba6c9112","expiresIn":3600,"user":{"id":1,"email":"admin@gmail.com","name":"System Admin"}}}

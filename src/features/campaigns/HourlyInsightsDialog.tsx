@@ -23,13 +23,15 @@ export function HourlyInsightsDialog({
     adName,
     open,
     onOpenChange,
+    initialDate,
 }: {
     adId: string;
     adName: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    initialDate?: Date;
 }) {
-    const [date, setDate] = useState<Date>(new Date());
+    const [date, setDate] = useState<Date>(initialDate || new Date());
 
     const { data: insights, isLoading } = useQuery({
         queryKey: ['hourly-insights', adId, date],
@@ -56,7 +58,7 @@ export function HourlyInsightsDialog({
                         <PopoverTrigger asChild>
                             <Button
                                 variant={"outline"}
-                                className="w-[240px] pl-3 text-left font-normal"
+                                className="w-60 pl-3 text-left font-normal"
                             >
                                 <span>{date ? format(date, "PPP", { locale: vi }) : <span>Pick a date</span>}</span>
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />

@@ -16,3 +16,4 @@ export { ViewToggle } from "./ViewToggle";
 export { useViewPreference } from "@/hooks/useViewPreference";
 export { AdCard, AdCardGrid } from "./AdCard";
 export { AdCompactRow, AdCompactList } from "./AdCompactRow";
+export { AdTableRow, AdTable } from "./AdTableRow";

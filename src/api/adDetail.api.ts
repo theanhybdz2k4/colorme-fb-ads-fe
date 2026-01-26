@@ -107,17 +107,17 @@ export interface HourlyInsight {
 }
 
 export const adDetailApi = {
-    getAd: (adId: string) => apiClient.get<AdDetail>(`/ads/${adId}`),
+    getAd: (adId: string) => apiClient.get<AdDetail>(`/ads?adId=${adId}`),
     getAnalytics: (adId: string, dateStart?: string, dateEnd?: string) => {
         const params = new URLSearchParams();
         if (dateStart) params.append('dateStart', dateStart);
         if (dateEnd) params.append('dateEnd', dateEnd);
         const query = params.toString() ? `?${params.toString()}` : '';
-        return apiClient.get<AdAnalytics>(`/insights/ads/${adId}/analytics${query}`);
+        return apiClient.get<AdAnalytics>(`/analytics/ad/${adId}${query}`);
     },
     getHourly: (adId: string, date?: string) => {
         const query = date ? `?date=${date}` : '';
-        return apiClient.get<HourlyInsight[]>(`/insights/ads/${adId}/hourly${query}`);
+        return apiClient.get<HourlyInsight[]>(`/analytics/ad-hourly/${adId}${query}`);
     },
     syncInsights: (adId: string, dateStart: string, dateEnd: string, breakdown: string = 'all') => {
         return apiClient.post(`/insights/sync`, {

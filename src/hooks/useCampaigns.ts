@@ -7,6 +7,10 @@ export interface UseCampaignsParams {
     effectiveStatus?: string;
     search?: string;
     branchId?: string;
+    page?: number;
+    limit?: number;
+    dateStart?: string;
+    dateEnd?: string;
 }
 
 export function useCampaigns(params: UseCampaignsParams = {}) {
@@ -16,11 +20,20 @@ export function useCampaigns(params: UseCampaignsParams = {}) {
             const { data } = await campaignsApi.list({
                 ...params,
                 accountId: params.accountId ? Number(params.accountId) : undefined,
-                status: params.effectiveStatus
+                status: params.effectiveStatus,
+                page: params.page || 1,
+                limit: params.limit || 20,
+                dateStart: params.dateStart,
+                dateEnd: params.dateEnd,
             });
             const result = data.result || data.data || data || [];
             if (Array.isArray(result)) return result;
             return (result.data || []) as Campaign[];
         },
+        // Refetch only when params change, not on window focus
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        // Stale time to avoid unnecessary refetches
+        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }

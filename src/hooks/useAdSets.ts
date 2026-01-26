@@ -17,11 +17,15 @@ export function useAdsets(params: UseAdsetsParams = {}) {
             const { data } = await adsetsApi.list({
                 ...params,
                 accountId: params.accountId ? Number(params.accountId) : undefined,
-                status: params.effectiveStatus
+                status: params.effectiveStatus,
+                limit: 100, // Higher limit for ad sets
             });
             const result = data.result || data.data || data || [];
             if (Array.isArray(result)) return result;
             return (result.data || []) as Adset[];
         },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 }

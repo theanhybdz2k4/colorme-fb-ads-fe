@@ -18,11 +18,15 @@ export function useAds(params: UseAdsParams = {}) {
                 ...params,
                 accountId: params.accountId ? Number(params.accountId) : undefined,
                 status: params.effectiveStatus,
-                adGroupId: params.adsetId
+                adGroupId: params.adsetId,
+                limit: 100, // Higher limit for ads
             });
             const result = data.result || data.data || data || [];
             if (Array.isArray(result)) return result;
             return (result.data || []) as Ad[];
         },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 }
