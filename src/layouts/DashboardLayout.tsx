@@ -115,7 +115,7 @@ function DashboardContent() {
                 sidebarExpanded ? "opacity-100" : "opacity-0 w-0"
               )}
             >
-              FB Ads
+              Ads Lytics
             </span>
           </Link>
         </div>

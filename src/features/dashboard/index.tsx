@@ -11,12 +11,12 @@ import { DollarSign, Users, Target, MousePointer, CreditCard, Megaphone } from '
 
 export function DashboardPage() {
   const { user } = useAuth();
-  
+
   // Get date range for last 30 days as a default
   const today = new Date();
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(today.getDate() - 30);
-  
+
   const dateEnd = today.toISOString().split('T')[0];
   const dateStart = thirtyDaysAgo.toISOString().split('T')[0];
 
@@ -42,7 +42,7 @@ export function DashboardPage() {
   });
 
   const isLoading = loadingAccounts || loadingCampaigns || loadingInsights;
-  
+
   // Safe data access
   const safeInsights = Array.isArray(insightsData) ? insightsData : [];
   const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
@@ -53,7 +53,7 @@ export function DashboardPage() {
   const totalLeads = safeInsights.reduce((sum, item) => sum + (Number(item.results || item.messagingStarted) || 0), 0) || 0;
   const totalClicks = safeInsights.reduce((sum, item) => sum + (Number(item.clicks) || 0), 0) || 0;
   const totalImpressions = safeInsights.reduce((sum, item) => sum + (Number(item.impressions) || 0), 0) || 0;
-  
+
   const overallCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
   const overallCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
@@ -67,10 +67,10 @@ export function DashboardPage() {
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-bold bg-clip-text text-foreground mb-2">
           Hệ thống Quản lý Quảng cáo
         </h1>
-        <p className="text-slate-600">
+        <p className="text-muted-foreground">
           Xin chào, {user?.name || user?.email}! Tổng quan hiệu suất trong 30 ngày qua.
         </p>
       </div>
@@ -82,7 +82,7 @@ export function DashboardPage() {
           value={`$${totalSpend.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
           subtitle={`${activeCampaigns} campaigns đang hoạt động`}
           icon={DollarSign}
-           trend={{ value: 12.5, isPositive: true, label: '30 ngày qua' }}
+          trend={{ value: 12.5, isPositive: true, label: '30 ngày qua' }}
           color="blue"
           chart="area"
         />
@@ -91,7 +91,7 @@ export function DashboardPage() {
           value={totalLeads.toLocaleString()}
           subtitle="Số khách hàng tiềm năng"
           icon={Users}
-           trend={{ value: 18.3, isPositive: true, label: '30 ngày qua' }}
+          trend={{ value: 18.3, isPositive: true, label: '30 ngày qua' }}
           color="green"
           status={totalLeads > 0 ? 'excellent' : undefined}
           chart="bar"
@@ -101,7 +101,7 @@ export function DashboardPage() {
           value={`$${overallCPL.toFixed(2)}`}
           subtitle={`CTR trung bình: ${overallCTR.toFixed(2)}%`}
           icon={Target}
-           trend={{ value: 8.2, isPositive: false, label: '30 ngày qua' }}
+          trend={{ value: 8.2, isPositive: false, label: '30 ngày qua' }}
           color="purple"
           status={overallCPL > 0 && overallCPL <= 10 ? 'excellent' : overallCPL <= 15 ? 'good' : overallCPL > 15 ? 'poor' : undefined}
           chart="line"
@@ -111,7 +111,7 @@ export function DashboardPage() {
           value={totalClicks.toLocaleString()}
           subtitle={`CPC: $${(totalClicks > 0 ? totalSpend / totalClicks : 0).toFixed(2)}`}
           icon={MousePointer}
-           trend={{ value: 15.7, isPositive: true, label: '30 ngày qua' }}
+          trend={{ value: 15.7, isPositive: true, label: '30 ngày qua' }}
           color="orange"
           chart="area"
         />
@@ -120,55 +120,54 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Stats Summary */}
         <div className="lg:col-span-2 space-y-6">
-           <h2 className="text-xl font-bold text-slate-900">Chi tiết tài khoản</h2>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-card rounded-2xl border border-border/50 p-6 flex items-center gap-4">
-                 <div className="p-3 bg-blue-500/10 rounded-xl">
-                    <CreditCard className="w-6 h-6 text-blue-500" />
-                 </div>
-                 <div>
-                    <p className="text-sm text-muted-foreground">Tài khoản quảng cáo</p>
-                    <p className="text-2xl font-bold">{safeAccounts.length || 0}</p>
-                 </div>
+          <h2 className="text-xl font-bold text-slate-900">Chi tiết tài khoản</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-card rounded-2xl border border-border/50 p-6 flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-xl">
+                <CreditCard className="w-6 h-6 text-blue-500" />
               </div>
-              <div className="bg-card rounded-2xl border border-border/50 p-6 flex items-center gap-4">
-                 <div className="p-3 bg-purple-500/10 rounded-xl">
-                    <Megaphone className="w-6 h-6 text-purple-500" />
-                 </div>
-                 <div>
-                    <p className="text-sm text-muted-foreground">Tổng số Campaigns</p>
-                    <p className="text-2xl font-bold">{safeCampaigns.length || 0}</p>
-                 </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Tài khoản quảng cáo</p>
+                <p className="text-2xl font-bold">{safeAccounts.length || 0}</p>
               </div>
-           </div>
-           
-           <div className="bg-card rounded-2xl border border-border/50 p-8 shadow-sm">
-             {!safeCampaigns.length ? (
-                <EmptyState
-                  title="Chưa có dữ liệu chiến dịch"
-                  description="Các chiến dịch sẽ xuất hiện ở đây sau khi bạn kết nối tài khoản Facebook."
-                />
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="font-bold text-lg">Chiến dịch hoạt động gần đây</h3>
-                  <div className="divide-y divide-border/50">
-                    {safeCampaigns.slice(0, 5).map((campaign: any) => (
-                      <div key={campaign.id} className="py-4 flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{campaign.name}</p>
-                          <p className="text-xs text-muted-foreground">{campaign.platform || 'Facebook'}</p>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                          (campaign.effectiveStatus === 'ACTIVE' || campaign.status === 'ACTIVE') ? 'bg-green-500/20 text-green-500' : 'bg-slate-500/20 text-slate-500'
-                        }`}>
-                          {campaign.effectiveStatus || campaign.status}
-                        </div>
+            </div>
+            <div className="bg-card rounded-2xl border border-border/50 p-6 flex items-center gap-4">
+              <div className="p-3 bg-purple-500/10 rounded-xl">
+                <Megaphone className="w-6 h-6 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Tổng số Campaigns</p>
+                <p className="text-2xl font-bold">{safeCampaigns.length || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border/50 p-8 shadow-sm">
+            {!safeCampaigns.length ? (
+              <EmptyState
+                title="Chưa có dữ liệu chiến dịch"
+                description="Các chiến dịch sẽ xuất hiện ở đây sau khi bạn kết nối tài khoản Facebook."
+              />
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-bold text-lg">Chiến dịch hoạt động gần đây</h3>
+                <div className="divide-y divide-border/50">
+                  {safeCampaigns.slice(0, 5).map((campaign: any) => (
+                    <div key={campaign.id} className="py-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{campaign.name}</p>
+                        <p className="text-xs text-muted-foreground">{campaign.platform || 'Facebook'}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${(campaign.effectiveStatus === 'ACTIVE' || campaign.status === 'ACTIVE') ? 'bg-green-500/20 text-green-500' : 'bg-slate-500/20 text-slate-500'
+                        }`}>
+                        {campaign.effectiveStatus || campaign.status}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-           </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Real-time Insights Simulation/Summary */}

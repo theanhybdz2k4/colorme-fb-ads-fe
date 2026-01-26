@@ -89,10 +89,10 @@ export function BranchAnalytics() {
     const dateStart = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
     const dateEnd = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
 
-    const { data: dashboardData, isLoading, refetch } = useDashboardStats({ 
-        dateStart, 
-        dateEnd, 
-        platformCode: activePlatform 
+    const { data: dashboardData, isLoading, refetch } = useDashboardStats({
+        dateStart,
+        dateEnd,
+        platformCode: activePlatform
     });
 
     const branches = dashboardData?.branches || [];
@@ -133,8 +133,8 @@ export function BranchAnalytics() {
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
-                    <p className="text-sm font-medium text-slate-200 mb-1">{label}</p>
+                <div className="bg-popover border border-border p-3 rounded-lg shadow-xl">
+                    <p className="text-sm font-medium text-popover-foreground mb-1">{label}</p>
                     {payload.map((entry: any, index: number) => (
                         <p key={index} className="text-xs" style={{ color: entry.color }}>
                             {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC') || entry.name.includes('Cost')
@@ -361,7 +361,7 @@ export function BranchAnalytics() {
                     <FloatingCardContent className="p-4 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <ReBarChart data={statsByBranch} layout="vertical" margin={{ left: 40, right: 30 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis
                                     dataKey="name"
@@ -393,7 +393,7 @@ export function BranchAnalytics() {
                     <FloatingCardContent className="p-4 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <ReBarChart data={statsByBranch}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                                 <XAxis
                                     dataKey="name"
                                     stroke="#94a3b8"
@@ -448,7 +448,7 @@ export function BranchAnalytics() {
                             <TableBody>
                                 {statsByBranch.map((row: any) => (
                                     <TableRow key={row.id} className="border-border/30 hover:bg-muted/30 transition-colors">
-                                        <TableCell className="font-semibold text-slate-200">
+                                        <TableCell className="font-semibold text-foreground">
                                             <div className="flex flex-col gap-1">
                                                 <span>{row.name}</span>
                                                 <div className="flex gap-1">
@@ -461,19 +461,19 @@ export function BranchAnalytics() {
                                         <TableCell className="text-right text-orange-400 font-mono font-medium">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(row.totalSpend)}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-slate-400">{row.totalImpressions.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-slate-400">{row.totalClicks.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalImpressions.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalClicks.toLocaleString()}</TableCell>
                                         <TableCell className="text-right font-mono font-bold text-pink-400">{row.totalMessaging.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-slate-300">
+                                        <TableCell className="text-right font-mono text-foreground/80">
                                             {new Intl.NumberFormat('vi-VN').format(Math.round(row.costPerMessage))}đ
                                         </TableCell>
                                         <TableCell className="text-right font-mono font-medium text-emerald-400">
                                             {row.ctrPercent.toFixed(2)}%
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-slate-300">
+                                        <TableCell className="text-right font-mono text-foreground/80">
                                             {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpc))}đ
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-slate-400">
+                                        <TableCell className="text-right font-mono text-muted-foreground">
                                             {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpm))}đ
                                         </TableCell>
                                     </TableRow>

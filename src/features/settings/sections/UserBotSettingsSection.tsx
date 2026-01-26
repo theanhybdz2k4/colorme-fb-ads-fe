@@ -201,7 +201,7 @@ export function UserBotSettingsSection() {
                                     <div className="flex items-center gap-2">
                                         <Bot className="h-4 w-4 text-purple-500" />
                                         <span className="font-medium">
-                                            {bot.botName || 'Unnamed Bot'}
+                                            {bot.botName || bot.bot_name || 'Unnamed Bot'}
                                         </span>
                                         {bot.adAccount ? (
                                             <Badge variant="outline" className="text-xs">
@@ -279,8 +279,8 @@ export function UserBotSettingsSection() {
                                     <div className="flex items-center gap-1">
                                         <Users className="h-4 w-4" />
                                         <span>
-                                            {bot.activeSubscribers || 0} người đang nhận thông báo
-                                            {bot.subscriberCount > 0 && ` / ${bot.subscriberCount} đã đăng ký`}
+                                            {bot.activeSubscribers || bot.active_subscribers || 0} người đang nhận thông báo
+                                            {(bot.subscriberCount || bot.subscriber_count) > 0 && ` / ${bot.subscriberCount || bot.subscriber_count} đã đăng ký`}
                                         </span>
                                     </div>
                                 </div>

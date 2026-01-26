@@ -69,96 +69,106 @@
    Layered depth system
 ======================================== */
 :root {
+  color-scheme: dark;
   --radius: 0.625rem;
 
   /* Layered backgrounds - depth system (High Contrast Dark) */
-  --background: hsl(225 15% 5%);         /* Deepest layer */
-  --card: hsl(225 15% 8%);               /* Surface layer */
-  --popover: hsl(225 15% 8%);            /* Elevated layer */
+  /* Main background: Very dark cool grey, not pitch black */
+  --background: hsl(222 17% 8%);         
+  /* Card/Surface: Slightly lighter cool grey */
+  --card: hsl(222 17% 11%);              
+  /* Popover: Same as card or slightly elevated */
+  --popover: hsl(222 17% 11%);           
   
   /* Foreground colors */
   --foreground: hsl(210 20% 98%);
   --card-foreground: hsl(210 20% 98%);
   --popover-foreground: hsl(210 20% 98%);
   
-  /* Primary - Vivid Blue */
-  --primary: hsl(215 90% 60%);
+  /* Primary - Vivid Blue (Facebook-ish but modern) */
+  --primary: hsl(215 90% 58%);
   --primary-foreground: hsl(0 0% 100%);
   
-  /* Secondary */
-  --secondary: hsl(225 15% 12%);
+  /* Secondary - Used for subtle backgrounds/buttons */
+  --secondary: hsl(217 19% 16%);
   --secondary-foreground: hsl(210 20% 90%);
   
-  /* Muted */
-  --muted: hsl(225 15% 12%);
-  --muted-foreground: hsl(215 20% 70%); /* Lighter for better readability */
+  /* Muted - For de-emphasized text/elements */
+  --muted: hsl(217 19% 16%);
+  /* Muted foreground: readable grey */
+  --muted-foreground: hsl(215 20% 70%); 
   
-  /* Accent */
-  --accent: hsl(225 15% 12%);
+  /* Accent - Hover states or highlights */
+  --accent: hsl(217 19% 16%);
   --accent-foreground: hsl(210 20% 95%);
   
   /* Destructive */
-  --destructive: hsl(0 85% 60%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
   
-  /* Borders & inputs - Increased visibility */
-  --border: hsl(225 15% 18%);
-  --input: hsl(225 15% 18%);
-  --ring: hsl(215 90% 60%);
+  /* Borders & inputs - Subtle but defined */
+  --border: hsl(217 19% 18%);
+  --input: hsl(217 19% 18%);
+  --ring: hsl(215 90% 58%);
 
   /* Charts */
-  --chart-1: hsl(215 90% 60%);
+  --chart-1: hsl(215 90% 58%);
   --chart-2: hsl(160 80% 45%);
   --chart-3: hsl(280 80% 60%);
   --chart-4: hsl(35 90% 60%);
   --chart-5: hsl(340 85% 60%);
 
   /* Sidebar */
-  --sidebar: hsl(225 15% 6%);
+  --sidebar: hsl(222 17% 7%);
   --sidebar-foreground: hsl(210 20% 95%);
-  --sidebar-primary: hsl(215 90% 60%);
+  --sidebar-primary: hsl(215 90% 58%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(225 15% 10%);
+  --sidebar-accent: hsl(217 19% 14%);
   --sidebar-accent-foreground: hsl(210 20% 98%);
-  --sidebar-border: hsl(225 15% 12%);
-  --sidebar-ring: hsl(215 90% 60%);
+  --sidebar-border: hsl(217 19% 12%);
+  --sidebar-ring: hsl(215 90% 58%);
 }
 
 /* Light mode override */
 .light {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(225 20% 10%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(225 20% 10%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(225 20% 10%);
+  color-scheme: light;
+  --background: hsl(210 20% 98%); /* Slightly off-white for less eye strain */
+  --foreground: hsl(222 20% 10%);
   
-  --primary: hsl(220 90% 55%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 20% 10%);
+  
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 20% 10%);
+  
+  --primary: hsl(221 83% 53%); /* Facebook Blue */
   --primary-foreground: hsl(0 0% 100%);
   
-  --secondary: hsl(220 20% 96%);
-  --secondary-foreground: hsl(225 20% 15%);
+  --secondary: hsl(210 20% 94%);
+  --secondary-foreground: hsl(222 20% 15%);
   
-  --muted: hsl(220 20% 96%);
-  --muted-foreground: hsl(220 15% 40%); /* Darker for better readability */
+  --muted: hsl(210 20% 94%);
+  --muted-foreground: hsl(215 16% 40%);
   
-  --accent: hsl(220 20% 94%);
-  --accent-foreground: hsl(225 20% 15%);
+  --accent: hsl(210 20% 92%);
+  --accent-foreground: hsl(222 20% 15%);
   
-  --destructive: hsl(0 85% 60%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
   
-  --border: hsl(220 20% 88%); /* Darker border */
-  --input: hsl(220 20% 88%);
-  --ring: hsl(220 90% 55%);
+  --border: hsl(214 32% 90%);
+  --input: hsl(214 32% 90%);
+  --ring: hsl(221 83% 53%);
 
   /* Sidebar Light Mode */
-  --sidebar: hsl(220 20% 98%);
-  --sidebar-foreground: hsl(225 20% 20%);
-  --sidebar-primary: hsl(220 90% 55%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(222 20% 20%);
+  --sidebar-primary: hsl(221 83% 53%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(220 20% 94%);
-  --sidebar-accent-foreground: hsl(225 20% 15%);
-  --sidebar-border: hsl(220 20% 90%);
-  --sidebar-ring: hsl(220 90% 55%);
+  --sidebar-accent: hsl(210 20% 94%);
+  --sidebar-accent-foreground: hsl(222 20% 15%);
+  --sidebar-border: hsl(214 32% 90%);
+  --sidebar-ring: hsl(221 83% 53%);
 }
 
 /* ========================================

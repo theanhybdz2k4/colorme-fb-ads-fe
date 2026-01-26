@@ -21,7 +21,7 @@ export function RegionBreakdownList({ data, loading }: Props) {
     if (loading) {
         return (
             <FloatingCard className="animate-pulse">
-                <div className="h-64 bg-slate-800/50 rounded-lg" />
+                <div className="h-64 bg-muted/50 rounded-lg" />
             </FloatingCard>
         );
     }
@@ -47,23 +47,23 @@ export function RegionBreakdownList({ data, loading }: Props) {
                             {sortedData.map((item, index) => {
                                 const percent = (item.spend / maxSpend) * 100;
                                 return (
-                                    <div key={index} className="flex items-center p-3 border-b border-border/10 hover:bg-slate-800/30 transition-colors text-sm relative group overflow-hidden">
+                                    <div key={index} className="flex items-center p-3 border-b border-border/10 hover:bg-muted/30 transition-colors text-sm relative group overflow-hidden">
                                         {/* Background bar */}
                                         <div
                                             className="absolute left-0 top-0 bottom-0 bg-emerald-500/5 transition-all duration-500"
                                             style={{ width: `${percent}%` }}
                                         />
 
-                                        <div className="w-8 font-mono text-slate-500 text-xs z-10">{index + 1}</div>
+                                        <div className="w-8 font-mono text-muted-foreground/70 text-xs z-10">{index + 1}</div>
                                         <div className="flex-1 z-10">
-                                            <div className="font-medium text-slate-200">{item.region || 'Unknown'}</div>
-                                            <div className="text-xs text-slate-500">{item.country}</div>
+                                            <div className="font-medium text-foreground">{item.region || 'Unknown'}</div>
+                                            <div className="text-xs text-muted-foreground">{item.country}</div>
                                         </div>
                                         <div className="text-right z-10 space-y-0.5">
                                             <div className="font-bold text-emerald-400 font-mono">{formatMoney(item.spend)}</div>
-                                            <div className="text-xs text-slate-400 flex gap-2 justify-end">
+                                            <div className="text-xs text-muted-foreground flex gap-2 justify-end">
                                                 <span>{item.results.toLocaleString()} results</span>
-                                                <span className="text-slate-600">|</span>
+                                                <span className="text-muted-foreground/50">|</span>
                                                 <span>{item.impressions.toLocaleString()} imp</span>
                                             </div>
                                         </div>
@@ -73,7 +73,7 @@ export function RegionBreakdownList({ data, loading }: Props) {
                         </div>
                     </div>
                 ) : (
-                    <div className="h-full flex items-center justify-center text-slate-500 text-sm">
+                    <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
                         Chưa có dữ liệu phân tích
                     </div>
                 )}

@@ -31,7 +31,7 @@ export function CampaignsPage() {
     d.setDate(d.getDate() - 7);
     return d.toISOString().split('T')[0];
   }, []);
-  
+
   const dateEnd = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const { data: campaigns, isLoading } = useCampaigns({
@@ -59,19 +59,19 @@ export function CampaignsPage() {
     // 2. Sort: Active & Has Data first, then Active & No Data
     // "Has Data" usually means spend > 0 or impressions > 0 in the requested period.
     // Since backend now returns stats for the requested period (7 days), we can use that directly.
-    
+
     return filtered.sort((a: any, b: any) => {
       const aHasData = (a.stats?.spend > 0 || a.stats?.impressions > 0);
       const bHasData = (b.stats?.spend > 0 || b.stats?.impressions > 0);
 
       if (aHasData && !bHasData) return -1; // a comes first
       if (!aHasData && bHasData) return 1;  // b comes first
-      
+
       // If both have data or both dont, maybe sort by spend desc?
       if (aHasData && bHasData) {
         return (b.stats?.spend || 0) - (a.stats?.spend || 0);
       }
-      
+
       return 0; // maintain original order (usually by createdAt desc)
     });
 
@@ -115,7 +115,7 @@ export function CampaignsPage() {
   const getStatusColor = (status: string) => {
     const s = status?.toUpperCase();
     if (s === 'ACTIVE') return 'bg-green-500/10 text-green-500 border-green-500/20';
-    if (s === 'PAUSED') return 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+    if (s === 'PAUSED') return 'bg-muted text-muted-foreground border-border/20';
     if (s === 'ARCHIVED') return 'bg-red-500/10 text-red-500 border-red-500/20';
     return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
   };
@@ -131,7 +131,7 @@ export function CampaignsPage() {
           <h1 className="text-3xl font-bold bg-linear-to-r bg-clip-text mb-2">
             Campaign Manager
           </h1>
-          <p className="text-slate-300">Quản lý và tối ưu campaigns với drill-down analysis</p>
+          <p className="text-muted-foreground">Quản lý và tối ưu campaigns với drill-down analysis</p>
         </div>
         <div className="flex gap-3">
           <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
@@ -141,13 +141,13 @@ export function CampaignsPage() {
           </Button>
         </div>
       </div>
-      
+
       {/* Active Count & Date Range Info */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-lg border border-muted">
-         <span className="font-semibold text-foreground">{filteredAndSortedData.length}</span> Active Campaigns 
-         <span className="mx-2">•</span>
-         <Calendar className="w-4 h-4" />
-         <span>Stats: Last 7 Days</span>
+        <span className="font-semibold text-foreground">{filteredAndSortedData.length}</span> Active Campaigns
+        <span className="mx-2">•</span>
+        <Calendar className="w-4 h-4" />
+        <span>Stats: Last 7 Days</span>
       </div>
 
       <div className="space-y-4">
@@ -388,7 +388,7 @@ const AdRow = memo(function AdRowComponent({ ad, getStatusColor, onViewHourly }:
             ) : (
               adDailyData.map((day: any) => (
                 <div key={day.id} className="grid grid-cols-6 gap-2 text-[10px] items-center p-2 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border/30">
-                  <div className="font-medium text-slate-700 dark:text-slate-300">
+                  <div className="font-medium text-foreground">
                     {new Date(day.date).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}
                   </div>
                   <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(day.spend)}</div>

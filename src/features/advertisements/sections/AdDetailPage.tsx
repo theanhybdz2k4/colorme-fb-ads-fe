@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAdDetail, useAdAnalytics, useSyncAdInsights, useAdHourly } from '@/hooks/useAdDetail';
+import { useAdDetail, useAdAnalytics, useSyncAdInsights } from '@/hooks/useAdDetail';
 import { PerformanceChart, AdInsightsViewer } from '../components';
-import type { DailyInsight, DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from '@/api/adDetail.api';
+import type { DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from '@/api/adDetail.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,11 +43,8 @@ export function AdDetailPage() {
   const { adId } = useParams<{ adId: string }>();
   const navigate = useNavigate();
   const [syncingSection, setSyncingSection] = useState<string | null>(null);
-  const [selectedHourlyDate, setSelectedHourlyDate] = useState<string>('');
-
   const { data: ad, isLoading: isLoadingAd } = useAdDetail(adId || '');
   const { data: analytics, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useAdAnalytics(adId || '');
-  const { data: hourlyData, isLoading: isLoadingHourly } = useAdHourly(adId || '', selectedHourlyDate);
   const syncInsightsMutation = useSyncAdInsights(adId || '');
 
   // Mặc định chỉ sync cho ngày hôm nay để tối ưu tốc độ và dữ liệu realtime
@@ -56,33 +53,40 @@ export function AdDetailPage() {
     return { dateStart: today, dateEnd: today };
   };
 
-  const handleSync = async (section: string) => {
+  const handleSync = (section: string) => {
     if (!adId) return;
 
     setSyncingSection(section);
-    try {
-      const { dateStart, dateEnd } = getDateRangeToday();
-      // Luôn sync tất cả insights (bao gồm hourly và các breakdowns khác) cho hôm nay
-      const result = await syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' });
+    
+    // Immediate feedback
+    toast.info('Đã gửi yêu cầu sync...', {
+      description: 'Dữ liệu sẽ được cập nhật trong vài phút. Vui lòng đợi.',
+      duration: 5000,
+    });
 
-      toast.success('Sync insights thành công!', {
-        description: `Đã sync ${result || 0} insights từ ${dateStart} đến ${dateEnd}`,
+    // Execute sync in background
+    const { dateStart, dateEnd } = getDateRangeToday();
+    
+    syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' })
+      .then((result) => {
+        toast.success('Sync insights thành công!', {
+          description: `Đã sync ${result || 0} insights. Dữ liệu đã được làm mới.`,
+        });
+        
+        // Refresh data
+        refetchAnalytics();
+        queryClient.invalidateQueries({ queryKey: ['ad-analytics', adId] });
+        queryClient.invalidateQueries({ queryKey: ['ad-hourly', adId] });
+      })
+      .catch((error: any) => {
+        console.error('Sync failed:', error);
+        toast.error('Sync insights thất bại', {
+          description: error?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.',
+        });
+      })
+      .finally(() => {
+        setSyncingSection(null);
       });
-
-      // Re-trigger analytics fetch
-      await refetchAnalytics();
-
-      // Specifically invalidate by adId to be safe
-      queryClient.invalidateQueries({ queryKey: ['ad-analytics', adId] });
-      queryClient.invalidateQueries({ queryKey: ['ad-hourly', adId] });
-    } catch (error: any) {
-      console.error('Sync failed:', error);
-      toast.error('Sync insights thất bại', {
-        description: error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi sync insights',
-      });
-    } finally {
-      setSyncingSection(null);
-    }
   };
 
   if (isLoadingAd || isLoadingAnalytics) {
@@ -297,152 +301,6 @@ export function AdDetailPage() {
         />
       )}
 
-      {/* Daily Insights */}
-      {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
-        <FloatingCard>
-          <FloatingCardHeader>
-            <div className="flex items-center justify-between w-full">
-              <FloatingCardTitle>Hiệu suất theo ngày</FloatingCardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSync('daily')}
-                disabled={syncingSection === 'daily'}
-                className="h-8"
-              >
-                {syncingSection === 'daily' ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    Đang sync...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    Sync
-                  </>
-                )}
-              </Button>
-            </div>
-          </FloatingCardHeader>
-          <FloatingCardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/30 hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase">Ngày</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Chi tiêu</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Impressions</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Clicks</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CTR</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Results</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CPR</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {analytics.dailyInsights.map((day: DailyInsight) => (
-                    <TableRow key={day.date} className="border-border/30 hover:bg-muted/30">
-                      <TableCell>{new Date(day.date).toLocaleDateString('vi-VN')}</TableCell>
-                      <TableCell className="text-right font-mono">{formatCurrency(day.spend, currency)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatNumber(day.impressions)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatNumber(day.clicks)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatPercent(day.ctr)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatNumber(day.results)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatCurrency(day.costPerResult, currency)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </FloatingCardContent>
-        </FloatingCard>
-      )}
-
-      {/* Hourly Insights */}
-      {analytics?.dailyInsights && analytics.dailyInsights.length > 0 && (
-        <FloatingCard>
-          <FloatingCardHeader>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex-1">
-                <FloatingCardTitle>Insights theo giờ</FloatingCardTitle>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={selectedHourlyDate}
-                  onChange={(e) => setSelectedHourlyDate(e.target.value)}
-                  className="px-3 py-1 border border-border rounded text-sm"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSync('hourly')}
-                  disabled={syncingSection === 'hourly' || !selectedHourlyDate}
-                  className="h-8"
-                >
-                  {syncingSection === 'hourly' ? (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                      Đang sync...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-2" />
-                      Sync
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Chọn ngày để xem insights theo giờ của ngày đó
-            </p>
-          </FloatingCardHeader>
-          <FloatingCardContent>
-            {!selectedHourlyDate ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Chọn ngày ở trên để xem insights theo giờ
-              </div>
-            ) : isLoadingHourly ? (
-              <div className="text-center py-8">Đang tải...</div>
-            ) : hourlyData && hourlyData.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase">Giờ</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Chi tiêu</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Impressions</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Clicks</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CTR</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Results</TableHead>
-                      <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">CPR</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {hourlyData.map((hour: any) => (
-                      <TableRow key={`${hour.dateStart}-${hour.hour}`} className="border-border/30 hover:bg-muted/30">
-                        <TableCell className="font-mono">
-                          {String(hour.hour).padStart(2, '0')}:00
-                        </TableCell>
-                        <TableCell className="text-right font-mono">{formatCurrency(hour.spend, currency)}</TableCell>
-                        <TableCell className="text-right font-mono">{formatNumber(hour.impressions)}</TableCell>
-                        <TableCell className="text-right font-mono">{formatNumber(hour.clicks)}</TableCell>
-                        <TableCell className="text-right font-mono">{formatPercent(hour.ctr)}</TableCell>
-                        <TableCell className="text-right font-mono">{formatNumber(hour.results)}</TableCell>
-                        <TableCell className="text-right font-mono">{formatCurrency(hour.costPerResult, currency)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Không có dữ liệu hourly insights cho ngày này
-              </div>
-            )}
-          </FloatingCardContent>
-        </FloatingCard>
-      )}
 
       {/* Breakdowns Grid */}
       <div className="grid gap-6 md:grid-cols-2">
