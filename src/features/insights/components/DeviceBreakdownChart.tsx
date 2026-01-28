@@ -60,8 +60,8 @@ export function DeviceBreakdownChart({ data, loading }: Props) {
                 <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl text-xs">
                     <p className="font-bold text-slate-200 mb-1">{entry.device}</p>
                     <p className="text-slate-300">Chi phí: <span className="text-indigo-400 font-mono">{formatMoney(entry.spend)}</span></p>
-                    <p className="text-slate-300">Impressions: <span className="text-slate-200 font-mono">{entry.impressions.toLocaleString()}</span></p>
-                    <p className="text-slate-300">Clicks: <span className="text-slate-200 font-mono">{entry.clicks.toLocaleString()}</span></p>
+                    <p className="text-slate-300">Impressions: <span className="text-slate-200 font-mono">{(entry.impressions ?? 0).toLocaleString()}</span></p>
+                    <p className="text-slate-300">Clicks: <span className="text-slate-200 font-mono">{(entry.clicks ?? 0).toLocaleString()}</span></p>
                 </div>
             );
         }

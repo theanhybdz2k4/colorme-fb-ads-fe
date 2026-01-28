@@ -140,8 +140,8 @@ export function BranchAnalytics() {
                     {payload.map((entry: any, index: number) => (
                         <p key={index} className="text-xs" style={{ color: entry.color }}>
                             {entry.name}: {entry.name.includes('Chi phí') || entry.name.includes('CPC') || entry.name.includes('Cost')
-                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(entry.value)
-                                : entry.value.toLocaleString()}
+                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(entry.value ?? 0)
+                                : (entry.value ?? 0).toLocaleString()}
                             {entry.name.includes('CTR') ? '%' : ''}
                         </p>
                     ))}
@@ -423,8 +423,7 @@ export function BranchAnalytics() {
                 <AgeGenderBreakdownChart data={breakdowns.ageGender} loading={isLoading} />
                 <RegionBreakdownList data={breakdowns.region} loading={isLoading} />
             </div>
-
-            
+           
         </div>
     );
 }

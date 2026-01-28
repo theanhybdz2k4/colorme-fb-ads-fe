@@ -23,6 +23,8 @@ import {
 import { Settings, Clock, Zap, Save, X, AlertTriangle, Plus, Check } from 'lucide-react';
 import { UserBotSettingsSection } from './sections/UserBotSettingsSection';
 import { AISettingsSection } from './sections/AISettingsSection';
+import { leadsApi } from '@/api/leads.api';
+import { RefreshCw } from 'lucide-react';
 
 export function CronSettingsPage() {
     const { data, isLoading, error } = useCronSettings();
@@ -34,6 +36,7 @@ export function CronSettingsPage() {
     const [editingType, setEditingType] = useState<CronType | null>(null);
     const [selectedHours, setSelectedHours] = useState<number[]>([]);
     const [enabled, setEnabled] = useState(true);
+    const [isSyncingLeads, setIsSyncingLeads] = useState(false);
 
     // Safe access to settings array
     const settings = data?.settings || [];
@@ -80,6 +83,23 @@ export function CronSettingsPage() {
         setSelectedHours((prev) =>
             prev.includes(hour) ? prev.filter((h) => h !== hour) : [...prev, hour].sort((a, b) => a - b)
         );
+    };
+
+    const handleManualCrawlLeads = async () => {
+        setIsSyncingLeads(true);
+        const toastId = toast.loading('Đang crawl leads từ Facebook...');
+        try {
+            const result = await leadsApi.syncLeadsFromFacebook();
+            if (result.success) {
+                toast.success(`Đã sync xong: ${result.result.leadsSynced} leads, ${result.result.messagesSynced} tin nhắn`, { id: toastId });
+            } else {
+                toast.error(result.error || 'Lỗi khi sync leads', { id: toastId });
+            }
+        } catch (err: any) {
+            toast.error('Lỗi kết nối server', { id: toastId });
+        } finally {
+            setIsSyncingLeads(false);
+        }
     };
 
     const getSettingForType = (cronType: CronType) => {
@@ -217,6 +237,34 @@ export function CronSettingsPage() {
                     );
                 })}
             </div>
+
+            {/* Manual Actions Section */}
+            <FloatingCard>
+                <FloatingCardHeader>
+                    <FloatingCardTitle className="text-lg flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-yellow-500" />
+                        Thao tác thủ công
+                    </FloatingCardTitle>
+                </FloatingCardHeader>
+                <FloatingCardContent className="flex flex-wrap gap-4">
+                    <div className="flex flex-col gap-2 p-4 border rounded-xl bg-muted/20 border-primary/20 flex-1 min-w-[300px]">
+                        <h4 className="font-medium flex items-center gap-2">
+                            <RefreshCw className={`h-4 w-4 ${isSyncingLeads ? 'animate-spin' : ''}`} />
+                            Crawl Leads & Messages
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                            Kích hoạt quét toàn bộ tin nhắn mới trên tất cả các trang Fanpage đã kết nối.
+                        </p>
+                        <Button
+                            className="mt-2 w-fit"
+                            onClick={handleManualCrawlLeads}
+                            disabled={isSyncingLeads}
+                        >
+                            {isSyncingLeads ? 'Đang quét...' : 'Bắt đầu Crawl ngay'}
+                        </Button>
+                    </div>
+                </FloatingCardContent>
+            </FloatingCard>
 
             {/* User Bot Settings */}
             <UserBotSettingsSection />

@@ -62,9 +62,9 @@ export function RegionBreakdownList({ data, loading }: Props) {
                                         <div className="text-right z-10 space-y-0.5">
                                             <div className="font-bold text-emerald-400 font-mono">{formatMoney(item.spend)}</div>
                                             <div className="text-xs text-muted-foreground flex gap-2 justify-end">
-                                                <span>{item.results.toLocaleString()} results</span>
+                                                <span>{(item.results ?? 0).toLocaleString()} results</span>
                                                 <span className="text-muted-foreground/50">|</span>
-                                                <span>{item.impressions.toLocaleString()} imp</span>
+                                                <span>{(item.impressions ?? 0).toLocaleString()} imp</span>
                                             </div>
                                         </div>
                                     </div>

@@ -12,7 +12,8 @@ import {
   MessageSquare,
   DollarSign,
   Loader2,
-  Send
+  Send,
+  RefreshCw
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -104,16 +105,37 @@ export function LeadInsights() {
   // Mutations
   const syncLeadsMutation = useMutation({
     mutationFn: async () => {
-      toast.info('Đang đồng bộ tin nhắn mới...');
-      await leadsApi.syncLeads(0); // Trigger global sync
+      const result = await leadsApi.syncLeadsFromFacebook();
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success('Đồng bộ thành công');
+      queryClient.invalidateQueries({ queryKey: ['lead-stats'] });
+      
+      if (data.success) {
+        const { pagesSynced, leadsSynced, messagesSynced, errors } = data.result || {};
+        if (leadsSynced > 0 || messagesSynced > 0) {
+          toast.success(`Đồng bộ thành công`, {
+            description: `${leadsSynced} leads, ${messagesSynced} tin nhắn từ ${pagesSynced} trang`
+          });
+        } else if (errors && errors.length > 0) {
+          toast.warning('Đồng bộ hoàn tất nhưng có lỗi', {
+            description: errors[0]
+          });
+        } else {
+          toast.info('Không có dữ liệu mới', {
+            description: `Đã quét ${pagesSynced} trang, không tìm thấy lead mới`
+          });
+        }
+      } else {
+        toast.error('Đồng bộ thất bại', {
+          description: data.error || 'Lỗi không xác định'
+        });
+      }
     },
     onError: (error: any) => {
       console.error("Sync failed", error);
-      toast.error('Đồng bộ thất bại: ' + (error.response?.data?.error || error.message));
+      toast.error('Đồng bộ thất bại: ' + (error.message || 'Lỗi kết nối'));
     }
   });
 
@@ -156,9 +178,14 @@ export function LeadInsights() {
           variant="outline"
           onClick={() => syncLeadsMutation.mutate()}
           disabled={syncLeadsMutation.isPending}
+          className="gap-2"
         >
-          {syncLeadsMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-          Đồng bộ tin nhắn
+          {syncLeadsMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {syncLeadsMutation.isPending ? 'Đang đồng bộ...' : 'Sync Lead từ Facebook'}
         </Button>
       </PageHeader>
 
@@ -196,9 +223,9 @@ export function LeadInsights() {
               <Target className="h-5 w-5 text-amber-400" />
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">ROAS / ACOS</p>
-              <p className="text-xl font-bold">{stats.roas}x</p>
-              <p className="text-[10px] text-amber-400">ACOS {stats.revenue > 0 ? ((stats.spendTotal / stats.revenue) * 100).toFixed(1) : 0}%</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">Ads/Revenue</p>
+              <p className="text-xl font-bold">{stats.revenue > 0 ? ((stats.spendTotal / stats.revenue) * 100).toFixed(1) : 0}%</p>
+              <p className="text-[10px] text-amber-400">ROAS {stats.revenue > 0 ? ((stats.revenue / stats.spendTotal) * 100).toFixed(0) : 0}%</p>
             </div>
           </div>
         </FloatingCard>

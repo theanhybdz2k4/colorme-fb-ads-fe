@@ -66,3 +66,20 @@ export function useDeleteAccount() {
         },
     });
 }
+
+export function useUpdateAccountToken() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, token }: { id: number; token: string }) =>
+            apiClient.post(`/accounts/identities/${id}/update-token`, { token }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['accounts'] });
+            toast.success('Cập nhật token thành công');
+        },
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { error?: string; message?: string } } };
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Không thể cập nhật token');
+        },
+    });
+}

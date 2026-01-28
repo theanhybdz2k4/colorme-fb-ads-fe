@@ -34,4 +34,9 @@ export const accountsApi = {
      */
     assignBranch: (accountId: number, branchId: number | null) =>
         apiClient.put(`/ad-accounts/${accountId}/branch`, { branchId }),
+    /**
+     * Update access token for an existing identity
+     */
+    updateToken: (identityId: number, token: string) =>
+        apiClient.post(`/accounts/identities/${identityId}/update-token`, { token }),
 };

@@ -21,6 +21,7 @@ export type CronType =
     | 'campaign'
     | 'creative'
     | 'ad_account'
+    | 'leads'
     | 'full';
 
 export interface CronSettingsResponse {
@@ -52,6 +53,7 @@ export const CRON_TYPES: { value: CronType; label: string; description: string }
     { value: 'adset', label: 'Ad Sets', description: 'Sync danh sách nhóm quảng cáo' },
     { value: 'campaign', label: 'Campaigns', description: 'Sync danh sách chiến dịch' },
     { value: 'creative', label: 'Creatives', description: 'Sync danh sách mẫu quảng cáo (hình ảnh, nội dung)' },
+    { value: 'leads', label: 'Leads', description: 'Sync danh sách leads và tin nhắn từ Facebook' },
     { value: 'ad_account', label: 'Ad Accounts', description: 'Sync thông tin tài khoản quảng cáo' },
     { value: 'full', label: 'Full Sync', description: 'Sync toàn bộ dữ liệu (entities + daily insights)' },
 ];

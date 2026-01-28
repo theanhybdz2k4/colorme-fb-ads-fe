@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAccounts, useAddAccount, useSyncAccount, useDeleteAccount } from '@/hooks/useAccounts';
+import { useAccounts, useAddAccount, useSyncAccount, useDeleteAccount, useUpdateAccountToken } from '@/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,7 @@ export function AccountsPage() {
     const addMutation = useAddAccount();
     const syncMutation = useSyncAccount();
     const deleteMutation = useDeleteAccount();
+    const updateTokenMutation = useUpdateAccountToken();
 
     const filteredData = useMemo(() => {
         if (activeTab === 'all') return data;
@@ -60,14 +61,20 @@ export function AccountsPage() {
         );
     };
 
-    const handleAddToken = (id: number) => {
-        // Placeholder logic for adding token to an existing identity
-        // In a real implementation, you would call an API endpoint here
-        toast.message(`Tính năng thêm token cho ID ${id} đang được phát triển`, {
-            description: `Token: ${tokenInput.slice(0, 10)}...`
-        });
-        setIsAddingToken(null);
-        setTokenInput('');
+    const handleUpdateToken = (id: number) => {
+        if (!tokenInput.trim()) {
+            toast.error('Vui lòng nhập token mới');
+            return;
+        }
+        updateTokenMutation.mutate(
+            { id, token: tokenInput },
+            {
+                onSuccess: () => {
+                    setIsAddingToken(null);
+                    setTokenInput('');
+                },
+            }
+        );
     };
 
     const getPlatformConfig = (code: string) => {
@@ -214,7 +221,9 @@ export function AccountsPage() {
                                                 />
                                                 <div className="flex justify-end gap-2">
                                                     <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setIsAddingToken(null); setTokenInput(''); }}>Hủy</Button>
-                                                    <Button size="sm" className="h-7 px-2" onClick={() => handleAddToken(account.id)}>Lưu</Button>
+                                                    <Button size="sm" className="h-7 px-2" onClick={() => handleUpdateToken(account.id)} disabled={updateTokenMutation.isPending}>
+                                                        {updateTokenMutation.isPending ? '...' : 'Lưu'}
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ) : (
