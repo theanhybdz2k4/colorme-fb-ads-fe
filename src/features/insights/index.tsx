@@ -93,13 +93,13 @@ export function InsightsPage() {
                     toast.error('Không có ad accounts nào active');
                     return;
                 }
-                
+
                 toast.info(`Đang sync daily insights cho ${activeAccounts.length} accounts...`);
                 await Promise.all(activeAccounts.map(acc => insightsApi.syncAccount(acc.id, dateStart, dateEnd)));
-                
+
                 toast.info(`Đang sync hourly insights cho ${activeAccounts.length} accounts...`);
                 await Promise.all(activeAccounts.map(acc => insightsApi.syncAccount(acc.id, dateStart, dateEnd, 'HOURLY')));
-                
+
                 toast.success('Đã hoàn tất sync Insights (Daily + Hourly)', {
                     description: `Đã sync ${activeAccounts.length} accounts`,
                 });

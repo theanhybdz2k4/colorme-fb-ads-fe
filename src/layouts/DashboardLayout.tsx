@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '@/features/auth';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,8 @@ import {
   ChevronLeft,
   LogOut,
   PieChart,
+  User,
+  Target,
 } from 'lucide-react';
 
 const navItems = [
@@ -38,6 +40,7 @@ const navItems = [
   { path: ROUTES.ADS, label: 'Ads', icon: FileText },
   { path: ROUTES.INSIGHTS, label: 'Insights', icon: BarChart3 },
   { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
+  { path: ROUTES.LEADS, label: 'Lead Insights', icon: Target },
   { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
   { path: ROUTES.SETTINGS, label: 'Cron Settings', icon: Clock },
 ];
@@ -199,28 +202,43 @@ function DashboardContent() {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full cursor-pointer">
                   <Avatar className="h-9 w-9 border border-border">
-                    <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    <AvatarImage src={user?.avatarUrl || ''} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-sm uppercase">
+                      {user?.name?.[0] || user?.email?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center gap-3 p-3">
-                  <Avatar className="h-10 w-10 border border-border">
-                    <AvatarFallback className="bg-muted text-muted-foreground">
-                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+              <DropdownMenuContent align="end" className="w-64 p-0">
+                <div className="flex items-center gap-3 p-4 bg-muted/20">
+                  <Avatar className="h-12 w-12 border border-border shadow-sm">
+                    <AvatarImage src={user?.avatarUrl || ''} />
+                    <AvatarFallback className="bg-muted text-muted-foreground uppercase">
+                      {user?.name?.[0] || user?.email?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col space-y-0.5">
-                    <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                  <div className="flex flex-col space-y-0.5 overflow-hidden">
+                    <p className="text-sm font-semibold truncate">{user?.name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem asChild>
+                  <Link to={ROUTES.PROFILE} className="cursor-pointer">
+                    <User className="h-4 w-4 mr-2" />
+                    Hồ sơ
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to={ROUTES.SETTINGS} className="cursor-pointer">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Cài đặt
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
                   <LogOut className="h-4 w-4 mr-2" />
                   Đăng xuất
                 </DropdownMenuItem>

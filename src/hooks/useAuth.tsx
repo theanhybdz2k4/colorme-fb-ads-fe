@@ -18,9 +18,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!token) return null;
             try {
                 const { data } = await authApi.getMe();
-                return data.result || data.data || data;
+                // Map backend snake_case to frontend camelCase
+                const rawUser = data.result || data.data || data;
+                if (!rawUser || typeof rawUser !== 'object') return null;
+                return {
+                    ...rawUser,
+                    avatarUrl: rawUser.avatar_url || rawUser.avatarUrl || null,
+                    geminiApiKey: rawUser.gemini_api_key || rawUser.geminiApiKey || null,
+                };
             } catch (err) {
-                // If it's a 401, apiClient handles refresh. If it fails there, we clear.
+                console.error('getMe error:', err);
                 return null;
             }
         },
@@ -35,9 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return data.result || data.data || data;
         },
         onSuccess: (data) => {
+            if (!data) return;
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
-            queryClient.setQueryData(['auth-me'], data.user);
+            const user = data.user ? {
+                ...data.user,
+                avatarUrl: data.user.avatar_url || data.user.avatarUrl || null,
+                geminiApiKey: data.user.gemini_api_key || data.user.geminiApiKey || null,
+            } : null;
+            queryClient.setQueryData(['auth-me'], user);
         }
     });
 
@@ -67,6 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         logout: () => logoutMutation.mutateAsync(),
         refreshUser: () => refetch(),
+        updateProfile: async (data: any) => {
+            const res = await authApi.updateProfile(data);
+            return res.data.result || res.data.data || res.data;
+        },
+        updatePassword: async (data: any) => {
+            const res = await authApi.updatePassword(data);
+            return res.data.result || res.data.data || res.data;
+        },
+        uploadAvatar: async (file: File) => {
+            const res = await authApi.uploadAvatar(file);
+            return res.data.result || res.data.data || res.data;
+        },
     }), [user, isFetchingUser, hasToken, loginMutation, logoutMutation, refetch]);
 
     return (

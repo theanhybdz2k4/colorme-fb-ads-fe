@@ -22,7 +22,7 @@ interface PerformanceChartProps {
   currency?: string;
 }
 
-type TimeRange = '3d' | '7d' | 'today' | 'yesterday';
+type TimeRange = '3d' | '7d' | '30d' | 'today' | 'yesterday';
 
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined) return '';
@@ -58,6 +58,8 @@ const getDateForRange = (range: TimeRange): { isHourly: boolean; date?: string; 
       return { isHourly: false, days: 3 };
     case '7d':
       return { isHourly: false, days: 7 };
+    case '30d':
+      return { isHourly: false, days: 30 };
     default:
       return { isHourly: false, days: 7 };
   }
@@ -127,6 +129,7 @@ export function PerformanceChart({ adId, dailyData, currency = 'VND' }: Performa
   const timeRangeButtons: { value: TimeRange; label: string }[] = [
     { value: '3d', label: '3 ngày' },
     { value: '7d', label: '7 ngày' },
+    { value: '30d', label: '30 ngày' },
     { value: 'today', label: 'Hôm nay (giờ)' },
     { value: 'yesterday', label: 'Hôm qua (giờ)' },
   ];

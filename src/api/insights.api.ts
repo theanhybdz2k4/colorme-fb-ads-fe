@@ -9,6 +9,7 @@ export const insightsApi = {
     branchId?: number;
     dateStart?: string;
     dateEnd?: string;
+    platformCode?: string;
   }) =>
     apiClient.get('/insights', { params }),
 

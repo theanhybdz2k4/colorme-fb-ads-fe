@@ -29,7 +29,7 @@ const failedQueue: Array<{
 const processQueue = (error: unknown, token: string | null = null) => {
   const queue = [...failedQueue];
   failedQueue.length = 0; // Clear array
-  
+
   queue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -62,13 +62,12 @@ apiClient.interceptors.response.use(
       // If not refreshing, start a new refresh
       isRefreshing = true;
       const refreshToken = localStorage.getItem('refreshToken');
-      
+
       if (!refreshToken) {
         isRefreshing = false;
         refreshPromise = null;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
         return Promise.reject(new Error('No refresh token available'));
       }
 
@@ -96,7 +95,6 @@ apiClient.interceptors.response.use(
           processQueue(refreshError, null);
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
           throw refreshError;
         } finally {
           isRefreshing = false;

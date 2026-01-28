@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Settings, Clock, Zap, Save, X, AlertTriangle, Plus, Check } from 'lucide-react';
 import { UserBotSettingsSection } from './sections/UserBotSettingsSection';
+import { AISettingsSection } from './sections/AISettingsSection';
 
 export function CronSettingsPage() {
     const { data, isLoading, error } = useCronSettings();
@@ -219,6 +220,9 @@ export function CronSettingsPage() {
 
             {/* User Bot Settings */}
             <UserBotSettingsSection />
+
+            {/* AI Settings */}
+            <AISettingsSection />
 
             {/* Edit Dialog */}
             <Dialog open={!!editingType} onOpenChange={() => setEditingType(null)}>

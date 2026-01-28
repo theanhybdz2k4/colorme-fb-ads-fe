@@ -11,3 +11,5 @@ export * from './insights.api';
 export * from './jobs.api';
 export * from './settings.api';
 export * from './branches.api';
+export * from './leads.api';
+export * from './users.api';

@@ -3,6 +3,8 @@ export interface User {
   email: string;
   name: string | null;
   isActive: boolean;
+  avatarUrl: string | null;
+  geminiApiKey: string | null;
   identities: {
     id: number;
     name: string | null;
@@ -21,6 +23,9 @@ export interface AuthContextType {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: { name?: string; email?: string; avatar_url?: string; gemini_api_key?: string }) => Promise<void>;
+  updatePassword: (data: any) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<{ url: string }>;
 }
 
 export interface LoginCredentials {

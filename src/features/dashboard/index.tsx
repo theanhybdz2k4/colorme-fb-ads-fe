@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth';
+import { usePlatform } from '@/contexts';
 import { adAccountsApi, campaignsApi } from '@/api';
 import { useInsights } from '@/hooks/useInsights';
 import {
@@ -11,6 +12,7 @@ import { DollarSign, Users, Target, MousePointer, CreditCard, Megaphone } from '
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const { activePlatform } = usePlatform();
 
   // Get date range for last 30 days as a default
   const today = new Date();
@@ -21,24 +23,35 @@ export function DashboardPage() {
   const dateStart = thirtyDaysAgo.toISOString().split('T')[0];
 
   const { data: adAccounts, isLoading: loadingAccounts } = useQuery({
-    queryKey: ['ad-accounts'],
+    queryKey: ['ad-accounts', activePlatform],
     queryFn: async () => {
       const { data } = await adAccountsApi.list();
-      return data.result || data.data || data || [];
+      const accounts = data.result || data.data || data || [];
+      // Filter by platform if not 'all'
+      if (activePlatform !== 'all') {
+        return accounts.filter((acc: any) => acc.platform?.code === activePlatform || (activePlatform === 'facebook' && !acc.platform));
+      }
+      return accounts;
     },
   });
 
   const { data: campaigns, isLoading: loadingCampaigns } = useQuery({
-    queryKey: ['campaigns'],
+    queryKey: ['campaigns', activePlatform],
     queryFn: async () => {
       const { data } = await campaignsApi.list();
-      return data.result || data.data || data || [];
+      const campaignList = data.result || data.data || data || [];
+      // Filter by platform if not 'all'
+      if (activePlatform !== 'all') {
+        return campaignList.filter((c: any) => c.account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !c.account?.platform));
+      }
+      return campaignList;
     },
   });
 
   const { data: insightsData, isLoading: loadingInsights } = useInsights({
     dateStart,
-    dateEnd
+    dateEnd,
+    platformCode: activePlatform
   });
 
   const isLoading = loadingAccounts || loadingCampaigns || loadingInsights;

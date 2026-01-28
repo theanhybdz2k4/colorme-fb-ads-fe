@@ -12,5 +12,7 @@ export const ROUTES = {
     BRANCH_ANALYTICS: '/branch-analytics',
     JOBS: '/jobs',
     SETTINGS: '/settings',
+    PROFILE: '/profile',
+    LEADS: '/lead-insights',
 };
 

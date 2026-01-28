@@ -42,6 +42,8 @@ export function AdAccountsPage() {
   const [editingBranchId, setEditingBranchId] = useState<number | null>(null);
   const [editingBranchName, setEditingBranchName] = useState('');
   const [editingBranchCode, setEditingBranchCode] = useState('');
+  const [newBranchKeywords, setNewBranchKeywords] = useState('');
+  const [editingBranchKeywords, setEditingBranchKeywords] = useState('');
   const [savingBranch, setSavingBranch] = useState(false);
   const [deletingBranchId, setDeletingBranchId] = useState<number | null>(null);
 
@@ -149,10 +151,12 @@ export function AdAccountsPage() {
       await branchesApi.create({
         name: newBranchName.trim(),
         code: newBranchCode.trim() || undefined,
-      });
+        autoMatchKeywords: newBranchKeywords.split(',').map(k => k.trim()).filter(Boolean),
+      } as any);
       toast.success('Đã tạo cơ sở mới');
       setNewBranchName('');
       setNewBranchCode('');
+      setNewBranchKeywords('');
       queryClient.invalidateQueries({ queryKey: ['branches'] });
     } catch {
       toast.error('Lỗi tạo cơ sở');
@@ -161,10 +165,11 @@ export function AdAccountsPage() {
     }
   };
 
-  const startEditBranch = (id: number, name: string, code: string | null | undefined) => {
+  const startEditBranch = (id: number, name: string, code: string | null | undefined, keywords: string[] | null | undefined) => {
     setEditingBranchId(id);
     setEditingBranchName(name);
     setEditingBranchCode(code || '');
+    setEditingBranchKeywords(keywords?.join(', ') || '');
   };
 
   const cancelEditBranch = () => {
@@ -185,7 +190,8 @@ export function AdAccountsPage() {
       await branchesApi.update(editingBranchId, {
         name: editingBranchName.trim(),
         code: editingBranchCode.trim() || null,
-      });
+        autoMatchKeywords: editingBranchKeywords.split(',').map(k => k.trim()).filter(Boolean),
+      } as any);
       toast.success('Đã cập nhật cơ sở');
       queryClient.invalidateQueries({ queryKey: ['branches'] });
       cancelEditBranch();
@@ -425,6 +431,16 @@ export function AdAccountsPage() {
                       onChange={(e) => setNewBranchCode(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branch-keywords">Từ khoá tự động (ngăn cách bởi dấu phẩy)</Label>
+                    <Input
+                      id="branch-keywords"
+                      placeholder="Ví dụ: HCM, CN1, Sài Gòn"
+                      value={newBranchKeywords}
+                      onChange={(e) => setNewBranchKeywords(e.target.value)}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Tài khoản mới sync sẽ tự gán vào cơ sở này nếu tên chứa từ khoá.</p>
+                  </div>
                   <Button onClick={handleCreateBranch} disabled={creatingBranch}>
                     {creatingBranch ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -460,6 +476,7 @@ export function AdAccountsPage() {
                           <TableHead className="text-xs font-medium text-muted-foreground uppercase">ID</TableHead>
                           <TableHead className="text-xs font-medium text-muted-foreground uppercase">Tên cơ sở</TableHead>
                           <TableHead className="text-xs font-medium text-muted-foreground uppercase">Mã</TableHead>
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase">Từ khoá Sync</TableHead>
                           <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Hành động</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -491,6 +508,18 @@ export function AdAccountsPage() {
                                   branch.code || '-'
                                 )}
                               </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {isEditing ? (
+                                  <Input
+                                    value={editingBranchKeywords}
+                                    onChange={(e) => setEditingBranchKeywords(e.target.value)}
+                                    className="h-8"
+                                    placeholder="Keywords..."
+                                  />
+                                ) : (
+                                  branch.autoMatchKeywords?.join(', ') || '-'
+                                )}
+                              </TableCell>
                               <TableCell className="text-right">
                                 {isEditing ? (
                                   <div className="flex items-center justify-end gap-2">
@@ -519,7 +548,7 @@ export function AdAccountsPage() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => startEditBranch(branch.id, branch.name, branch.code)}
+                                      onClick={() => startEditBranch(branch.id, branch.name, branch.code, branch.autoMatchKeywords)}
                                     >
                                       Sửa
                                     </Button>

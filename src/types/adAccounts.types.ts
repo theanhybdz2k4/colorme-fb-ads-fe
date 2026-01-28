@@ -2,6 +2,7 @@ export interface BranchSummary {
     id: number;
     name: string;
     code?: string | null;
+    autoMatchKeywords?: string[] | null;
 }
 
 export interface PlatformAccount {

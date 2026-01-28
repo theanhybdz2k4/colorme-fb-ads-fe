@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Image as ImageIcon, TrendingUp, Users, MousePointerClick, DollarSign, Target, Eye, RefreshCw } from 'lucide-react';
-import { getVietnamDateString } from '@/lib/utils';
+import { getVietnamDateString, getVietnamPastDateString } from '@/lib/utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -57,22 +57,31 @@ export function AdDetailPage() {
     if (!adId) return;
 
     setSyncingSection(section);
-    
+
     // Immediate feedback
     toast.info('Đã gửi yêu cầu sync...', {
       description: 'Dữ liệu sẽ được cập nhật trong vài phút. Vui lòng đợi.',
       duration: 5000,
     });
 
-    // Execute sync in background
-    const { dateStart, dateEnd } = getDateRangeToday();
-    
+    // Custom date range based on section
+    let range = getDateRangeToday();
+
+    // Nếu sync chart thì lấy 30 ngày
+    if (section === 'chart') {
+      const today = getVietnamDateString();
+      const thirtyDaysAgo = getVietnamPastDateString(30);
+      range = { dateStart: thirtyDaysAgo, dateEnd: today };
+    }
+
+    const { dateStart, dateEnd } = range;
+
     syncInsightsMutation.mutateAsync({ dateStart, dateEnd, breakdown: 'all' })
       .then((result) => {
         toast.success('Sync insights thành công!', {
           description: `Đã sync ${result || 0} insights. Dữ liệu đã được làm mới.`,
         });
-        
+
         // Refresh data
         refetchAnalytics();
         queryClient.invalidateQueries({ queryKey: ['ad-analytics', adId] });

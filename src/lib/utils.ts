@@ -27,6 +27,16 @@ export function getVietnamYesterdayString(): string {
 }
 
 /**
+ * Get date string for X days ago in Vietnam timezone (GMT+7)
+ */
+export function getVietnamPastDateString(days: number): string {
+  const now = new Date();
+  // Get Vietnam time by adding 7 hours to UTC, then subtract X days
+  const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000) - (days * 24 * 60 * 60 * 1000));
+  return vietnamTime.toISOString().split('T')[0];
+}
+
+/**
  * Get current hour in Vietnam timezone (0-23)
  */
 export function getVietnamHour(): number {

@@ -13,10 +13,11 @@ export function useBranches() {
         BranchSummary & { _count?: { adAccounts?: number } }
       >;
 
-      return list.map((b) => ({
+      return list.map((b: any) => ({
         id: b.id,
         name: b.name,
         code: b.code ?? null,
+        autoMatchKeywords: b.auto_match_keywords || [],
       })) as BranchSummary[];
     },
   });

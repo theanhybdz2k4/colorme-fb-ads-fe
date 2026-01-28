@@ -7,18 +7,20 @@ export interface UseInsightsParams {
     dateStart?: string;
     dateEnd?: string;
     branchId?: string;
+    platformCode?: string;
     enabled?: boolean;
 }
 
-export function useInsights({ accountId, dateStart, dateEnd, branchId, enabled = true }: UseInsightsParams) {
+export function useInsights({ accountId, dateStart, dateEnd, branchId, platformCode, enabled = true }: UseInsightsParams) {
     return useQuery({
-        queryKey: ['insights', accountId, dateStart, dateEnd, branchId],
+        queryKey: ['insights', accountId, dateStart, dateEnd, branchId, platformCode],
         queryFn: async () => {
             const { data } = await insightsApi.list({
                 accountId: accountId ? Number(accountId) : undefined,
                 branchId: branchId ? Number(branchId) : undefined,
                 dateStart,
-                dateEnd
+                dateEnd,
+                platformCode: platformCode !== 'all' ? platformCode : undefined
             });
             const result = data.result || data.data || data || [];
             if (Array.isArray(result)) return result;
@@ -27,3 +29,4 @@ export function useInsights({ accountId, dateStart, dateEnd, branchId, enabled =
         enabled: enabled && !!dateStart && !!dateEnd,
     });
 }
+

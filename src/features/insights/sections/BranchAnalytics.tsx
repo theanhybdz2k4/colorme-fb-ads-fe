@@ -104,15 +104,17 @@ export function BranchAnalytics() {
                 const spend = Number(b.totalSpend || 0);
                 const impressions = Number(b.totalImpressions || 0);
                 const clicks = Number(b.totalClicks || 0);
-                const messaging = Number(b.totalMessaging || 0);
+                const messagingTotal = Number(b.totalMessagingTotal || b.totalMessaging || 0);
+                const messagingNew = Number(b.totalMessagingNew || 0);
 
                 return {
                     ...b,
                     totalSpend: spend,
                     totalImpressions: impressions,
                     totalClicks: clicks,
-                    totalMessaging: messaging,
-                    costPerMessage: messaging > 0 ? spend / messaging : 0,
+                    totalMessagingTotal: messagingTotal,
+                    totalMessagingNew: messagingNew,
+                    costPerMessage: messagingNew > 0 ? spend / messagingNew : 0,
                     ctrPercent: impressions > 0 ? (clicks / impressions) * 100 : 0,
                     cpc: clicks > 0 ? spend / clicks : 0,
                     cpm: impressions > 0 ? (spend / (impressions / 1000)) : 0,
@@ -123,8 +125,9 @@ export function BranchAnalytics() {
 
     const totalSpend = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalSpend || 0), 0);
     const totalClicks = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalClicks || 0), 0);
-    const totalMessages = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalMessaging || 0), 0);
-    const avgCostPerMessage = totalMessages > 0 ? totalSpend / totalMessages : 0;
+    const totalMessagingTotal = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalMessagingTotal || 0), 0);
+    const totalMessagingNew = statsByBranch.reduce((sum: number, b: any) => sum + Number(b.totalMessagingNew || 0), 0);
+    const avgCostPerMessage = totalMessagingNew > 0 ? totalSpend / totalMessagingNew : 0;
     const avgCPC = totalClicks > 0 ? totalSpend / totalClicks : 0;
 
     if (isLoading) return <LoadingState text="Đang thống kê dữ liệu cơ sở..." />;
@@ -263,14 +266,91 @@ export function BranchAnalytics() {
                     <div className="space-y-1">
                         <p className="text-xs text-muted-foreground uppercase font-semibold">Tin nhắn mới</p>
                         <div className="flex items-baseline gap-2">
-                            <p className="text-2xl font-bold text-pink-400">{totalMessages.toLocaleString()}</p>
+                            <p className="text-2xl font-bold text-pink-400">{totalMessagingNew.toLocaleString()}</p>
                             <span className="text-xs text-muted-foreground">
-                                ({new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(avgCostPerMessage)}đ / tin)
+                                / {totalMessagingTotal.toLocaleString()} tổng
                             </span>
                         </div>
+                        <span className="text-xs text-muted-foreground">
+                            ({new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(avgCostPerMessage)}đ / tin)
+                        </span>
                     </div>
                 </FloatingCard>
             </div>
+
+            {/* DATA TABLE */}
+            <FloatingCard padding="none">
+                <FloatingCardHeader className="p-4 border-b border-border/30">
+                    <FloatingCardTitle className="text-sm font-medium flex items-center gap-2">
+                        <BarChart className="h-4 w-4 text-indigo-400" />
+                        Bảng thống kê chi tiết theo cơ sở
+                    </FloatingCardTitle>
+                </FloatingCardHeader>
+                <FloatingCardContent className="p-0">
+                    <div className="overflow-auto border-t border-border/10">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-border/30 hover:bg-transparent bg-muted/20">
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase py-4">Cơ sở</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí (VND)</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Hiển thị</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Click</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Tin nhắn mới</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí/Tin</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CTR</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPC</TableHead>
+                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPM</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {statsByBranch.map((row: any) => (
+                                    <TableRow key={row.id} className="border-border/30 hover:bg-muted/30 transition-colors">
+                                        <TableCell className="font-semibold text-foreground">
+                                            <div className="flex flex-col gap-1">
+                                                <span>{row.name}</span>
+                                                <div className="flex gap-1">
+                                                    {row.platforms?.map((p: any) => (
+                                                        <PlatformIcon key={p.code} platformCode={p.code} className="h-3 w-3" />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right text-orange-400 font-mono font-medium">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(row.totalSpend)}
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalImpressions.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalClicks.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono font-bold text-pink-400">{row.totalMessagingNew.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right font-mono text-foreground/80">
+                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.costPerMessage))}đ
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono font-medium text-emerald-400">
+                                            {row.ctrPercent.toFixed(2)}%
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-foreground/80">
+                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpc))}đ
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-muted-foreground">
+                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpm))}đ
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {statsByBranch.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={9} className="h-32">
+                                            <EmptyState
+                                                icon={<LayoutDashboard className="h-8 w-8 text-muted-foreground/30" />}
+                                                title="Không có dữ liệu"
+                                                description="Vui lòng kiểm tra lại khoảng thời gian hoặc sync dữ liệu mới"
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </FloatingCardContent>
+            </FloatingCard>
 
             {/* CHARTS ROW 1: Spend & CTR */}
             <div className="grid gap-6 lg:grid-cols-2">
@@ -344,79 +424,7 @@ export function BranchAnalytics() {
                 <RegionBreakdownList data={breakdowns.region} loading={isLoading} />
             </div>
 
-            {/* DATA TABLE */}
-            <FloatingCard padding="none">
-                <FloatingCardHeader className="p-4 border-b border-border/30">
-                    <FloatingCardTitle className="text-sm font-medium flex items-center gap-2">
-                        <BarChart className="h-4 w-4 text-indigo-400" />
-                        Bảng thống kê chi tiết theo cơ sở
-                    </FloatingCardTitle>
-                </FloatingCardHeader>
-                <FloatingCardContent className="p-0">
-                    <div className="overflow-auto border-t border-border/10">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-border/30 hover:bg-transparent bg-muted/20">
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase py-4">Cơ sở</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí (VND)</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Hiển thị</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Click</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Tin nhắn mới</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">Chi phí/Tin</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CTR</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPC</TableHead>
-                                    <TableHead className="text-xs font-bold text-muted-foreground uppercase text-right py-4">CPM</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {statsByBranch.map((row: any) => (
-                                    <TableRow key={row.id} className="border-border/30 hover:bg-muted/30 transition-colors">
-                                        <TableCell className="font-semibold text-foreground">
-                                            <div className="flex flex-col gap-1">
-                                                <span>{row.name}</span>
-                                                <div className="flex gap-1">
-                                                    {row.platforms?.map((p: any) => (
-                                                        <PlatformIcon key={p.code} platformCode={p.code} className="h-3 w-3" />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right text-orange-400 font-mono font-medium">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(row.totalSpend)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalImpressions.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground">{row.totalClicks.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono font-bold text-pink-400">{row.totalMessaging.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right font-mono text-foreground/80">
-                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.costPerMessage))}đ
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono font-medium text-emerald-400">
-                                            {row.ctrPercent.toFixed(2)}%
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-foreground/80">
-                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpc))}đ
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-muted-foreground">
-                                            {new Intl.NumberFormat('vi-VN').format(Math.round(row.cpm))}đ
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {statsByBranch.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={9} className="h-32">
-                                            <EmptyState
-                                                icon={<LayoutDashboard className="h-8 w-8 text-muted-foreground/30" />}
-                                                title="Không có dữ liệu"
-                                                description="Vui lòng kiểm tra lại khoảng thời gian hoặc sync dữ liệu mới"
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </FloatingCardContent>
-            </FloatingCard>
+            
         </div>
     );
 }

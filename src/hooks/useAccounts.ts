@@ -28,8 +28,8 @@ export function useAddAccount() {
             toast.success('Đã thêm tài khoản thành công');
         },
         onError: (error: unknown) => {
-            const err = error as { response?: { data?: { message?: string } } };
-            toast.error(err.response?.data?.message || 'Không thể thêm tài khoản');
+            const err = error as { response?: { data?: { error?: string; message?: string } } };
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Không thể thêm tài khoản');
         },
     });
 }
@@ -45,8 +45,8 @@ export function useSyncAccount() {
             toast.success(`Đã đồng bộ accounts cho ID #${id}`);
         },
         onError: (error: unknown) => {
-            const err = error as { response?: { data?: { message?: string } } };
-            toast.error(err.response?.data?.message || 'Không thể đồng bộ');
+            const err = error as { response?: { data?: { error?: string; message?: string } } };
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Không thể đồng bộ');
         },
     });
 }
@@ -61,8 +61,8 @@ export function useDeleteAccount() {
             toast.success('Đã xóa tài khoản');
         },
         onError: (error: unknown) => {
-            const err = error as { response?: { data?: { message?: string } } };
-            toast.error(err.response?.data?.message || 'Không thể xóa tài khoản');
+            const err = error as { response?: { data?: { error?: string; message?: string } } };
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Không thể xóa tài khoản');
         },
     });
 }
