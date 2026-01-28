@@ -156,4 +156,20 @@ export const userTelegramBotApi = {
         const { data } = await apiClient.post(`/telegram/bots/${botId}/add-subscriber`, dto);
         return data;
     },
+
+    /**
+     * Register webhook for a bot
+     */
+    registerWebhook: async (botId: number): Promise<{ success: boolean; message: string; url: string }> => {
+        const { data } = await apiClient.post(`/telegram/bots/${botId}/register-webhook`);
+        return data;
+    },
+
+    /**
+     * Get webhook info for a bot
+     */
+    getWebhookInfo: async (botId: number): Promise<{ success: boolean; result: any; isRegistered: boolean }> => {
+        const { data } = await apiClient.get(`/telegram/bots/${botId}/webhook-info`);
+        return data;
+    },
 };

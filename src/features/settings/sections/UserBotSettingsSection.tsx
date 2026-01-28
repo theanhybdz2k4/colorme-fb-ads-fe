@@ -6,7 +6,8 @@ import {
     useDeleteUserTelegramBot,
     useUpsertBotSettings,
     useTestBotMessage,
-    useMigrateSubscribers,
+    useRegisterWebhook,
+    useWebhookInfo,
 } from '@/hooks/useCronSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Bot, Plus, Trash2, Loader2, ExternalLink, Users, Clock, Save, Check, Send } from 'lucide-react';
+import { Bot, Plus, Trash2, Loader2, ExternalLink, Users, Clock, Save, Check, Send, Globe, AlertCircle } from 'lucide-react';
 import { HOURS } from '@/types/settings.types';
 
 export function UserBotSettingsSection() {
@@ -34,7 +35,7 @@ export function UserBotSettingsSection() {
     const deleteMutation = useDeleteUserTelegramBot();
     const upsertSettingsMutation = useUpsertBotSettings();
     const testMessageMutation = useTestBotMessage();
-    const migrateMutation = useMigrateSubscribers();
+    const registerWebhookMutation = useRegisterWebhook();
 
     const [showAddDialog, setShowAddDialog] = useState(false);
     const [editingBotId, setEditingBotId] = useState<number | null>(null);
@@ -132,7 +133,9 @@ export function UserBotSettingsSection() {
         }
     };
 
-    const handleTestMessage = async (botId: number) => {
+    const handleTestMessage = async (e: React.MouseEvent, botId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
         try {
             const result = await testMessageMutation.mutateAsync(botId);
             if (result.success) {
@@ -146,16 +149,18 @@ export function UserBotSettingsSection() {
         }
     };
 
-    const handleMigrateSubscribers = async (botId: number) => {
+    const handleRegisterWebhook = async (e: React.MouseEvent, botId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
         try {
-            const result = await migrateMutation.mutateAsync(botId);
+            const result = await registerWebhookMutation.mutateAsync(botId);
             if (result.success) {
-                toast.success(`Đã migrate ${result.migrated} subscribers${result.skipped > 0 ? `, bỏ qua ${result.skipped}` : ''}`);
+                toast.success('Đã đăng ký Webhook thành công!');
             } else {
-                toast.error('Không thể migrate subscribers');
+                toast.error(`Lỗi: ${result.message || 'Không thể đăng ký Webhook'}`);
             }
         } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || 'Lỗi khi migrate subscribers';
+            const errorMessage = err?.response?.data?.message || 'Lỗi khi đăng ký Webhook';
             toast.error(errorMessage);
         }
     };
@@ -217,30 +222,46 @@ export function UserBotSettingsSection() {
                                                 {bot.notificationSettings.enabled ? 'Enabled' : 'Disabled'}
                                             </Badge>
                                         )}
+                                        <WebhookStatusBadge botId={bot.id} />
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Button
+                                            type="button"
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => handleTestMessage(bot.id)}
+                                            onClick={(e) => handleTestMessage(e, bot.id)}
                                             disabled={testMessageMutation.isPending}
                                         >
                                             <Send className="h-4 w-4 mr-1" />
                                             Test
                                         </Button>
                                         <Button
+                                            type="button"
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => openSettingsDialog(bot.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                openSettingsDialog(bot.id);
+                                            }}
                                         >
                                             <Clock className="h-4 w-4 mr-1" />
-                                            Thiết lập giờ
                                         </Button>
+                                        <WebhookActionButton 
+                                            botId={bot.id} 
+                                            onRegister={(e) => handleRegisterWebhook(e, bot.id)}
+                                            isRegistering={registerWebhookMutation.isPending}
+                                        />
                                         <Button
+                                            type="button"
                                             size="sm"
                                             variant="ghost"
                                             className="text-destructive hover:text-destructive"
-                                            onClick={() => handleDelete(bot.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleDelete(bot.id);
+                                            }}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -285,28 +306,6 @@ export function UserBotSettingsSection() {
                                     </div>
                                 </div>
 
-                                {bot.activeSubscribers === 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleMigrateSubscribers(bot.id)}
-                                            disabled={migrateMutation.isPending}
-                                        >
-                                            {migrateMutation.isPending ? (
-                                                <>
-                                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                                    Đang migrate...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Users className="h-4 w-4 mr-1" />
-                                                    Migrate từ bảng cũ
-                                                </>
-                                            )}
-                                        </Button>
-                                    </div>
-                                )}
 
                                 <p className="text-xs text-muted-foreground">
                                     Chia sẻ link cho team để họ bấm /start → /subscribe
@@ -505,5 +504,68 @@ export function UserBotSettingsSection() {
                 </DialogContent>
             </Dialog>
         </>
+    );
+}
+
+function WebhookStatusBadge({ botId }: { botId: number }) {
+    const { data, isLoading } = useWebhookInfo(botId);
+
+    if (isLoading) return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />;
+
+    if (data?.isRegistered) {
+        return (
+            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] py-0 h-4">
+                <Check className="h-2 w-2 mr-1" /> Webhook OK
+            </Badge>
+        );
+    }
+
+    return (
+        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 text-[10px] py-0 h-4">
+            <AlertCircle className="h-2 w-2 mr-1" /> Webhook Chưa Đăng Ký
+        </Badge>
+    );
+}
+
+function WebhookActionButton({ botId, onRegister, isRegistering }: { botId: number, onRegister: (e: React.MouseEvent) => void, isRegistering: boolean }) {
+    const { data, isLoading } = useWebhookInfo(botId);
+
+    if (isLoading) return null;
+
+    if (!data?.isRegistered) {
+        return (
+            <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={onRegister}
+                disabled={isRegistering}
+                className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/30"
+            >
+                <Globe className="h-4 w-4 mr-1" />
+                Đăng ký Backend
+            </Button>
+        );
+    }
+
+    // If registered, show info button (or just hide the register button)
+    return (
+        <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="cursor-default opacity-70 bg-green-500/5 text-green-500 border-green-500/20"
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Webhook Details:', data.result);
+                toast.info(`Webhook URL: ${data.result?.url?.substring(0, 40)}...`, {
+                    description: `Pending updates: ${data.result?.pending_update_count}`
+                });
+            }}
+        >
+            <Globe className="h-4 w-4 mr-1" />
+            Webhook Info
+        </Button>
     );
 }

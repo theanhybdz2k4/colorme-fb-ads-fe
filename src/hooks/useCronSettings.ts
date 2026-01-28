@@ -192,3 +192,23 @@ export function useMigrateSubscribers() {
         },
     });
 }
+
+export function useRegisterWebhook() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (botId: number) => userTelegramBotApi.registerWebhook(botId),
+        onSuccess: (_, botId) => {
+            queryClient.invalidateQueries({ queryKey: ['telegram', 'bots', botId, 'webhook-info'] });
+            queryClient.invalidateQueries({ queryKey: ['telegram', 'bots'] });
+        },
+    });
+}
+
+export function useWebhookInfo(botId: number) {
+    return useQuery({
+        queryKey: ['telegram', 'bots', botId, 'webhook-info'],
+        queryFn: () => userTelegramBotApi.getWebhookInfo(botId),
+        enabled: !!botId,
+    });
+}
