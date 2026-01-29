@@ -248,7 +248,7 @@ function DashboardContent() {
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main>
           <Outlet />
         </main>
       </div>

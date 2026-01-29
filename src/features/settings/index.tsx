@@ -121,7 +121,7 @@ export function CronSettingsPage() {
     // Handle API error (e.g., migration not run yet)
     if (error) {
         return (
-            <div className="space-y-6 animate-float-up">
+            <div className="space-y-6 animate-float-up p-6">
                 <PageHeader
                     title="Cron Settings"
                     description="Cài đặt lịch sync dữ liệu tự động qua n8n"
@@ -142,7 +142,7 @@ export function CronSettingsPage() {
     }
 
     return (
-        <div className="space-y-6 animate-float-up">
+        <div className="space-y-6 animate-float-up p-6">
             <PageHeader
                 title="Cron Settings"
                 description="Cài đặt lịch sync dữ liệu tự động qua n8n"

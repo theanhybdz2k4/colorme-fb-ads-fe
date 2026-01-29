@@ -1,1 +1,10 @@
-export { LeadInsights as LeadsPage } from './sections/LeadInsights';
+import { LeadInsights } from './sections/LeadInsights';
+import { LeadProvider } from './context/LeadContext';
+
+export function LeadsPage() {
+  return (
+    <LeadProvider>
+      <LeadInsights />
+    </LeadProvider>
+  );
+}

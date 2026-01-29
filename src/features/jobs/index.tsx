@@ -11,7 +11,7 @@ import {
 
 export function JobsPage() {
   return (
-    <div className="space-y-6 animate-float-up">
+    <div className="space-y-6 animate-float-up p-6">
       {/* Header */}
       <PageHeader
         title="Jobs"

@@ -13,17 +13,38 @@ export const leadsApi = {
   getMessages: (leadId: string) =>
     apiClient.get(`/leads/${leadId}/messages`),
 
+  getPages: async () => {
+    const token = localStorage.getItem('accessToken');
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/leads/pages`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.json();
+  },
+
   assignUser: (leadId: string, userId: number) =>
     apiClient.post(`/leads/${leadId}/assign`, { userId }),
 
-  syncLeads: (accountId: number) =>
-    apiClient.post('/fb-sync-leads', { accountId }),
+  reply: (leadId: string, message: string) =>
+    fetch(`${SUPABASE_FUNCTIONS_URL}/fb-reply`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+      },
+      body: JSON.stringify({ leadId, message }),
+    }).then(r => r.json()),
 
-  // Direct call through NestJS proxy or Supabase Edge Function (using apiClient for Auth)
+  updateLead: (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean }) =>
+    apiClient.patch(`/leads/${leadId}`, data),
+
+  markAsRead: (leadId: string) =>
+    apiClient.patch(`/leads/${leadId}`, { is_read: true }),
+
   syncLeadsFromFacebook: async () => {
-    // We point to the same endpoint but through our apiClient to get the token automatically
-    // The apiClient baseURL is http://localhost:3000/api/v1
-    // The backend should proxy /fb-sync-leads to Supabase or we call it directly with headers
     const token = localStorage.getItem('accessToken');
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/fb-sync-leads`, {
       method: 'POST',

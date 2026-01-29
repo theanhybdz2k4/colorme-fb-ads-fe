@@ -152,7 +152,7 @@ export function BranchAnalytics() {
     };
 
     return (
-        <div className="space-y-6 animate-float-up pb-10">
+        <div className="space-y-6 animate-float-up pb-10 p-6">
             <PageHeader
                 title="Phân tích cơ sở"
                 description="Tổng quan hiệu suất quảng cáo gom theo chi nhánh. Tự động gom nhóm dựa trên tài khoản quảng cáo của cơ sở."

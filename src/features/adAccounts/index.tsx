@@ -230,7 +230,7 @@ export function AdAccountsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-float-up">
+    <div className="space-y-6 animate-float-up p-6">
       <PageHeader
         title="Ad Accounts"
         description="Quản lý tài khoản quảng cáo và cơ sở"
