@@ -49,6 +49,14 @@ export const cronSettingsApi = {
         const { data } = await apiClient.get('/fb-settings?estimate=true');
         return data.result || data;
     },
+
+    /**
+     * Trigger immediate sync for a cron type (calls fb-dispatch)
+     */
+    triggerSync: async (cronType: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+        const { data } = await apiClient.post('/fb-settings/trigger', { cronType });
+        return data;
+    },
 };
 
 // Legacy telegram API routes removed - use userTelegramBotApi instead

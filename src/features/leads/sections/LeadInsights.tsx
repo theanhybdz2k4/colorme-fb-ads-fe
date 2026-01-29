@@ -111,7 +111,7 @@ export function LeadInsights() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['lead-stats'] });
-      
+
       if (data.success) {
         const { pagesSynced, leadsSynced, messagesSynced, errors } = data.result || {};
         if (leadsSynced > 0 || messagesSynced > 0) {
@@ -301,9 +301,9 @@ export function LeadInsights() {
                       </div>
                       <div className="flex flex-wrap gap-1 mb-1.5">
                         {lead.platform_data?.labels?.map((label: any) => (
-                          <Badge 
-                            key={label.id} 
-                            variant="outline" 
+                          <Badge
+                            key={label.id}
+                            variant="outline"
                             className="text-[9px] px-1.5 h-4 bg-primary/10 border-primary/20 text-primary-foreground/90 font-medium flex gap-1"
                           >
                             {label.name === 'Mới' || label.name.toLowerCase().includes('mới') ? '✨ ' : ''}
@@ -374,9 +374,9 @@ export function LeadInsights() {
                     </p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {selectedLead.platform_data?.labels?.map((label: any) => (
-                        <Badge 
-                          key={label.id} 
-                          variant="secondary" 
+                        <Badge
+                          key={label.id}
+                          variant="secondary"
                           className="text-[10px] px-2 h-5 bg-primary/20 hover:bg-primary/30 text-white border-none flex gap-1"
                         >
                           {label.name === 'Mới' || label.name.toLowerCase().includes('mới') ? '✨ ' : ''}
@@ -406,12 +406,12 @@ export function LeadInsights() {
                       (() => {
                         let lastDate = "";
                         let lastSenderId = "";
-                        
+
                         return messagesData?.map((msg: any) => {
                           const msgDate = format(new Date(msg.sent_at), 'dd/MM/yyyy');
                           const showDateSeparator = msgDate !== lastDate;
                           lastDate = msgDate;
-                          
+
                           const isSameSender = msg.sender_id === lastSenderId && !showDateSeparator;
                           lastSenderId = msg.sender_id;
 
@@ -435,8 +435,7 @@ export function LeadInsights() {
                               <div
                                 className={`flex ${msg.is_from_customer ? 'justify-start' : 'justify-end'}`}
                               >
-                                <div className={`relative max-w-[80%] p-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all hover:brightness-110 ${
-                                  msg.is_from_customer
+                                <div className={`relative max-w-[80%] p-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all hover:brightness-110 ${msg.is_from_customer
                                     ? `bg-[#3e4042] text-white ${isSameSender ? 'rounded-tl-md mt-0.5' : 'rounded-bl-md mt-2'}`
                                     : `bg-[#0084ff] text-white ${isSameSender ? 'rounded-tr-md mt-0.5' : 'rounded-br-md mt-2'}`
                                   }`}>
@@ -447,9 +446,9 @@ export function LeadInsights() {
                                     </p>
                                   )}
                                   {isSameSender && (
-                                     <div className="absolute -right-10 bottom-1 opacity-0 hover:opacity-100 text-[8px] text-muted-foreground transition-opacity">
-                                       {format(new Date(msg.sent_at), 'HH:mm')}
-                                     </div>
+                                    <div className="absolute -right-10 bottom-1 opacity-0 hover:opacity-100 text-[8px] text-muted-foreground transition-opacity">
+                                      {format(new Date(msg.sent_at), 'HH:mm')}
+                                    </div>
                                   )}
                                 </div>
                               </div>
