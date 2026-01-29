@@ -64,7 +64,7 @@ export function ChatWindow() {
                             <Badge className="bg-emerald-500 rounded-full h-2 w-2 p-0 border-none" />
                         </div>
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            {selectedLead.platform_data?.fb_page_name} • {selectedLead.external_id}
+                            {selectedLead.platform_pages?.name || selectedLead.platform_data?.fb_page_name || selectedLead.fb_page_id || 'Unknown Page'} • {selectedLead.external_id}
                         </p>
                     </div>
                 </div>
@@ -94,7 +94,7 @@ export function ChatWindow() {
                                 )}
                                 {!isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}
 
-                                <div className="max-w-[85%] group relative">
+                                <div className="group relative">
                                     <div className={`px-4 py-2.5 rounded-2xl text-[13.5px] shadow-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${isSystem ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border/50 text-foreground rounded-bl-sm'}`}>
                                         {msg.message_content}
                                     </div>

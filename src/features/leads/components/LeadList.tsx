@@ -164,7 +164,7 @@ export function LeadList() {
                                     {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
                                     <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-blue-500/10 text-blue-600 border-none font-semibold flex items-center gap-1">
                                         <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                                        {lead.platform_data?.fb_page_name || 'Unknown Page'}
+                                        {lead.platform_pages?.name || lead.platform_data?.fb_page_name || lead.fb_page_id || 'Unknown Page'}
                                     </Badge>
                                 </div>
                             </div>
