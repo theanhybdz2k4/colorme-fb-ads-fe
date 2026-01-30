@@ -13,3 +13,4 @@ export * from './settings.api';
 export * from './branches.api';
 export * from './leads.api';
 export * from './users.api';
+export * from './pages.api';

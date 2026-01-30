@@ -6,8 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, RefreshCw, Search, Loader2 } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function LeadList() {
@@ -15,17 +14,10 @@ export function LeadList() {
         leads,
         selectedLeadId,
         setSelectedLeadId,
-        selectedAccountId,
-        setSelectedAccountId,
-        selectedPageId,
-        setSelectedPageId,
         searchQuery,
         setSearchQuery,
         activeFilter,
         setActiveFilter,
-        adAccounts,
-        availablePages,
-        pagesLoading,
         markAsRead
     } = useLeads();
 
@@ -52,7 +44,7 @@ export function LeadList() {
 
     return (
         <div className="w-[360px] flex flex-col border-r bg-muted/5 shrink-0 h-full">
-            <div className="p-3 space-y-3">
+            <div className="p-3 space-y-3 pb-0">
                 <div className="flex items-center justify-between">
                     <h2 className="font-bold text-lg flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-primary" />
@@ -104,30 +96,9 @@ export function LeadList() {
                         CỦA TÔI
                     </Button>
                 </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                    <Select value={selectedPageId} onValueChange={setSelectedPageId} disabled={pagesLoading}>
-                        <SelectTrigger className="h-8 text-[10px] bg-background">
-                            {pagesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue placeholder="Trang" />}
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả Trang</SelectItem>
-                            {availablePages.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                        <SelectTrigger className="h-8 text-[10px] bg-background">
-                            <SelectValue placeholder="Tài khoản" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả TKQC</SelectItem>
-                            {adAccounts.map((a: any) => <SelectItem key={a.id} value={a.id.toString()}>{a.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
             </div>
 
-            <Separator className="opacity-50" />
+            <Separator className="mt-3 opacity-50" />
 
             <ScrollArea className="flex-1">
                 <div className="divide-y divide-border/5">
@@ -157,15 +128,16 @@ export function LeadList() {
                                         })() : '--:--'}
                                     </span>
                                 </div>
-                                <p className={`text-[11px] line-clamp-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                                    {lead.platform_data?.snippet || '...'}
-                                </p>
-                                <div className="flex gap-1 mt-1.5 items-center flex-wrap">
-                                    {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
-                                    <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-blue-500/10 text-blue-600 border-none font-semibold flex items-center gap-1">
-                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                                        {lead.platform_pages?.name || lead.platform_data?.fb_page_name || lead.fb_page_id || 'Unknown Page'}
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold">
+                                        {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
                                     </Badge>
+                                    <p className={`text-[10px] line-clamp-1 flex-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                        {lead.platform_data?.snippet || '...'}
+                                    </p>
+                                </div>
+                                <div className="flex gap-1 items-center flex-wrap">
+                                    {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
                                 </div>
                             </div>
                             {!lead.is_read && (

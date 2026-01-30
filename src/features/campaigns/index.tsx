@@ -383,6 +383,16 @@ const AdRow = memo(function AdRowComponent({ ad, getStatusColor, onViewHourly }:
           </div>
 
           <div className="space-y-1.5">
+            {adDailyData.length > 0 && (
+              <div className="grid grid-cols-6 gap-2 text-[9px] font-bold text-muted-foreground/70 px-2 pb-1 border-b border-border/10 mb-1 uppercase tracking-wider">
+                <div>Ngày</div>
+                <div>Chi phí</div>
+                <div>Kết quả</div>
+                <div>Giá/KQ</div>
+                <div>CTR</div>
+                <div className="text-right">Thao tác</div>
+              </div>
+            )}
             {adDailyData.length === 0 && !adInsights.isLoading ? (
               <p className="text-[10px] text-muted-foreground italic text-center py-2">Chưa có dữ liệu chi tiết cho 7 ngày qua</p>
             ) : (

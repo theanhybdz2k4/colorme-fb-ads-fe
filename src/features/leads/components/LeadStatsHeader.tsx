@@ -1,24 +1,15 @@
 
 import { useLeads } from '../context/LeadContext';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { Button } from '@/components/ui/button';
 import { StatsGrid, StatsCard } from '@/components/custom/StatsCard';
 import {
     Users,
     Target,
     MessageSquare,
-    Loader2,
-    RefreshCw,
     DollarSign
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-interface LeadStatsHeaderProps {
-    showOnlyStats?: boolean;
-}
-
-export function LeadStatsHeader({ showOnlyStats = false }: LeadStatsHeaderProps) {
-    const { stats, syncLeads, isSyncing } = useLeads();
+export function LeadStatsHeader() {
+    const { stats } = useLeads();
 
     const formatCurrency = (val: number) => {
         if (val >= 1000000) return (val / 1000000).toFixed(1) + 'tr';
@@ -27,27 +18,7 @@ export function LeadStatsHeader({ showOnlyStats = false }: LeadStatsHeaderProps)
     };
 
     return (
-        <div className={cn(
-            "space-y-6 shrink-0 z-20",
-            !showOnlyStats && "p-6 pb-0 bg-background/50 backdrop-blur-md"
-        )}>
-            {!showOnlyStats && (
-                <div className="flex items-start justify-between">
-                    <PageHeader
-                        title="Lead Insights"
-                        description="Quản lý khách hàng tiềm năng và phân bổ nhân sự xử lý tin nhắn."
-                    />
-                    <Button
-                        onClick={syncLeads}
-                        disabled={isSyncing}
-                        className="rounded-xl font-bold gap-2 animate-shimmer"
-                    >
-                        {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                        Sync Lead từ Facebook
-                    </Button>
-                </div>
-            )}
-
+        <div className="space-y-6 shrink-0 z-20">
             <StatsGrid columns={4}>
                 <StatsCard
                     title="ADS SPENT"

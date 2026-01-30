@@ -14,13 +14,16 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, CreditCard, Image } from 'lucide-react';
+import { Loader2, RefreshCw, CreditCard, Image, Key, Link as LinkIcon } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FilterBar } from '@/components/custom/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
 import { LoadingPage } from '@/components/custom/LoadingState';
 import { EmptyState } from '@/components/custom/EmptyState';
 import { PlatformIcon } from '@/components/custom/PlatformIcon';
+import { useQuery } from '@tanstack/react-query';
+import { pagesApi } from '@/api/pages.api';
+import type { FBPage } from '@/api/pages.api';
 
 import { getVietnamDateString } from '@/lib/utils';
 
@@ -46,6 +49,10 @@ export function AdAccountsPage() {
   const [editingBranchKeywords, setEditingBranchKeywords] = useState('');
   const [savingBranch, setSavingBranch] = useState(false);
   const [deletingBranchId, setDeletingBranchId] = useState<number | null>(null);
+  const [syncingPages, setSyncingPages] = useState(false);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [newPageToken, setNewPageToken] = useState('');
+  const [updatingPageToken, setUpdatingPageToken] = useState(false);
 
 
   const { data: branches } = useBranches();
@@ -223,6 +230,41 @@ export function AdAccountsPage() {
     }
   };
 
+  const { data: pages, isLoading: isLoadingPages } = useQuery({
+    queryKey: ['fb-pages'],
+    queryFn: () => pagesApi.getPages(),
+    enabled: activePlatform === 'facebook' || activePlatform === 'all',
+  });
+
+  const handleSyncPages = async () => {
+    setSyncingPages(true);
+    try {
+      await pagesApi.syncPages();
+      toast.success('Đã đồng bộ danh sách Facebook Pages');
+      queryClient.invalidateQueries({ queryKey: ['fb-pages'] });
+    } catch {
+      toast.error('Lỗi đồng bộ pages');
+    } finally {
+      setSyncingPages(false);
+    }
+  };
+
+  const handleUpdatePageToken = async (pageId: string) => {
+    if (!newPageToken.trim()) return;
+    setUpdatingPageToken(true);
+    try {
+      await pagesApi.updatePageToken(pageId, newPageToken.trim());
+      toast.success('Đã cập nhật token cho page');
+      setEditingPageId(null);
+      setNewPageToken('');
+      queryClient.invalidateQueries({ queryKey: ['fb-pages'] });
+    } catch (e: any) {
+      toast.error(e.message || 'Lỗi cập nhật token');
+    } finally {
+      setUpdatingPageToken(false);
+    }
+  };
+
 
 
   if (isLoading) {
@@ -251,6 +293,7 @@ export function AdAccountsPage() {
         <TabsList>
           <TabsTrigger value="ad-accounts">Ad Accounts</TabsTrigger>
           <TabsTrigger value="branches">Cơ sở</TabsTrigger>
+          <TabsTrigger value="pages">Facebook Pages</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ad-accounts" className="space-y-4">
@@ -575,6 +618,108 @@ export function AdAccountsPage() {
                   </div>
                 )}
               </div>
+            </FloatingCardContent>
+          </FloatingCard>
+        </TabsContent>
+
+        <TabsContent value="pages" className="space-y-4">
+          <FloatingCard>
+            <FloatingCardHeader className="flex flex-row items-center justify-between">
+              <FloatingCardTitle> Facebook Pages ({pages?.length || 0})</FloatingCardTitle>
+              <Button size="sm" onClick={handleSyncPages} disabled={syncingPages}>
+                {syncingPages ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Sync Pages from Auth
+              </Button>
+            </FloatingCardHeader>
+            <FloatingCardContent>
+              {isLoadingPages ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : !pages || pages.length === 0 ? (
+                <EmptyState
+                  icon={<LinkIcon className="h-8 w-8" />}
+                  title="Chưa có page nào"
+                  description="Nhấn nút 'Sync Pages' để lấy danh sách pages từ tài khoản Facebook của bạn."
+                  className="py-12"
+                />
+              ) : (
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/30 hover:bg-transparent">
+                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">Page ID</TableHead>
+                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">Tên Page</TableHead>
+                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">Token Webhook</TableHead>
+                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">Sync lần cuối</TableHead>
+                        <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">Hành động</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pages.map((page: FBPage) => {
+                        const isEditing = editingPageId === page.id;
+                        return (
+                          <TableRow key={page.id} className="border-border/30 hover:bg-muted/30 transition-colors">
+                            <TableCell className="font-mono text-xs text-muted-foreground">{page.id}</TableCell>
+                            <TableCell className="font-medium">{page.name}</TableCell>
+                            <TableCell>
+                              {isEditing ? (
+                                <Input
+                                  value={newPageToken}
+                                  onChange={(e) => setNewPageToken(e.target.value)}
+                                  placeholder="Nhập Page Access Token..."
+                                  className="h-8 text-xs"
+                                />
+                              ) : page.access_token ? (
+                                <Badge variant="outline" className="text-green-400 border-green-400/30 bg-green-400/5">
+                                  <Key className="h-3 w-3 mr-1" />
+                                  Đã cấu hình
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-yellow-400 border-yellow-400/30 bg-yellow-400/5">
+                                  Chưa cấu hình
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {page.last_synced_at ? new Date(page.last_synced_at).toLocaleString('vi-VN') : '-'}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {isEditing ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdatePageToken(page.id)}
+                                    disabled={updatingPageToken}
+                                  >
+                                    {updatingPageToken ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+                                    Lưu
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingPageId(null)}>
+                                    Hủy
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingPageId(page.id);
+                                    setNewPageToken(page.access_token || '');
+                                  }}
+                                  className="bg-muted/30 border-border/50 hover:bg-muted/50"
+                                >
+                                  Cấu hình Token
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </FloatingCardContent>
           </FloatingCard>
         </TabsContent>
