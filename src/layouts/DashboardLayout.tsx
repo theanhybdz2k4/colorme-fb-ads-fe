@@ -42,7 +42,6 @@ const navItems = [
   { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
   { path: ROUTES.LEADS, label: 'Lead Insights', icon: Target },
   { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
-  { path: ROUTES.SETTINGS, label: 'Cron Settings', icon: Clock },
 ];
 
 // Platform tab config with colors
