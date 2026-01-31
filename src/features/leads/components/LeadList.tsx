@@ -1,4 +1,3 @@
-
 import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, RefreshCw, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { useState } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export function LeadList() {
     const {
@@ -18,8 +19,11 @@ export function LeadList() {
         setSearchQuery,
         activeFilter,
         setActiveFilter,
-        markAsRead
+        syncHistoricLeads,
+        isSyncing
     } = useLeads();
+
+    const [hoveredLeadId, setHoveredLeadId] = useState<string | null>(null);
 
     const filteredLeads = leads.filter((l: any) => {
         const matchesSearch = !searchQuery ||
@@ -36,10 +40,6 @@ export function LeadList() {
 
     const handleSelectLead = (leadId: string) => {
         setSelectedLeadId(leadId);
-        const lead = leads.find((l: any) => l.id === leadId);
-        if (lead && !lead.is_read) {
-            markAsRead(leadId);
-        }
     };
 
     return (
@@ -50,8 +50,8 @@ export function LeadList() {
                         <MessageSquare className="h-5 w-5 text-primary" />
                         Messenger
                     </h2>
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedLeadId(null)}>
-                        <RefreshCw className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" onClick={syncHistoricLeads} disabled={isSyncing}>
+                        <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
                     </Button>
                 </div>
 
@@ -103,47 +103,90 @@ export function LeadList() {
             <ScrollArea className="flex-1">
                 <div className="divide-y divide-border/5">
                     {filteredLeads.map((lead: any) => (
-                        <div
-                            key={lead.id}
-                            onClick={() => handleSelectLead(lead.id)}
-                            className={`p-3 relative cursor-pointer hover:bg-muted/30 transition-all flex gap-3 border-l-4 ${selectedLeadId === lead.id ? 'bg-primary/5 border-primary shadow-sm' : 'border-transparent'}`}
+                        <Popover 
+                            key={lead.id} 
+                            open={hoveredLeadId === lead.id} 
+                            onOpenChange={(open) => !open && setHoveredLeadId(null)}
                         >
-                            <Avatar className="h-12 w-12 border-2 border-border/10 shrink-0">
-                                <AvatarImage src={lead.customer_avatar} />
-                                <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <div className="flex justify-between items-start mb-0.5">
-                                    <p className={`text-[13px] truncate pr-1 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>
-                                        {lead.customer_name}
-                                    </p>
-                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                        {lead.last_message_at ? (() => {
-                                            const msgDate = new Date(lead.last_message_at);
-                                            const today = new Date();
-                                            const isToday = msgDate.toDateString() === today.toDateString();
-                                            return isToday
-                                                ? format(msgDate, 'HH:mm')
-                                                : format(msgDate, 'dd/MM HH:mm');
-                                        })() : '--:--'}
-                                    </span>
+                            <PopoverTrigger asChild>
+                                <div
+                                    onClick={() => handleSelectLead(lead.id)}
+                                    onMouseEnter={() => lead.ai_analysis && setHoveredLeadId(lead.id)}
+                                    onMouseLeave={() => setHoveredLeadId(null)}
+                                    className={`p-3 relative cursor-pointer hover:bg-muted/30 transition-all flex gap-3 border-l-4 group/lead ${selectedLeadId === lead.id ? 'bg-primary/5 border-primary shadow-sm' : 'border-transparent'}`}
+                                >
+                                    <Avatar className="h-12 w-12 border-2 border-border/10 shrink-0">
+                                        <AvatarImage src={lead.customer_avatar} />
+                                        <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div className="flex justify-between items-start mb-0.5">
+                                            <p className={`text-[13px] truncate pr-1 flex items-center gap-1 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>
+                                                {lead.customer_name}
+                                                {lead.is_potential && lead.is_manual_potential && (
+                                                    <span className="text-amber-500 animate-pulse-slow">⭐</span>
+                                                )}
+                                            </p>
+                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                {lead.last_message_at ? (() => {
+                                                    const msgDate = new Date(lead.last_message_at);
+                                                    const today = new Date();
+                                                    const isToday = msgDate.toDateString() === today.toDateString();
+                                                    return isToday
+                                                        ? format(msgDate, 'HH:mm')
+                                                        : format(msgDate, 'dd/MM HH:mm');
+                                                })() : '--:--'}
+                                            </span>
+                                        </div>
+                                        {lead.ai_analysis ? (
+                                            <p className="text-[10px] line-clamp-2 text-muted-foreground leading-relaxed">
+                                                {lead.ai_analysis.split('\n').filter((line: string) => line.trim()).slice(0, 2).join(' • ')}
+                                            </p>
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 mb-1">
+                                                <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold">
+                                                    {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
+                                                </Badge>
+                                                <p className={`text-[10px] line-clamp-1 flex-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                                    {lead.platform_data?.snippet || 'Tin nhắn mới'}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-1 items-center flex-wrap">
+                                            {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
+                                        </div>
+                                    </div>
+                                    {!lead.is_read && (
+                                        <div className="absolute right-3 bottom-3 h-2.5 w-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
+                                    )}
                                 </div>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold">
-                                        {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
-                                    </Badge>
-                                    <p className={`text-[10px] line-clamp-1 flex-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                                        {lead.platform_data?.snippet || '...'}
-                                    </p>
-                                </div>
-                                <div className="flex gap-1 items-center flex-wrap">
-                                    {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
-                                </div>
-                            </div>
-                            {!lead.is_read && (
-                                <div className="absolute right-3 bottom-3 h-2.5 w-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
+                            </PopoverTrigger>
+                            {lead.ai_analysis && (
+                                <PopoverContent 
+                                    side="right" 
+                                    align="start" 
+                                    sideOffset={10}
+                                    className="p-0 border-none bg-transparent shadow-none w-auto pointer-events-none"
+                                >
+                                    <div className="w-[300px] animate-in fade-in zoom-in-95 slide-in-from-left-2 duration-200">
+                                        <div className="bg-background border shadow-2xl rounded-xl p-4 ml-2 relative before:content-[''] before:absolute before:top-6 before:-left-2 before:w-4 before:h-4 before:bg-background before:border-l before:border-b before:rotate-45">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <MessageSquare className="h-3 w-3 text-primary" />
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/80">AI Insight</span>
+                                                {lead.is_potential && (
+                                                    <Badge className="ml-auto bg-amber-500 border-none text-[8px] h-3.5 px-1 font-bold animate-pulse">⭐ TIỀM NĂNG</Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                                                {lead.ai_analysis}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </PopoverContent>
                             )}
-                        </div>
+                        </Popover>
                     ))}
                     {!filteredLeads.length && (
                         <div className="p-8 text-center text-muted-foreground opacity-50 flex flex-col items-center gap-2">

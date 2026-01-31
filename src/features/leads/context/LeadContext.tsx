@@ -26,11 +26,15 @@ interface LeadContextType {
     activeFilter: 'all' | 'unread' | 'mine';
     setActiveFilter: (filter: 'all' | 'unread' | 'mine') => void;
     syncLeads: () => Promise<void>;
+    syncHistoricLeads: () => Promise<void>;
     isSyncing: boolean;
     sendReply: (text: string) => Promise<void>;
     isSending: boolean;
     updateLead: (data: any) => void;
-    markAsRead: (id: string) => void;
+    reanalyzeLead: () => void;
+    isReanalyzing: boolean;
+    syncMessages: () => Promise<void>;
+    isSyncingMessages: boolean;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -49,12 +53,12 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     const { data: leads = [], isLoading: leadsLoading } = useQuery({
         queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId],
         queryFn: async () => {
-            const { data } = await leadsApi.list({
+            const res = await leadsApi.list({
                 branchId: activeBranchId,
                 accountId: selectedAccountId === "all" ? undefined : selectedAccountId,
                 pageId: selectedPageId === "all" ? undefined : selectedPageId
             });
-            return data.result || [];
+            return res.result || [];
         }
     });
 
@@ -62,12 +66,12 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     const { data: stats, isLoading: statsLoading } = useQuery({
         queryKey: ['leads-stats', activeBranchId, selectedAccountId, selectedPageId],
         queryFn: async () => {
-            const { data } = await leadsApi.getStats({
+            const res = await leadsApi.getStats({
                 branchId: activeBranchId,
                 accountId: selectedAccountId === "all" ? undefined : selectedAccountId,
                 pageId: selectedPageId === "all" ? undefined : selectedPageId
             } as any);
-            return data.result || {};
+            return res.data?.result || res.result || {};
         }
     });
 
@@ -75,8 +79,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     const { data: adAccounts = [] } = useQuery({
         queryKey: ['ad-accounts-list'],
         queryFn: async () => {
-            const { data } = await adAccountsApi.list({ branchId: activeBranchId });
-            return data || [];
+            const res = await adAccountsApi.list({ branchId: activeBranchId });
+            return res || [];
         }
     });
 
@@ -95,8 +99,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         queryKey: ['messages', selectedLeadId],
         queryFn: async () => {
             if (!selectedLeadId) return [];
-            const { data } = await leadsApi.getMessages(selectedLeadId);
-            return data.result || [];
+            const res = await leadsApi.getMessages(selectedLeadId);
+            return res.result || [];
         },
         enabled: !!selectedLeadId
     });
@@ -122,12 +126,13 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
 
     // Mutations
     const syncMutation = useMutation({
-        mutationFn: () => leadsApi.syncLeadsFromFacebook(),
+        mutationFn: (options?: any) => leadsApi.syncLeadsFromFacebook(options),
         onSuccess: (data) => {
             if (data.success) {
                 toast.success(`Đã đồng bộ ${data.result.leadsSynced} khách hàng mới!`);
                 queryClient.invalidateQueries({ queryKey: ['leads'] });
                 queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
+                queryClient.invalidateQueries({ queryKey: ['messages'] });
             } else {
                 toast.error("Đồng bộ thất bại: " + data.error);
             }
@@ -153,10 +158,29 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         }
     });
 
-    const markReadMutation = useMutation({
-        mutationFn: (id: string) => leadsApi.markAsRead(id),
+    const reanalyzeMutation = useMutation({
+        mutationFn: () => leadsApi.reanalyzeLead(selectedLeadId!),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['leads'] });
+            toast.success("Đã yêu cầu AI phân tích lại hội thoại");
+        }
+    });
+
+    const syncMessagesMutation = useMutation({
+        mutationFn: () => leadsApi.syncMessages(selectedLeadId!),
+        onSuccess: (data) => {
+            if (data.success) {
+                queryClient.invalidateQueries({ queryKey: ['messages', selectedLeadId] });
+                // Also invalidate leads to update sorting/last_message_at
+                queryClient.invalidateQueries({ queryKey: ['leads'] });
+                
+                toast.success(`Đã đồng bộ ${data.count} tin nhắn mới`);
+            } else {
+                toast.error("Đồng bộ thất bại: " + data.error);
+            }
+        },
+        onError: (e: any) => {
+            toast.error("Đồng bộ thất bại: " + (e.response?.data?.error || e.message));
         }
     });
 
@@ -182,10 +206,14 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         setActiveFilter,
         syncLeads: async () => { await syncMutation.mutateAsync(); },
         isSyncing: syncMutation.isPending,
+        syncHistoricLeads: async () => { await syncMutation.mutateAsync({ force_historic: true } as any); },
         sendReply: async (text: string) => { await replyMutation.mutateAsync(text); },
         isSending: replyMutation.isPending,
         updateLead: (data: any) => updateLeadMutation.mutate(data),
-        markAsRead: (id: string) => markReadMutation.mutate(id)
+        reanalyzeLead: () => reanalyzeMutation.mutate(),
+        isReanalyzing: reanalyzeMutation.isPending,
+        syncMessages: async () => { await syncMessagesMutation.mutateAsync(); },
+        isSyncingMessages: syncMessagesMutation.isPending,
     };
 
     return <LeadContext.Provider value={value}>{children}</LeadContext.Provider>;

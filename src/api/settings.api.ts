@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { CronSettingsResponse, EstimatedApiCalls, UpsertCronSettingDto, CronSetting } from '@/types/settings.types';
+import type { CronSettingsResponse, EstimatedApiCalls, UpsertCronSettingDto, CronSetting, CrawlerCookieStatus } from '@/types/settings.types';
 
 export const cronSettingsApi = {
     /**
@@ -55,6 +55,22 @@ export const cronSettingsApi = {
      */
     triggerSync: async (cronType: string): Promise<{ success: boolean; data?: any; error?: string }> => {
         const { data } = await apiClient.post('/fb-settings/trigger', { cronType });
+        return data;
+    },
+
+    /**
+     * Get current crawler cookie status
+     */
+    getCookieStatus: async (): Promise<CrawlerCookieStatus> => {
+        const { data } = await apiClient.get('/fb-settings/cookie');
+        return data.result || data;
+    },
+
+    /**
+     * Update crawler cookie
+     */
+    updateCookie: async (cookie: string): Promise<{ success: boolean; result?: any; error?: string }> => {
+        const { data } = await apiClient.post('/fb-settings/cookie', { cookie });
         return data;
     },
 };

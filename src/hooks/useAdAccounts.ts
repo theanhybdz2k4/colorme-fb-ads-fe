@@ -6,8 +6,9 @@ export function useAdAccounts(filters?: { accountStatus?: string; search?: strin
   return useQuery({
     queryKey: ['ad-accounts', filters],
     queryFn: async () => {
-      const { data } = await adAccountsApi.list(filters);
-      const result = data.result || data.data || data || [];
+      const response = await adAccountsApi.list(filters);
+      const data = response.data;
+      const result = data?.result || data?.data || data || [];
       if (Array.isArray(result)) return result;
       return (result.data || []) as AdAccount[];
     },

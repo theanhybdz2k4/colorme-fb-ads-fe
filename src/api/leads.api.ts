@@ -3,34 +3,49 @@ import { apiClient } from '@/lib/apiClient';
 
 
 export const leadsApi = {
-  list: (params?: { date?: string; branchId?: string; accountId?: string; pageId?: string }) =>
-    apiClient.get('/leads', { params }),
+  list: async (params?: { date?: string; branchId?: string; accountId?: string; pageId?: string }) => {
+    const { data } = await apiClient.get('/leads', { params });
+    return data;
+  },
 
-  getStats: (params?: { branchId?: string; dateStart?: string; dateEnd?: string }) =>
-    apiClient.get('/leads/stats', { params }),
+  getStats: async (params?: { branchId?: string; dateStart?: string; dateEnd?: string }) => {
+    const { data } = await apiClient.get('/leads/stats', { params });
+    return data;
+  },
 
-  getMessages: (leadId: string) =>
-    apiClient.get(`/leads/${leadId}/messages`),
+  getMessages: async (leadId: string) => {
+    const { data } = await apiClient.get(`/leads/${leadId}/messages`);
+    return data;
+  },
 
   getPages: async () => {
     const { data } = await apiClient.get('/leads/pages');
     return data;
   },
 
-  assignUser: (leadId: string, userId: number) =>
-    apiClient.post(`/leads/${leadId}/assign`, { userId }),
+  reply: async (leadId: string, message: string) => {
+    const { data } = await apiClient.post('/fb-reply', { leadId, message });
+    return data;
+  },
 
-  reply: (leadId: string, message: string) =>
-    apiClient.post('/fb-reply', { leadId, message }),
+  updateLead: async (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean; is_manual_potential?: boolean }) => {
+    const { data: responseData } = await apiClient.patch(`/leads/${leadId}`, data);
+    return responseData;
+  },
 
-  updateLead: (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean }) =>
-    apiClient.patch(`/leads/${leadId}`, data),
+  reanalyzeLead: async (leadId: string) => {
+    const { data } = await apiClient.patch(`/leads/${leadId}`, { reanalyze: true });
+    return data;
+  },
 
-  markAsRead: (leadId: string) =>
-    apiClient.patch(`/leads/${leadId}`, { is_read: true }),
+  syncMessages: async (leadId: string) => {
+    const { data } = await apiClient.post(`/leads/${leadId}/sync_messages`);
+    return data;
+  },
 
-  syncLeadsFromFacebook: async () => {
-    const { data } = await apiClient.post('/fb-sync-leads', {});
+
+  syncLeadsFromFacebook: async (options?: { force_historic?: boolean }) => {
+    const { data } = await apiClient.post('/fb-sync-leads', options || {});
     return data;
   },
 };

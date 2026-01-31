@@ -6,13 +6,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Info, Phone, StickyNote, Tag, Target, ExternalLink, RefreshCw } from 'lucide-react';
+import { Info, Phone, StickyNote, Tag, Target, ExternalLink, RefreshCw, Star, Brain, Sparkles } from 'lucide-react';
 
 export function LeadDetails() {
     const {
         leads,
         selectedLeadId,
-        updateLead
+        updateLead,
+        reanalyzeLead,
+        isReanalyzing
     } = useLeads();
 
     const selectedLead = leads?.find((l: any) => l.id === selectedLeadId);
@@ -33,8 +35,22 @@ export function LeadDetails() {
                             <AvatarImage src={selectedLead.customer_avatar} />
                             <AvatarFallback>{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <h4 className="font-black text-lg">{selectedLead.customer_name}</h4>
+                        <h4 className="font-black text-lg flex items-center justify-center gap-1">
+                            {selectedLead.customer_name}
+                            {selectedLead.is_potential && selectedLead.is_manual_potential && (
+                                <span className="text-amber-500 text-base">⭐</span>
+                            )}
+                        </h4>
                         <p className="text-xs text-muted-foreground font-medium select-all">PSID: {selectedLead.external_id}</p>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className={`mt-2 h-7 px-3 text-[10px] uppercase font-black tracking-wider gap-2 rounded-full border shadow-sm transition-all ${selectedLead.is_manual_potential ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100 hover:text-amber-700' : 'text-muted-foreground border-transparent hover:bg-muted/50'}`}
+                            onClick={() => updateLead({ is_manual_potential: !selectedLead.is_manual_potential })}
+                        >
+                            <Star className={`h-3 w-3 ${selectedLead.is_manual_potential ? 'fill-amber-600' : ''}`} />
+                            {selectedLead.is_manual_potential ? 'Đã đánh giá Tiềm năng' : 'Đánh giá tiềm năng'}
+                        </Button>
                     </div>
 
                     <div className="space-y-4">
@@ -103,10 +119,51 @@ export function LeadDetails() {
                             </div>
                         </div>
 
-                        <div className="p-3 space-y-2 rounded-xl border border-dashed border-muted-foreground/20 opacity-60">
-                            <p className="text-[10px] font-bold text-center">ORDER HISTORY (Coming Soon)</p>
-                            <div className="h-8 bg-muted/10 rounded"></div>
+                        <Separator />
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
+                                    <Brain className="h-3 w-3" /> Phân tích AI
+                                </label>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-[9px] font-bold gap-1 text-primary hover:bg-primary/10"
+                                    onClick={() => reanalyzeLead()}
+                                    disabled={isReanalyzing}
+                                >
+                                    <Sparkles className={`h-2.5 w-2.5 ${isReanalyzing ? 'animate-spin' : ''}`} />
+                                    {isReanalyzing ? 'Đang phân tích...' : 'Phân tích lại'}
+                                </Button>
+                            </div>
+                            
+                            {selectedLead.ai_analysis ? (
+                                <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
+                                    <div className="text-[11px] font-medium leading-relaxed whitespace-pre-wrap text-foreground/80">
+                                        {selectedLead.ai_analysis.startsWith('Đánh giá') 
+                                            ? selectedLead.ai_analysis.split('\n').slice(1).join('\n').trim() 
+                                            : selectedLead.ai_analysis}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl border border-dashed text-center space-y-2 bg-muted/5">
+                                    <p className="text-[10px] text-muted-foreground font-medium">Chưa có đánh giá AI cho hội thoại này</p>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="h-7 text-[10px] font-bold border-primary/20 hover:bg-primary/5"
+                                        onClick={() => reanalyzeLead()}
+                                        disabled={isReanalyzing}
+                                    >
+                                        Bắt đầu phân tích
+                                    </Button>
+                                </div>
+                            )}
                         </div>
+
+                        <Separator />
+
                     </div>
                 </div>
             </ScrollArea>

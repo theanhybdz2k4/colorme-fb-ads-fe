@@ -24,6 +24,7 @@ import { Settings, Clock, Zap, Save, X, AlertTriangle, Plus, Check } from 'lucid
 import { UserBotSettingsSection } from './sections/UserBotSettingsSection';
 import { AISettingsSection } from './sections/AISettingsSection';
 import { leadsApi } from '@/api/leads.api';
+import { cronSettingsApi } from '@/api/settings.api';
 import { RefreshCw } from 'lucide-react';
 
 export function CronSettingsPage() {
@@ -37,6 +38,7 @@ export function CronSettingsPage() {
     const [selectedHours, setSelectedHours] = useState<number[]>([]);
     const [enabled, setEnabled] = useState(true);
     const [isSyncingLeads, setIsSyncingLeads] = useState(false);
+    const [isSyncingCampaigns, setIsSyncingCampaigns] = useState(false);
 
     // Safe access to settings array
     const settings = data?.settings || [];
@@ -99,6 +101,23 @@ export function CronSettingsPage() {
             toast.error('Lỗi kết nối server', { id: toastId });
         } finally {
             setIsSyncingLeads(false);
+        }
+    };
+
+    const handleManualSyncCampaigns = async () => {
+        setIsSyncingCampaigns(true);
+        const toastId = toast.loading('Đang kích hoạt đồng bộ Campaigns...');
+        try {
+            const result = await cronSettingsApi.triggerSync('campaign');
+            if (result.success) {
+                toast.success('Đã gửi lệnh đồng bộ! Dữ liệu sẽ cập nhật trong vài giây.', { id: toastId });
+            } else {
+                toast.error(result.error || 'Lỗi khi kích hoạt sync', { id: toastId });
+            }
+        } catch (err: any) {
+            toast.error('Lỗi kết nối server', { id: toastId });
+        } finally {
+            setIsSyncingCampaigns(false);
         }
     };
 
@@ -256,11 +275,28 @@ export function CronSettingsPage() {
                             Kích hoạt quét toàn bộ tin nhắn mới trên tất cả các trang Fanpage đã kết nối.
                         </p>
                         <Button
-                            className="mt-2 w-fit"
+                            className="mt-auto w-fit"
                             onClick={handleManualCrawlLeads}
                             disabled={isSyncingLeads}
                         >
                             {isSyncingLeads ? 'Đang quét...' : 'Bắt đầu Crawl ngay'}
+                        </Button>
+                    </div>
+
+                    <div className="flex flex-col gap-2 p-4 border rounded-xl bg-blue-500/10 border-blue-500/20 flex-1 min-w-[300px]">
+                        <h4 className="font-medium flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                            <RefreshCw className={`h-4 w-4 ${isSyncingCampaigns ? 'animate-spin' : ''}`} />
+                            Sync Campaigns & Ads
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                            Đồng bộ lại toàn bộ Chiến dịch, Nhóm QC và Quảng cáo từ Facebook (Bỏ qua lịch sync).
+                        </p>
+                        <Button
+                            className="mt-auto w-fit bg-blue-600 hover:bg-blue-700"
+                            onClick={handleManualSyncCampaigns}
+                            disabled={isSyncingCampaigns}
+                        >
+                            {isSyncingCampaigns ? 'Đang đồng bộ...' : 'Sync Data ngay'}
                         </Button>
                     </div>
                 </FloatingCardContent>

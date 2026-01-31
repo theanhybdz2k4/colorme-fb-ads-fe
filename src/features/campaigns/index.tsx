@@ -228,7 +228,7 @@ function CampaignRow({
                     {campaign.objective}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    Synced: {new Date(campaign.syncedAt).toLocaleString()}
+                    Synced: {new Date(campaign.account?.syncedAt || campaign.syncedAt).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -296,9 +296,14 @@ const AdSetRow = memo(function AdSetRowComponent({ adSet, isExpanded, onToggle, 
         <div className="flex-1">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-semibold text-sm">{adSet.name}</h4>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(adSet.status)}`}>
-              {adSet.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(adSet.status)}`}>
+                {adSet.status}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Synced: {new Date(adSet.campaign?.account?.syncedAt || adSet.syncedAt).toLocaleString()}
+              </span>
+            </div>
           </div>
           <MetricsDisplay stats={adSet.stats} compact />
         </div>
@@ -364,9 +369,14 @@ const AdRow = memo(function AdRowComponent({ ad, getStatusColor, onViewHourly }:
                 <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">{ad.status}</p>
               </div>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getStatusColor(ad.status)}`}>
-              {ad.status}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getStatusColor(ad.status)}`}>
+                {ad.status}
+              </span>
+              <span className="text-[9px] text-muted-foreground">
+                {new Date(ad.account?.syncedAt || ad.syncedAt).toLocaleString()}
+              </span>
+            </div>
           </div>
           <MetricsDisplay stats={ad.stats} compact />
         </div>

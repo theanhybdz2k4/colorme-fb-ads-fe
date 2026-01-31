@@ -4,7 +4,7 @@ import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info } from 'lucide-react';
+import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function ChatWindow() {
@@ -14,7 +14,9 @@ export function ChatWindow() {
         messages,
         messagesLoading,
         sendReply,
-        isSending
+        isSending,
+        syncMessages,
+        isSyncingMessages
     } = useLeads();
 
     const [replyText, setReplyText] = useState("");
@@ -69,6 +71,16 @@ export function ChatWindow() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary"
+                        onClick={syncMessages}
+                        disabled={isSyncingMessages}
+                        title="Đồng bộ lại tin nhắn"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${isSyncingMessages ? 'animate-spin' : ''}`} />
+                    </Button>
                     <Button variant="ghost" size="icon" className="text-muted-foreground"><Phone className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-4 w-4" /></Button>
                 </div>
@@ -82,33 +94,129 @@ export function ChatWindow() {
                     messages.map((msg: any, i: number) => {
                         const isSystem = !msg.is_from_customer;
                         const nextMsg = messages[i + 1];
+                        const prevMsg = messages[i - 1];
                         const isLastInGroup = !nextMsg || nextMsg.is_from_customer !== msg.is_from_customer;
 
+                        // Date separator logic
+                        const msgDate = new Date(msg.sent_at);
+                        const prevMsgDate = prevMsg ? new Date(prevMsg.sent_at) : null;
+                        const showDateSeparator = !prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString();
+
+                        const getDateLabel = (date: Date) => {
+                            const today = new Date();
+                            const yesterday = new Date(today);
+                            yesterday.setDate(yesterday.getDate() - 1);
+
+                            if (date.toDateString() === today.toDateString()) return 'Hôm nay';
+                            if (date.toDateString() === yesterday.toDateString()) return 'Hôm qua';
+                            return format(date, 'dd/MM/yyyy');
+                        };
+
                         return (
-                            <div key={msg.id} className={`flex ${isSystem ? 'justify-end' : 'justify-start'}`}>
-                                {!isSystem && isLastInGroup && (
-                                    <Avatar className="h-7 w-7 mr-2 mt-auto shrink-0 border border-border/20">
-                                        <AvatarImage src={selectedLead.customer_avatar} />
-                                        <AvatarFallback className="text-[10px]">{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                )}
-                                {!isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}
-
-                                <div className="group relative">
-                                    <div className={`px-4 py-2.5 rounded-2xl text-[13.5px] shadow-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${isSystem ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border/50 text-foreground rounded-bl-sm'}`}>
-                                        {msg.message_content}
+                            <div key={msg.id}>
+                                {showDateSeparator && (
+                                    <div className="flex items-center gap-3 my-4">
+                                        <div className="flex-1 h-px bg-border/50" />
+                                        <span className="text-[11px] text-muted-foreground font-medium px-3 py-1 bg-muted/50 rounded-full">
+                                            {getDateLabel(msgDate)}
+                                        </span>
+                                        <div className="flex-1 h-px bg-border/50" />
                                     </div>
-                                    <p className={`text-[10px] mt-1 opacity-60 group-hover:opacity-100 transition-opacity ${isSystem ? 'text-right' : 'text-left'} text-muted-foreground`}>
-                                        {format(new Date(msg.sent_at), 'HH:mm')}
-                                    </p>
-                                </div>
-
-                                {isSystem && isLastInGroup && (
-                                    <Avatar className="h-7 w-7 ml-2 mt-auto shrink-0 border border-border/20">
-                                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">ME</AvatarFallback>
-                                    </Avatar>
                                 )}
-                                {isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}
+                                <div className={`flex ${isSystem ? 'justify-end' : 'justify-start'}`}>
+                                    {!isSystem && isLastInGroup && (
+                                        <Avatar className="h-7 w-7 mr-2 mt-auto shrink-0 border border-border/20">
+                                            <AvatarImage src={selectedLead.customer_avatar} />
+                                            <AvatarFallback className="text-[10px]">{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    {!isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}
+
+                                    <div className="group relative max-w-[70%]">
+                                        {/* 1. Stickers (No bubble) */}
+                                        {msg.sticker && (
+                                            <div className="mb-1">
+                                                <img
+                                                    src={msg.sticker}
+                                                    alt="Sticker"
+                                                    className="h-32 w-auto hover:opacity-90 transition-opacity cursor-pointer"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* 2. Attachments (Images/Videos/Files) */}
+                                        {msg.attachments && msg.attachments.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mb-1">
+                                                {msg.attachments.map((att: any, idx: number) => {
+                                                    if (att.type === 'image' || att.type === 'sticker') {
+                                                        return (
+                                                            <img
+                                                                key={idx}
+                                                                src={att.payload?.url}
+                                                                alt="Attachment"
+                                                                className={att.type === 'sticker' ? "h-32 w-auto hover:opacity-90 transition-opacity cursor-pointer mb-1" : "rounded-xl w-full max-w-[240px] h-auto border border-border/10 cursor-pointer hover:opacity-95"}
+                                                            />
+                                                        );
+                                                    }
+                                                    if (att.type === 'video') {
+                                                        return (
+                                                            <video
+                                                                key={idx}
+                                                                src={att.payload?.url}
+                                                                className="rounded-xl w-full max-w-[240px] h-auto border border-border/10"
+                                                                controls
+                                                            />
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div key={idx} className="bg-muted p-3 rounded-xl flex items-center gap-2 text-xs">
+                                                            <Info className="h-4 w-4" />
+                                                            <a href={att.payload?.url} target="_blank" rel="noreferrer" className="underline truncate max-w-[150px]">
+                                                                File đính kèm ({att.type})
+                                                            </a>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* 3. Shares (Links) */}
+                                        {msg.shares && msg.shares.length > 0 && (
+                                            <div className="bg-muted/30 border border-border/50 rounded-xl p-3 mb-1 max-w-[240px]">
+                                                {msg.shares.map((share: any, idx: number) => (
+                                                    <div key={idx}>
+                                                        <a href={share.link} target="_blank" rel="noreferrer" className="block">
+                                                            <p className="font-bold text-sm truncate">{share.name || 'Shared Link'}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{share.description}</p>
+                                                            <p className="text-[10px] text-blue-500 mt-1 truncate">{share.link}</p>
+                                                        </a>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* 4. Text Content (Bubble) - Only show if valid text exists and isn't just a media placeholder */}
+                                        {msg.message_content &&
+                                            !msg.message_content.startsWith('[Sticker]') &&
+                                            !msg.message_content.startsWith('[Media]') &&
+                                            (
+                                                <div className={`px-4 py-2.5 rounded-2xl text-[14px] shadow-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${isSystem ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border/50 text-foreground rounded-bl-sm'}`}>
+                                                    {msg.message_content}
+                                                </div>
+                                            )}
+
+                                        <p className={`text-[10px] mt-1 opacity-60 group-hover:opacity-100 transition-opacity ${isSystem ? 'text-right' : 'text-left'} text-muted-foreground`}>
+                                            {format(new Date(msg.sent_at), 'HH:mm')}
+                                        </p>
+                                    </div>
+
+                                    {isSystem && isLastInGroup && (
+                                        <Avatar className="h-7 w-7 ml-2 mt-auto shrink-0 border border-border/20">
+                                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">ME</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    {isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}
+                                </div>
                             </div>
                         );
                     })

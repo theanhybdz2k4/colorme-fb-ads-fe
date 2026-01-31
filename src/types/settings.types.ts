@@ -62,3 +62,10 @@ export const HOURS = Array.from({ length: 24 }, (_, i) => ({
     value: i,
     label: `${i.toString().padStart(2, '0')}:00`,
 }));
+
+export interface CrawlerCookieStatus {
+    hasCookie: boolean;
+    updatedAt?: string;
+    maskedValue?: string;
+}
+
