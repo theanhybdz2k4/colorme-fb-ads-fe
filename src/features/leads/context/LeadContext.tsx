@@ -80,7 +80,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         queryKey: ['ad-accounts-list'],
         queryFn: async () => {
             const res = await adAccountsApi.list({ branchId: activeBranchId });
-            return res || [];
+            return res.data?.result || res.data || [];
         }
     });
 
@@ -204,7 +204,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         setSearchQuery,
         activeFilter,
         setActiveFilter,
-        syncLeads: async () => { await syncMutation.mutateAsync(); },
+        syncLeads: async () => { await syncMutation.mutateAsync({}); },
         isSyncing: syncMutation.isPending,
         syncHistoricLeads: async () => { await syncMutation.mutateAsync({ force_historic: true } as any); },
         sendReply: async (text: string) => { await replyMutation.mutateAsync(text); },
