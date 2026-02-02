@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, RefreshCw, Search } from 'lucide-react';
+import { MessageSquare, RefreshCw, Search, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -139,6 +139,12 @@ export function LeadList() {
                                                     <span className="text-amber-500 animate-pulse-slow">⭐</span>
                                                 )}
                                             </p>
+                                            {lead.source_campaign_name && lead.source_campaign_name !== "Tự nhiên" && (
+                                                <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-blue-200 text-blue-600 bg-blue-50 font-bold shrink-0 max-w-[100px] truncate">
+                                                    <Target className="h-2 w-2 mr-1" />
+                                                    {lead.source_campaign_name}
+                                                </Badge>
+                                            )}
                                             <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold shrink-0 max-w-[100px] truncate">
                                                 {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
                                             </Badge>
@@ -155,7 +161,12 @@ export function LeadList() {
                                         </div>
                                         {lead.ai_analysis ? (
                                             <p className="text-[10px] line-clamp-2 text-muted-foreground leading-relaxed">
-                                                {lead.ai_analysis.split('\n').filter((line: string) => line.trim()).slice(0, 2).join(' • ')}
+                                                {(() => {
+                                                    const lines = lead.ai_analysis.split('\n');
+                                                    const summaryLine = lines.find((l: string) => l.trim().startsWith('Tóm tắt:'));
+                                                    if (summaryLine) return summaryLine.replace('Tóm tắt:', '').trim();
+                                                    return lines.filter((l: string) => l.trim() && !l.includes('Đánh giá:') && !l.includes('Tổng điểm:')).slice(0, 2).join(' • ');
+                                                })()}
                                             </p>
                                         ) : (
                                             <p className={`text-[10px] line-clamp-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
@@ -191,7 +202,7 @@ export function LeadList() {
                                                 <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
                                                     <MessageSquare className="h-3 w-3 text-primary" />
                                                 </div>
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/80">AI Insight</span>
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-primary">Phân tích AI</span>
                                                 {lead.is_potential && (
                                                     <Badge className="ml-auto bg-amber-500 border-none text-[8px] h-3.5 px-1 font-bold animate-pulse">⭐ TIỀM NĂNG</Badge>
                                                 )}

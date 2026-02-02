@@ -33,7 +33,7 @@ export const leadsApi = {
     return data;
   },
 
-  updateLead: async (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean; is_manual_potential?: boolean; assigned_agent_id?: string; assigned_agent_name?: string }) => {
+  updateLead: async (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean; is_manual_potential?: boolean; assigned_agent_id?: string; assigned_agent_name?: string, is_read?: boolean }) => {
     const { data: responseData } = await apiClient.patch(`/leads/${leadId}`, data);
     return responseData;
   },

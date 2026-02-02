@@ -136,6 +136,25 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         };
     }, [queryClient]);
 
+    // Auto mark-as-read when lead is selected
+    useEffect(() => {
+        if (selectedLeadId && leads.length > 0) {
+            const lead = leads.find((l: any) => l.id === selectedLeadId);
+            if (lead && lead.is_read === false) {
+                console.log(`[LeadContext] Marking lead ${selectedLeadId} as read...`);
+                leadsApi.updateLead(selectedLeadId, { is_read: true })
+                    .then((res) => {
+                        console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully:`, res);
+                        queryClient.invalidateQueries({ queryKey: ['leads'] });
+                        queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
+                    })
+                    .catch(err => {
+                        console.error(`[LeadContext] Failed to mark lead ${selectedLeadId} as read:`, err);
+                    });
+            }
+        }
+    }, [selectedLeadId, leads, queryClient]);
+
     // Mutations
     const syncMutation = useMutation({
         mutationFn: (options?: any) => leadsApi.syncLeadsFromFacebook(options),
