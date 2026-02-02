@@ -23,7 +23,6 @@ import {
   FileText,
   BarChart3,
   Settings,
-  Clock,
   ChevronLeft,
   LogOut,
   PieChart,

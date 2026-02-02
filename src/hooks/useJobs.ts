@@ -7,7 +7,7 @@ export function useJobs(limit: number = 50) {
         queryKey: ['jobs', limit],
         queryFn: async () => {
             try {
-                const { data } = await jobsApi.list(limit);
+                const { data } = await jobsApi.list({ limit });
                 const result = data.result || data.data || data || [];
                 if (Array.isArray(result)) return result;
                 return (result.data || []) as Job[];

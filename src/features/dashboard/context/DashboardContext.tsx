@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adAccountsApi, campaignsApi, insightsApi, analyticsApi } from '@/api';
+import { adAccountsApi, campaignsApi, analyticsApi } from '@/api';
 import { useInsights } from '@/hooks/useInsights';
 import { useAuth } from '@/features/auth';
 import { usePlatform } from '@/contexts';
