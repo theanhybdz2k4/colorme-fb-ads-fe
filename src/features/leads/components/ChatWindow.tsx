@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { LeadDetails } from './LeadDetails';
 
@@ -19,7 +21,9 @@ export function ChatWindow() {
         sendReply,
         isSending,
         syncMessages,
-        isSyncingMessages
+        isSyncingMessages,
+        agents,
+        assignAgent
     } = useLeads();
 
     const [replyText, setReplyText] = useState("");
@@ -82,6 +86,71 @@ export function ChatWindow() {
                     </div>
                 </div>
                 <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                    {/* Agent Assignment */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className={`h-8 gap-2 px-2 hidden sm:flex border-dashed ${selectedLead.assigned_agent_id ? 'border-primary/50 bg-primary/5' : 'text-muted-foreground'}`}
+                            >
+                                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="text-[10px] font-bold text-primary">
+                                        {selectedLead.assigned_agent_name?.charAt(0) || '?'}
+                                    </span>
+                                </div>
+                                <span className="text-[11px] font-medium max-w-[80px] truncate">
+                                    {selectedLead.assigned_agent_name || 'Chưa bàn giao'}
+                                </span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-2" align="end">
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold px-2 py-1.5 text-muted-foreground uppercase tracking-wider">Chọn nhân viên phụ trách</p>
+                                {agents.length > 0 ? (
+                                    agents.map((agent: any) => (
+                                        <Button
+                                            key={agent.id}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start font-normal h-9"
+                                            onClick={() => assignAgent(agent)}
+                                        >
+                                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+                                                <span className="text-[10px] font-bold text-primary">{agent.name.charAt(0)}</span>
+                                            </div>
+                                            <span className="text-sm">{agent.name}</span>
+                                            {selectedLead.assigned_agent_id === agent.id && (
+                                                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                                            )}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-xs text-muted-foreground">
+                                        Chưa phát hiện nhân viên nào.
+                                        <p className="mt-1">Hãy để nhân viên nhắn tin cho khách trên fanpage để tự động nhận diện.</p>
+                                    </div>
+                                )}
+                                {selectedLead.assigned_agent_id && (
+                                    <>
+                                        <Separator className="my-1" />
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start font-normal h-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                                            onClick={() => assignAgent({ id: '', name: '' })}
+                                        >
+                                            <div className="h-6 w-6 rounded-full bg-rose-100 flex items-center justify-center mr-2">
+                                                <span className="text-[10px] font-bold text-rose-500">X</span>
+                                            </div>
+                                            <span className="text-sm">Gỡ phân công</span>
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
                     <Button
                         variant="ghost"
                         size="icon"

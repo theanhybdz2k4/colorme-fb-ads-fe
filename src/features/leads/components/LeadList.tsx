@@ -115,10 +115,22 @@ export function LeadList() {
                                     onMouseLeave={() => setHoveredLeadId(null)}
                                     className={`p-3 relative cursor-pointer hover:bg-muted/30 transition-all flex gap-3 border-l-4 group/lead ${selectedLeadId === lead.id ? 'bg-primary/5 border-primary shadow-sm' : 'border-transparent'}`}
                                 >
-                                    <Avatar className="h-12 w-12 border-2 border-border/10 shrink-0">
-                                        <AvatarImage src={lead.customer_avatar} />
-                                        <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
+                                    <div className="relative shrink-0">
+                                        <Avatar className="h-12 w-12 border-2 border-border/10">
+                                            <AvatarImage src={lead.customer_avatar} />
+                                            <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+
+                                        {/* Agent Indicator Badge */}
+                                        <div
+                                            className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-background flex items-center justify-center shadow-sm ${lead.assigned_agent_id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                                            title={lead.assigned_agent_name ? `Phụ trách bởi: ${lead.assigned_agent_name}` : 'Chưa phân công'}
+                                        >
+                                            <span className="text-[9px] font-bold">
+                                                {lead.assigned_agent_name?.charAt(0) || '?'}
+                                            </span>
+                                        </div>
+                                    </div>
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                                         <div className="flex items-center gap-2 mb-0.5">
                                             <p className={`text-[13px] truncate flex items-center gap-1 min-w-0 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>

@@ -25,6 +25,9 @@ interface LeadContextType {
     setSearchQuery: (query: string) => void;
     activeFilter: 'all' | 'unread' | 'mine';
     setActiveFilter: (filter: 'all' | 'unread' | 'mine') => void;
+    agents: any[];
+    agentsLoading: boolean;
+    assignAgent: (agent: { id: string; name: string }) => Promise<void>;
     syncLeads: () => Promise<void>;
     syncHistoricLeads: () => Promise<void>;
     isSyncing: boolean;
@@ -105,6 +108,15 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         enabled: !!selectedLeadId
     });
 
+    // 6. Agents
+    const { data: agents = [], isLoading: agentsLoading } = useQuery({
+        queryKey: ['agents'],
+        queryFn: async () => {
+            const res = await leadsApi.getAgents();
+            return res.result || [];
+        }
+    });
+
     // Realtime Subscription
     useEffect(() => {
         const channel = supabase
@@ -173,7 +185,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
                 queryClient.invalidateQueries({ queryKey: ['messages', selectedLeadId] });
                 // Also invalidate leads to update sorting/last_message_at
                 queryClient.invalidateQueries({ queryKey: ['leads'] });
-                
+
                 toast.success(`Đã đồng bộ ${data.count} tin nhắn mới`);
             } else {
                 toast.error("Đồng bộ thất bại: " + data.error);
@@ -181,6 +193,18 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         },
         onError: (e: any) => {
             toast.error("Đồng bộ thất bại: " + (e.response?.data?.error || e.message));
+        }
+    });
+
+    const assignAgentMutation = useMutation({
+        mutationFn: (agent: { id: string; name: string }) =>
+            leadsApi.updateLead(selectedLeadId!, {
+                assigned_agent_id: agent.id,
+                assigned_agent_name: agent.name
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['leads'] });
+            toast.success("Phân công nhân viên thành công");
         }
     });
 
@@ -204,6 +228,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         setSearchQuery,
         activeFilter,
         setActiveFilter,
+        agents,
+        agentsLoading,
+        assignAgent: async (agent: { id: string; name: string }) => { await assignAgentMutation.mutateAsync(agent); },
         syncLeads: async () => { await syncMutation.mutateAsync({}); },
         isSyncing: syncMutation.isPending,
         syncHistoricLeads: async () => { await syncMutation.mutateAsync({ force_historic: true } as any); },
