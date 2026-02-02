@@ -56,7 +56,7 @@ export function LeadList() {
                 </div>
 
                 <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Tìm tên, sđt khách hàng..."
                         className="pl-9 h-9 text-sm rounded-lg border-muted-foreground/20"
@@ -65,11 +65,11 @@ export function LeadList() {
                     />
                 </div>
 
-                <div className="flex gap-1">
+                <div className="flex gap-1 overflow-x-auto pb-1 custom-scrollbar">
                     <Button
                         variant={activeFilter === 'all' ? 'default' : 'outline'}
                         size="sm"
-                        className="flex-1 h-8 text-[11px] font-bold"
+                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold min-w-[70px]"
                         onClick={() => setActiveFilter('all')}
                     >
                         TẤT CẢ
@@ -77,7 +77,7 @@ export function LeadList() {
                     <Button
                         variant={activeFilter === 'unread' ? 'default' : 'outline'}
                         size="sm"
-                        className="flex-1 h-8 text-[11px] font-bold gap-1"
+                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold gap-1 min-w-[90px]"
                         onClick={() => setActiveFilter('unread')}
                     >
                         CHƯA ĐỌC
@@ -90,7 +90,7 @@ export function LeadList() {
                     <Button
                         variant={activeFilter === 'mine' ? 'default' : 'outline'}
                         size="sm"
-                        className="flex-1 h-8 text-[11px] font-bold"
+                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold min-w-[70px]"
                         onClick={() => setActiveFilter('mine')}
                     >
                         CỦA TÔI
@@ -103,9 +103,9 @@ export function LeadList() {
             <ScrollArea className="flex-1">
                 <div className="divide-y divide-border/5">
                     {filteredLeads.map((lead: any) => (
-                        <Popover 
-                            key={lead.id} 
-                            open={hoveredLeadId === lead.id} 
+                        <Popover
+                            key={lead.id}
+                            open={hoveredLeadId === lead.id}
                             onOpenChange={(open) => !open && setHoveredLeadId(null)}
                         >
                             <PopoverTrigger asChild>
@@ -120,14 +120,17 @@ export function LeadList() {
                                         <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                        <div className="flex justify-between items-start mb-0.5">
-                                            <p className={`text-[13px] truncate pr-1 flex items-center gap-1 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <p className={`text-[13px] truncate flex items-center gap-1 min-w-0 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>
                                                 {lead.customer_name}
                                                 {lead.is_potential && lead.is_manual_potential && (
                                                     <span className="text-amber-500 animate-pulse-slow">⭐</span>
                                                 )}
                                             </p>
-                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                            <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold shrink-0 max-w-[100px] truncate">
+                                                {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
+                                            </Badge>
+                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 ml-auto">
                                                 {lead.last_message_at ? (() => {
                                                     const msgDate = new Date(lead.last_message_at);
                                                     const today = new Date();
@@ -143,14 +146,16 @@ export function LeadList() {
                                                 {lead.ai_analysis.split('\n').filter((line: string) => line.trim()).slice(0, 2).join(' • ')}
                                             </p>
                                         ) : (
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <Badge variant="secondary" className="text-[8px] h-3.5 px-1 bg-primary/10 text-primary border-none font-bold">
-                                                    {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
-                                                </Badge>
-                                                <p className={`text-[10px] line-clamp-1 flex-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                                                    {lead.platform_data?.snippet || 'Tin nhắn mới'}
-                                                </p>
-                                            </div>
+                                            <p className={`text-[10px] line-clamp-1 ${!lead.is_read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                                {(() => {
+                                                    const snippet = lead.platform_data?.snippet || '';
+                                                    if (snippet.startsWith('[Hình ảnh]')) return '📷 Hình ảnh';
+                                                    if (snippet.startsWith('[Sticker]')) return '🎨 Sticker';
+                                                    if (snippet.startsWith('[Video]')) return '🎥 Video';
+                                                    if (snippet.startsWith('[Media]')) return '📎 File đính kèm';
+                                                    return snippet || 'Tin nhắn mới';
+                                                })()}
+                                            </p>
                                         )}
                                         <div className="flex gap-1 items-center flex-wrap">
                                             {lead.phone && <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-emerald-500/10 text-emerald-600 border-none font-medium">📞 {lead.phone}</Badge>}
@@ -162,9 +167,9 @@ export function LeadList() {
                                 </div>
                             </PopoverTrigger>
                             {lead.ai_analysis && (
-                                <PopoverContent 
-                                    side="right" 
-                                    align="start" 
+                                <PopoverContent
+                                    side="right"
+                                    align="start"
                                     sideOffset={10}
                                     className="p-0 border-none bg-transparent shadow-none w-auto pointer-events-none"
                                 >

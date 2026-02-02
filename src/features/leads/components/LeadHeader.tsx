@@ -24,17 +24,19 @@ export function LeadHeader() {
     } = useLeads();
 
     return (
-        <div className="p-6 pb-2 flex items-start justify-between bg-background/50 backdrop-blur-md z-20">
-            <div className="flex flex-col gap-4">
+        <div className="p-4 md:p-6 pb-2 flex flex-col sm:flex-row items-start justify-between bg-background/50 backdrop-blur-md z-20 gap-4 sm:gap-0">
+            <div className="flex flex-col gap-3 md:gap-4 w-full sm:w-auto">
                 <PageHeader
                     title="Lead Insights"
                     description="Quản lý khách hàng tiềm năng và phân bổ nhân sự xử lý tin nhắn."
+                    className="hidden sm:block"
                 />
+                <h1 className="text-xl font-bold sm:hidden">Lead Insights</h1>
 
-                <div className="flex gap-3 items-center">
-                    <span className="text-sm font-semibold text-muted-foreground pr-1">Chọn Fanpage:</span>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center w-full">
+                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">Chọn Fanpage:</span>
                     <Select value={selectedPageId} onValueChange={setSelectedPageId} disabled={pagesLoading}>
-                        <SelectTrigger className="h-9 w-[300px] bg-background border-primary/20 hover:border-primary/40 transition-colors rounded-xl shadow-sm">
+                        <SelectTrigger className="h-9 w-full sm:w-[240px] md:w-[300px] bg-background border-primary/20 hover:border-primary/40 transition-colors rounded-xl shadow-sm">
                             {pagesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SelectValue placeholder="Tất cả Fanpage" />}
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -45,15 +47,15 @@ export function LeadHeader() {
                 </div>
             </div>
 
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center w-full sm:w-auto justify-end">
                 <CookieManager />
                 <Button
                     onClick={syncLeads}
                     disabled={isSyncing}
-                    className="rounded-xl font-bold gap-2 animate-shimmer"
+                    className="rounded-xl font-bold gap-2 animate-shimmer flex-1 sm:flex-none"
                 >
                     {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    Sync Avatar
+                    <span className="whitespace-nowrap">Sync Avatar</span>
                 </Button>
             </div>
         </div>

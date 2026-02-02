@@ -4,13 +4,16 @@ import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw } from 'lucide-react';
+import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { LeadDetails } from './LeadDetails';
 
 export function ChatWindow() {
     const {
         leads,
         selectedLeadId,
+        setSelectedLeadId,
         messages,
         messagesLoading,
         sendReply,
@@ -39,50 +42,73 @@ export function ChatWindow() {
 
     if (!selectedLead) {
         return (
-            <div className="flex-1 h-full flex flex-col items-center justify-center animate-fade-in gap-4 bg-background">
+            <div className="flex-1 h-full flex flex-col items-center justify-center animate-fade-in gap-4 bg-background px-6">
                 <div className="p-6 bg-primary/5 rounded-full animate-pulse-slow">
-                    <MessageSquare className="h-20 w-20 text-primary/20" />
+                    <MessageSquare className="h-12 w-12 md:h-20 md:w-20 text-primary/20" />
                 </div>
                 <div className="text-center">
-                    <h3 className="font-bold text-lg">Chào mừng quay lại!</h3>
-                    <p className="text-muted-foreground text-sm max-w-[300px]">Hãy chọn một hội thoại bên trái để bắt đầu tư vấn và chốt đơn.</p>
+                    <h3 className="font-bold text-base md:text-lg">Chào mừng quay lại!</h3>
+                    <p className="text-muted-foreground text-xs md:text-sm max-w-[300px]">Hãy chọn một hội thoại bên trái để bắt đầu tư vấn và chốt đơn.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex-1 flex flex-col bg-muted/10 relative h-full">
+        <div className="flex-1 flex flex-col bg-muted/10 relative h-full overflow-hidden">
             {/* Chat Header */}
-            <div className="h-14 flex items-center justify-between px-6 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-                <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
+            <div className="h-14 flex items-center justify-between px-3 md:px-6 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10 w-full">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="lg:hidden h-8 w-8 -ml-1" 
+                        onClick={() => setSelectedLeadId(null)}
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0">
                         <AvatarImage src={selectedLead.customer_avatar} />
                         <AvatarFallback>{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm">{selectedLead.customer_name}</p>
-                            <Badge className="bg-emerald-500 rounded-full h-2 w-2 p-0 border-none" />
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                            <p className="font-bold text-xs md:text-sm truncate">{selectedLead.customer_name}</p>
+                            <Badge className="bg-emerald-500 rounded-full h-1.5 w-1.5 md:h-2 md:w-2 p-0 border-none shrink-0" />
                         </div>
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            {selectedLead.platform_pages?.name || selectedLead.platform_data?.fb_page_name || selectedLead.fb_page_id || 'Unknown Page'} • {selectedLead.external_id}
+                        <p className="text-[9px] md:text-[10px] text-muted-foreground truncate">
+                            {selectedLead.platform_pages?.name || selectedLead.platform_data?.fb_page_name || 'Fanpage'}
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 md:gap-2 shrink-0">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-primary"
+                        className="h-8 w-8 md:h-9 md:w-9 text-muted-foreground hover:text-primary"
                         onClick={syncMessages}
                         disabled={isSyncingMessages}
                         title="Đồng bộ lại tin nhắn"
                     >
                         <RefreshCw className={`h-4 w-4 ${isSyncingMessages ? 'animate-spin' : ''}`} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground"><Phone className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground"><MoreVertical className="h-4 w-4" /></Button>
+                    
+                    {/* Info Button for Mobile */}
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="xl:hidden h-8 w-8 md:h-9 md:w-9 text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="p-0 border-none bg-transparent max-w-[360px] h-[80vh]">
+                            <div className="h-full bg-background rounded-2xl overflow-hidden border">
+                                <LeadDetails />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 md:h-9 md:w-9 text-muted-foreground"><Phone className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 text-muted-foreground"><MoreVertical className="h-4 w-4" /></Button>
                 </div>
             </div>
 
@@ -182,16 +208,28 @@ export function ChatWindow() {
 
                                         {/* 3. Shares (Links) */}
                                         {msg.shares && msg.shares.length > 0 && (
-                                            <div className="bg-muted/30 border border-border/50 rounded-xl p-3 mb-1 max-w-[240px]">
-                                                {msg.shares.map((share: any, idx: number) => (
-                                                    <div key={idx}>
-                                                        <a href={share.link} target="_blank" rel="noreferrer" className="block">
-                                                            <p className="font-bold text-sm truncate">{share.name || 'Shared Link'}</p>
-                                                            <p className="text-xs text-muted-foreground truncate">{share.description}</p>
-                                                            <p className="text-[10px] text-blue-500 mt-1 truncate">{share.link}</p>
-                                                        </a>
-                                                    </div>
-                                                ))}
+                                            <div className="flex flex-col gap-1 mb-1">
+                                                {msg.shares
+                                                    .filter((share: any) => {
+                                                        // Hide if this share link is likely the same as the sticker or an attachment image
+                                                        const isStickerUrl = msg.sticker && share.link && share.link.includes(msg.sticker.split('?')[0]);
+                                                        const isAttachmentUrl = msg.attachments?.some((att: any) => 
+                                                            att.payload?.url && share.link && share.link.includes(att.payload.url.split('?')[0])
+                                                        );
+                                                        // Also hide if it's a very long CDN URL which is likely just the media itself
+                                                        const isCdnUrl = share.link?.includes('fbcdn.net');
+                                                        
+                                                        return !isStickerUrl && !isAttachmentUrl && !isCdnUrl;
+                                                    })
+                                                    .map((share: any, idx: number) => (
+                                                        <div key={idx} className="bg-muted/30 border border-border/50 rounded-xl p-3 max-w-[240px]">
+                                                            <a href={share.link} target="_blank" rel="noreferrer" className="block">
+                                                                <p className="font-bold text-sm truncate">{share.name || 'Shared Link'}</p>
+                                                                <p className="text-xs text-muted-foreground truncate">{share.description}</p>
+                                                                <p className="text-[10px] text-blue-500 mt-1 truncate">{share.link}</p>
+                                                            </a>
+                                                        </div>
+                                                    ))}
                                             </div>
                                         )}
 
@@ -199,6 +237,14 @@ export function ChatWindow() {
                                         {msg.message_content &&
                                             !msg.message_content.startsWith('[Sticker]') &&
                                             !msg.message_content.startsWith('[Media]') &&
+                                            !msg.message_content.startsWith('[Hình ảnh]') &&
+                                            !msg.message_content.startsWith('[Ảnh]') &&
+                                            !msg.message_content.startsWith('[Video]') &&
+                                            !(msg.attachments && msg.attachments.length > 0 && 
+                                                (msg.message_content.trim() === '[Hình ảnh]' || 
+                                                 msg.message_content.trim() === '[Ảnh]' || 
+                                                 msg.message_content.trim() === '[Video]' ||
+                                                 msg.message_content.trim() === '[Media]')) &&
                                             (
                                                 <div className={`px-4 py-2.5 rounded-2xl text-[14px] shadow-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${isSystem ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border/50 text-foreground rounded-bl-sm'}`}>
                                                     {msg.message_content}
