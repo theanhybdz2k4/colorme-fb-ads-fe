@@ -3,12 +3,35 @@ import { apiClient } from '@/lib/apiClient';
 
 
 export const leadsApi = {
-  list: async (params?: { date?: string; branchId?: string; accountId?: string; pageId?: string }) => {
+  list: async (params?: { 
+    date?: string; 
+    dateStart?: string;
+    dateEnd?: string;
+    branchId?: string; 
+    accountId?: string; 
+    pageId?: string;
+    page?: number;
+    limit?: number;
+    qualified?: boolean;
+    potential?: boolean;
+    today?: boolean;
+    startTime?: string;
+    endTime?: string;
+    userId?: number;
+  }) => {
     const { data } = await apiClient.get('/leads', { params });
     return data;
   },
 
-  getStats: async (params?: { branchId?: string; dateStart?: string; dateEnd?: string }) => {
+  getStats: async (params?: { 
+    branchId?: string; 
+    accountId?: string;
+    pageId?: string;
+    dateStart?: string; 
+    dateEnd?: string;
+    startTime?: string;
+    endTime?: string;
+  }) => {
     const { data } = await apiClient.get('/leads/stats', { params });
     return data;
   },

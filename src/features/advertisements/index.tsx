@@ -79,15 +79,42 @@ export function AdsPage() {
   const handleSyncAllActive = async () => {
     setSyncingAll(true);
     try {
-      if (!adsets || adsets.length === 0) {
-        toast.error('Không có adsets nào để sync');
+      if (!filteredData || filteredData.length === 0) {
+        toast.error('Không có ads nào để sync');
         return;
       }
 
-      const accountIds = Array.from(new Set(adsets.map(a => a.accountId)));
-      await Promise.all(accountIds.map(accountId => adsApi.syncAccount(accountId)));
+      const accountIds = Array.from(new Set(filteredData.map(a => a.accountId))).filter(Boolean) as number[];
+      if (accountIds.length === 0) {
+        toast.error('Không tìm thấy tài khoản để sync');
+        return;
+      }
 
-      toast.success(`Đã hoàn thành sync Ads cho ${accountIds.length} tài khoản`);
+      const results = await Promise.all(accountIds.map(accountId => adsApi.syncAccount(accountId)));
+      
+      let totalAdded = 0;
+      let totalUpdated = 0;
+      let totalCleanedUp = 0;
+
+      results.forEach(res => {
+        const data = res.data;
+        if (data?.ads) {
+          totalAdded += data.ads.added || 0;
+          totalUpdated += data.ads.updated || 0;
+        }
+        if (data?.creatives) {
+          totalCleanedUp += data.creatives.cleanedUp || 0;
+        }
+      });
+
+      if (totalAdded === 0 && totalUpdated === 0) {
+        toast.info(totalCleanedUp > 0 ? `Dữ liệu mới nhất. Đã dọn dẹp ${totalCleanedUp} creative.` : 'Tất cả quảng cáo đã là mới nhất');
+      } else {
+        let msg = `Đã sync: ${totalAdded} mới, ${totalUpdated} cập nhật`;
+        if (totalCleanedUp > 0) msg += `, xoá ${totalCleanedUp} cũ`;
+        toast.success(`${msg} cho ${accountIds.length} tài khoản`);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['ads'] });
     } catch {
       toast.error('Lỗi sync');

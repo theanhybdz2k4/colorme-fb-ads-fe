@@ -5,7 +5,8 @@ import {
     Users,
     Target,
     MessageSquare,
-    DollarSign
+    DollarSign,
+    MessageCircle
 } from 'lucide-react';
 
 export function LeadStatsHeader() {
@@ -19,7 +20,7 @@ export function LeadStatsHeader() {
 
     return (
         <div className="space-y-6 shrink-0 z-20">
-            <StatsGrid columns={4}>
+            <StatsGrid columns={5}>
                 <StatsCard
                     title="ADS SPENT"
                     value={`${formatCurrency(stats?.spendTotal || 0)}`}
@@ -48,6 +49,13 @@ export function LeadStatsHeader() {
                     subtitle="Ok/Lead"
                     icon={<Users className="h-4 w-4" />}
                     className="bg-rose-500/5 border-rose-500/10"
+                />
+                <StatsCard
+                    title="TỔNG TIN NHẮN HÔM NAY"
+                    value={`${stats?.todayMessagesCount || 0}`}
+                    subtitle="Mới + Cũ"
+                    icon={<MessageCircle className="h-4 w-4" />}
+                    className="bg-primary/5 border-primary/10"
                 />
             </StatsGrid>
         </div>

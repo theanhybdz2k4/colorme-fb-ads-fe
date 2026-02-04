@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Info, Phone, StickyNote, Tag, Target, ExternalLink, RefreshCw, Star, Brain, Sparkles } from 'lucide-react';
+import { Info, Phone, StickyNote, Tag, Target, ExternalLink, RefreshCw, Star, Brain, Sparkles, Calendar } from 'lucide-react';
 
 export function LeadDetails() {
     const {
@@ -42,9 +42,9 @@ export function LeadDetails() {
                             )}
                         </h4>
                         <p className="text-xs text-muted-foreground font-medium select-all">PSID: {selectedLead.external_id}</p>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             className={`mt-2 h-7 px-3 text-[10px] uppercase font-black tracking-wider gap-2 rounded-full border shadow-sm transition-all ${selectedLead.is_manual_potential ? 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100 hover:text-amber-700' : 'text-muted-foreground border-transparent hover:bg-muted/50'}`}
                             onClick={() => updateLead({ is_manual_potential: !selectedLead.is_manual_potential })}
                         >
@@ -54,6 +54,25 @@ export function LeadDetails() {
                     </div>
 
                     <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
+                                <Calendar className="h-3 w-3" /> Lần đầu liên hệ
+                            </label>
+                            <div className="p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/10">
+                                <span className="text-xs font-bold text-orange-700">
+                                    {selectedLead.first_contact_at
+                                        ? new Date(selectedLead.first_contact_at).toLocaleString('vi-VN', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })
+                                        : 'Chưa cập nhật'}
+                                </span>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
                                 <Phone className="h-3 w-3" /> Số điện thoại
@@ -126,9 +145,9 @@ export function LeadDetails() {
                                 <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
                                     <Brain className="h-3 w-3" /> Phân tích AI
                                 </label>
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
                                     className="h-6 px-2 text-[9px] font-bold gap-1 text-primary hover:bg-primary/10"
                                     onClick={() => reanalyzeLead()}
                                     disabled={isReanalyzing}
@@ -137,21 +156,21 @@ export function LeadDetails() {
                                     {isReanalyzing ? 'Đang phân tích...' : 'Phân tích lại'}
                                 </Button>
                             </div>
-                            
+
                             {selectedLead.ai_analysis ? (
                                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
                                     <div className="text-[11px] font-medium leading-relaxed whitespace-pre-wrap text-foreground/80">
-                                        {selectedLead.ai_analysis.startsWith('Đánh giá') 
-                                            ? selectedLead.ai_analysis.split('\n').slice(1).join('\n').trim() 
+                                        {selectedLead.ai_analysis.startsWith('Đánh giá')
+                                            ? selectedLead.ai_analysis.split('\n').slice(1).join('\n').trim()
                                             : selectedLead.ai_analysis}
                                     </div>
                                 </div>
                             ) : (
                                 <div className="p-4 rounded-xl border border-dashed text-center space-y-2 bg-muted/5">
                                     <p className="text-[10px] text-muted-foreground font-medium">Chưa có đánh giá AI cho hội thoại này</p>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
                                         className="h-7 text-[10px] font-bold border-primary/20 hover:bg-primary/5"
                                         onClick={() => reanalyzeLead()}
                                         disabled={isReanalyzing}

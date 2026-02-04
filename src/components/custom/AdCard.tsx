@@ -110,8 +110,21 @@ export function AdCard({
         </div>
 
         {/* Meta */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Synced: {new Date(ad.syncedAt).toLocaleDateString('vi-VN')}</span>
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground/70">
+          {status === 'ACTIVE' ? (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Đồng bộ: {ad.syncedAt ? new Date(ad.syncedAt).toLocaleString('vi-VN', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 'Chưa rõ'}
+            </span>
+          ) : (
+            <span>Dữ liệu lưu lúc: {ad.syncedAt ? new Date(ad.syncedAt).toLocaleDateString('vi-VN') : 'N/A'}</span>
+          )}
         </div>
 
         {/* Action */}

@@ -12,6 +12,7 @@ import { cronSettingsApi } from '@/api/settings.api';
 import { toast } from 'sonner';
 import type { CrawlerCookieStatus } from '@/types/settings.types';
 import { format } from 'date-fns';
+import { DateRangeFilter } from '@/components/custom';
 
 export function LeadHeader() {
     const {
@@ -20,42 +21,53 @@ export function LeadHeader() {
         selectedPageId,
         setSelectedPageId,
         availablePages,
-        pagesLoading
+        pagesLoading,
+        dateRange,
+        setDateRange
     } = useLeads();
 
     return (
-        <div className="p-4 md:p-6 pb-2 flex flex-col sm:flex-row items-start justify-between bg-background/50 backdrop-blur-md z-20 gap-4 sm:gap-0">
-            <div className="flex flex-col gap-3 md:gap-4 w-full sm:w-auto">
+        <div className="p-4 md:p-6 pb-2 flex flex-col md:flex-row items-start md:items-end justify-between bg-background/50 backdrop-blur-md z-20 gap-4">
+            <div className="flex flex-col gap-3 md:gap-4 w-full sm:w-auto flex-1">
                 <PageHeader
                     title="Lead Insights"
                     description="Quản lý khách hàng tiềm năng và phân bổ nhân sự xử lý tin nhắn."
-                    className="hidden sm:block"
+                    className="hidden lg:block"
                 />
-                <h1 className="text-xl font-bold sm:hidden">Lead Insights</h1>
+                
+                <div className="flex flex-col xl:flex-row gap-6 xl:items-end w-full">
+                    <div className="flex flex-col gap-2 min-w-[240px]">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Fanpage</span>
+                        <Select value={selectedPageId} onValueChange={setSelectedPageId} disabled={pagesLoading}>
+                            <SelectTrigger className="h-10 w-full bg-background border-primary/20 hover:border-primary/40 transition-colors rounded-xl shadow-sm">
+                                {pagesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SelectValue placeholder="Tất cả Fanpage" />}
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">Tất cả Fanpage</SelectItem>
+                                {availablePages.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center w-full">
-                    <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap">Chọn Fanpage:</span>
-                    <Select value={selectedPageId} onValueChange={setSelectedPageId} disabled={pagesLoading}>
-                        <SelectTrigger className="h-9 w-full sm:w-[240px] md:w-[300px] bg-background border-primary/20 hover:border-primary/40 transition-colors rounded-xl shadow-sm">
-                            {pagesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SelectValue placeholder="Tất cả Fanpage" />}
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="all">Tất cả Fanpage</SelectItem>
-                            {availablePages.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex-1">
+                        <DateRangeFilter 
+                            dateRange={dateRange} 
+                            setDateRange={setDateRange} 
+                            className="w-full"
+                        />
+                    </div>
                 </div>
             </div>
 
-            <div className="flex gap-2 items-center w-full sm:w-auto justify-end">
+            <div className="flex gap-2 items-center w-full md:w-auto justify-end">
                 <CookieManager />
                 <Button
                     onClick={syncLeads}
                     disabled={isSyncing}
-                    className="rounded-xl font-bold gap-2 animate-shimmer flex-1 sm:flex-none"
+                    className="rounded-xl h-10 font-bold gap-2 animate-shimmer w-full sm:w-auto"
                 >
                     {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    <span className="whitespace-nowrap">Sync Avatar</span>
+                    <span className="whitespace-nowrap">Đồng bộ Leads</span>
                 </Button>
             </div>
         </div>

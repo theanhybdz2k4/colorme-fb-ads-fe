@@ -87,8 +87,25 @@ export function AdSetsPage() {
   const handleSyncAds = async (adset: Adset) => {
     setSyncingAdset(adset.id);
     try {
-      await adsApi.syncAccount(adset.accountId);
-      toast.success('Đã hoàn thành sync Quảng cáo');
+      const response = await adsApi.syncAccount(adset.accountId);
+      const result = response.data;
+      
+      if (result?.ads) {
+        const { added, updated } = result.ads;
+        const cleanedUp = result.creatives?.cleanedUp || 0;
+        
+        let msg = `Đã sync: ${added} mới, ${updated} cập nhật`;
+        if (cleanedUp > 0) msg += `, đã xóa ${cleanedUp} creative cũ`;
+        
+        if (added === 0 && updated === 0) {
+          toast.info(cleanedUp > 0 ? `Dữ liệu mới nhất. Đã dọn dẹp ${cleanedUp} creative.` : 'Dữ liệu quảng cáo đã là mới nhất');
+        } else {
+          toast.success(msg);
+        }
+      } else {
+        toast.success('Đã hoàn thành sync Quảng cáo');
+      }
+
       queryClient.invalidateQueries({ queryKey: ['ads'] });
     } catch {
       toast.error('Lỗi sync Ads');

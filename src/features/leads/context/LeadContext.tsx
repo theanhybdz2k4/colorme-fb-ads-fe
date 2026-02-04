@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, adAccountsApi } from '@/api';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import type { DateRange } from 'react-day-picker';
 
 interface LeadContextType {
     leads: any[];
@@ -23,8 +24,15 @@ interface LeadContextType {
     setSelectedPageId: (id: string) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    activeFilter: 'all' | 'unread' | 'mine';
-    setActiveFilter: (filter: 'all' | 'unread' | 'mine') => void;
+    activeFilter: 'all' | 'unread' | 'mine' | 'qualified' | 'potential' | 'today';
+    setActiveFilter: (filter: 'all' | 'unread' | 'mine' | 'qualified' | 'potential' | 'today') => void;
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+    setPage: (page: number) => void;
     agents: any[];
     agentsLoading: boolean;
     assignAgent: (agent: { id: string; name: string }) => Promise<void>;
@@ -38,6 +46,12 @@ interface LeadContextType {
     isReanalyzing: boolean;
     syncMessages: () => Promise<void>;
     isSyncingMessages: boolean;
+    dateRange: DateRange | undefined;
+    setDateRange: (range: DateRange | undefined) => void;
+    startTime: string;
+    setStartTime: (time: string) => void;
+    endTime: string;
+    setEndTime: (time: string) => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -48,31 +62,66 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
     const [selectedPageId, setSelectedPageId] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'mine'>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'mine' | 'qualified' | 'potential' | 'today'>('all');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: new Date(),
+        to: new Date()
+    });
+    const [startTime, setStartTime] = useState("00:00:00");
+    const [endTime, setEndTime] = useState("23:59:59");
+    const [page, setPage] = useState(1);
+    const limit = 50;
 
     const activeBranchId = "all";
 
+    // Reset page when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [activeBranchId, selectedAccountId, selectedPageId, activeFilter, searchQuery, startTime, endTime]);
+
     // 1. Leads Query
-    const { data: leads = [], isLoading: leadsLoading } = useQuery({
-        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId],
+    const { data: leadsData, isLoading: leadsLoading } = useQuery({
+        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange, startTime, endTime],
         queryFn: async () => {
+            const dateStart = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
+            const dateEnd = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined;
+
             const res = await leadsApi.list({
                 branchId: activeBranchId,
                 accountId: selectedAccountId === "all" ? undefined : selectedAccountId,
-                pageId: selectedPageId === "all" ? undefined : selectedPageId
+                pageId: selectedPageId === "all" ? undefined : selectedPageId,
+                page,
+                limit,
+                qualified: activeFilter === 'qualified' ? true : undefined,
+                potential: activeFilter === 'potential' ? true : undefined,
+                today: activeFilter === 'today' ? true : undefined,
+                dateStart,
+                dateEnd,
+                startTime,
+                endTime
             });
-            return res.result || [];
+            return res; // Return full response including pagination
         }
     });
 
+    const leads = leadsData?.result || [];
+    const pagination = leadsData?.pagination || { page, limit, total: 0, totalPages: 0 };
+
     // 2. Stats Query
     const { data: stats, isLoading: statsLoading } = useQuery({
-        queryKey: ['leads-stats', activeBranchId, selectedAccountId, selectedPageId],
+        queryKey: ['leads-stats', activeBranchId, selectedAccountId, selectedPageId, dateRange, startTime, endTime],
         queryFn: async () => {
+            const dateStart = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
+            const dateEnd = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined;
+
             const res = await leadsApi.getStats({
                 branchId: activeBranchId,
                 accountId: selectedAccountId === "all" ? undefined : selectedAccountId,
-                pageId: selectedPageId === "all" ? undefined : selectedPageId
+                pageId: selectedPageId === "all" ? undefined : selectedPageId,
+                dateStart,
+                dateEnd,
+                startTime,
+                endTime
             } as any);
             return res.data?.result || res.result || {};
         }
@@ -140,11 +189,13 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (selectedLeadId && leads.length > 0) {
             const lead = leads.find((l: any) => l.id === selectedLeadId);
-            if (lead && lead.is_read === false) {
-                console.log(`[LeadContext] Marking lead ${selectedLeadId} as read...`);
+            // Use falsy check to be robust against null/undefined/0
+            if (lead && !lead.is_read) {
+                console.log(`[LeadContext] Marking lead ${selectedLeadId} (${lead.customer_name}) as read...`);
                 leadsApi.updateLead(selectedLeadId, { is_read: true })
                     .then((res) => {
-                        console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully:`, res);
+                        console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully`);
+                        // Invalidate both leads and stats to update UI and badges
                         queryClient.invalidateQueries({ queryKey: ['leads'] });
                         queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
                     })
@@ -247,6 +298,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         setSearchQuery,
         activeFilter,
         setActiveFilter,
+        pagination,
+        setPage,
         agents,
         agentsLoading,
         assignAgent: async (agent: { id: string; name: string }) => { await assignAgentMutation.mutateAsync(agent); },
@@ -260,6 +313,12 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         isReanalyzing: reanalyzeMutation.isPending,
         syncMessages: async () => { await syncMessagesMutation.mutateAsync(); },
         isSyncingMessages: syncMessagesMutation.isPending,
+        dateRange,
+        setDateRange,
+        startTime,
+        setStartTime,
+        endTime,
+        setEndTime
     };
 
     return <LeadContext.Provider value={value}>{children}</LeadContext.Provider>;

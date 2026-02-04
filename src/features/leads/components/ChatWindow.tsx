@@ -4,7 +4,7 @@ import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +22,8 @@ export function ChatWindow() {
         isSending,
         syncMessages,
         isSyncingMessages,
+        reanalyzeLead,
+        isReanalyzing,
         agents,
         assignAgent
     } = useLeads();
@@ -76,9 +78,26 @@ export function ChatWindow() {
                         <AvatarFallback>{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 md:gap-2">
+                        <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                             <p className="font-bold text-xs md:text-sm truncate">{selectedLead.customer_name}</p>
                             <Badge className="bg-emerald-500 rounded-full h-1.5 w-1.5 md:h-2 md:w-2 p-0 border-none shrink-0" />
+                            
+                            {/* Status Badges */}
+                            {selectedLead.is_potential && (
+                                <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[9px] h-4 px-1.5 font-black flex items-center gap-1 group/tooltip relative">
+                                    <Target className="h-2.5 w-2.5" />
+                                    AI TIỀM NĂNG
+                                    <div className="absolute top-full left-0 mt-1 w-48 p-2 bg-background border rounded-lg shadow-xl hidden group-hover/tooltip:block z-[100] font-normal normal-case text-foreground text-[10px] leading-relaxed">
+                                        {selectedLead.ai_analysis}
+                                    </div>
+                                </Badge>
+                            )}
+                            {selectedLead.is_qualified && (
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 text-[9px] h-4 px-1.5 font-black flex items-center gap-1">
+                                    <RefreshCw className="h-2.5 w-2.5" />
+                                    QUALIFIED
+                                </Badge>
+                            )}
                         </div>
                         <p className="text-[9px] md:text-[10px] text-muted-foreground truncate">
                             {selectedLead.platform_pages?.name || selectedLead.platform_data?.fb_page_name || 'Fanpage'}
@@ -183,6 +202,33 @@ export function ChatWindow() {
 
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar" ref={scrollRef}>
+                {selectedLead.ai_analysis && (
+                    <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 rounded-2xl p-4 shadow-sm relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Target className="h-12 w-12 text-amber-600" />
+                            </div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Badge className="bg-amber-500 hover:bg-amber-600 text-[10px] font-black tracking-wider px-2 border-none">AI INSIGHT</Badge>
+                                <span className="text-[11px] font-bold text-amber-700 uppercase tracking-tight">Tóm tắt nhu cầu</span>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="ml-auto h-6 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-100/50 gap-1.5 font-bold"
+                                    onClick={() => reanalyzeLead()}
+                                    disabled={isReanalyzing}
+                                >
+                                    <RefreshCw className={`h-3 w-3 ${isReanalyzing ? 'animate-spin' : ''}`} />
+                                    PHÂN TÍCH LẠI
+                                </Button>
+                            </div>
+                            <p className="text-[13px] text-amber-900/80 leading-relaxed font-medium whitespace-pre-wrap">
+                                {selectedLead.ai_analysis}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {messagesLoading ? (
                     <div className="h-full flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
                 ) : (
@@ -241,7 +287,7 @@ export function ChatWindow() {
 
                                         {/* 2. Attachments (Images/Videos/Files) */}
                                         {msg.attachments && msg.attachments.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mb-1">
+                                            <div className="flex justify-end flex-wrap gap-1 mb-1">
                                                 {msg.attachments.map((att: any, idx: number) => {
                                                     if (att.type === 'image' || att.type === 'sticker') {
                                                         return (
@@ -327,7 +373,10 @@ export function ChatWindow() {
 
                                     {isSystem && isLastInGroup && (
                                         <Avatar className="h-7 w-7 ml-2 mt-auto shrink-0 border border-border/20">
-                                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">ME</AvatarFallback>
+                                            <AvatarImage src={selectedLead.platform_pages?.avatar_url} />
+                                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
+                                                {selectedLead.platform_pages?.name?.charAt(0) || 'ME'}
+                                            </AvatarFallback>
                                         </Avatar>
                                     )}
                                     {isSystem && !isLastInGroup && <div className="w-9 shrink-0" />}

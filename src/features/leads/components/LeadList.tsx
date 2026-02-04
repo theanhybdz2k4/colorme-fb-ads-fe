@@ -20,7 +20,9 @@ export function LeadList() {
         activeFilter,
         setActiveFilter,
         syncHistoricLeads,
-        isSyncing
+        isSyncing,
+        pagination,
+        setPage
     } = useLeads();
 
     const [hoveredLeadId, setHoveredLeadId] = useState<string | null>(null);
@@ -33,7 +35,8 @@ export function LeadList() {
 
         const matchesFilter = activeFilter === 'all' ||
             (activeFilter === 'unread' && !l.is_read) ||
-            (activeFilter === 'mine' && l.assigned_user_id === 1);
+            (activeFilter === 'mine' && l.assigned_user_id === 1) ||
+            ['potential', 'qualified', 'today'].includes(activeFilter); // Server-side filters
 
         return matchesSearch && matchesFilter;
     });
@@ -65,36 +68,36 @@ export function LeadList() {
                     />
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto pb-1 custom-scrollbar">
-                    <Button
-                        variant={activeFilter === 'all' ? 'default' : 'outline'}
-                        size="sm"
-                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold min-w-[70px]"
-                        onClick={() => setActiveFilter('all')}
-                    >
-                        TẤT CẢ
-                    </Button>
-                    <Button
-                        variant={activeFilter === 'unread' ? 'default' : 'outline'}
-                        size="sm"
-                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold gap-1 min-w-[90px]"
-                        onClick={() => setActiveFilter('unread')}
-                    >
-                        CHƯA ĐỌC
-                        {leads.filter((l: any) => !l.is_read).length > 0 && (
-                            <span className="bg-rose-500 text-white rounded-full px-1 min-w-[16px] text-[9px]">
-                                {leads.filter((l: any) => !l.is_read).length}
-                            </span>
-                        )}
-                    </Button>
-                    <Button
-                        variant={activeFilter === 'mine' ? 'default' : 'outline'}
-                        size="sm"
-                        className="flex-1 h-8 text-[10px] sm:text-[11px] font-bold min-w-[70px]"
-                        onClick={() => setActiveFilter('mine')}
-                    >
-                        CỦA TÔI
-                    </Button>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {[
+                        { id: 'all', label: 'TẤT CẢ' },
+                        { id: 'unread', label: 'CHƯA ĐỌC', count: leads.filter((l: any) => !l.is_read).length },
+                        { id: 'today', label: 'HÔM NAY' },
+                        { id: 'potential', label: 'TIỀM NĂNG' },
+                        { id: 'qualified', label: 'QUALIFIED' },
+                        { id: 'mine', label: 'CỦA TÔI' }
+                    ].map((filter) => (
+                        <Button
+                            key={filter.id}
+                            variant="ghost"
+                            size="sm"
+                            className={`h-8 px-4 text-[10px] font-bold rounded-full transition-all shrink-0 ${
+                                activeFilter === filter.id 
+                                ? 'bg-slate-900 text-white shadow-sm' 
+                                : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                            }`}
+                            onClick={() => setActiveFilter(filter.id as any)}
+                        >
+                            {filter.label}
+                            {filter.count && filter.count > 0 && (
+                                <span className={`ml-1.5 rounded-full px-1.5 min-w-[18px] h-4 flex items-center justify-center text-[9px] font-bold ${
+                                    activeFilter === filter.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                    {filter.count}
+                                </span>
+                            )}
+                        </Button>
+                    ))}
                 </div>
             </div>
 
@@ -149,14 +152,17 @@ export function LeadList() {
                                                 {lead.platform_pages?.name || lead.platform_data?.fb_page_name || 'Fanpage'}
                                             </Badge>
                                             <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 ml-auto">
-                                                {lead.last_message_at ? (() => {
-                                                    const msgDate = new Date(lead.last_message_at);
+                                                {(() => {
+                                                    const timestamp = lead.last_message_at || lead.created_at;
+                                                    if (!timestamp) return '--:--';
+                                                    
+                                                    const msgDate = new Date(timestamp);
                                                     const today = new Date();
                                                     const isToday = msgDate.toDateString() === today.toDateString();
                                                     return isToday
                                                         ? format(msgDate, 'HH:mm')
                                                         : format(msgDate, 'dd/MM HH:mm');
-                                                })() : '--:--'}
+                                                })()}
                                             </span>
                                         </div>
                                         {lead.ai_analysis ? (
@@ -224,6 +230,33 @@ export function LeadList() {
                     )}
                 </div>
             </ScrollArea>
+
+            {/* Pagination footer */}
+            {pagination && pagination.totalPages > 1 && (
+                <div className="p-2 border-t bg-background/50 backdrop-blur-sm flex items-center justify-between gap-2 shrink-0">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] px-2 rounded-lg"
+                        disabled={pagination.page <= 1}
+                        onClick={() => setPage(pagination.page - 1)}
+                    >
+                        Trang trước
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                        Trang {pagination.page} / {pagination.totalPages}
+                    </span>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] px-2 rounded-lg"
+                        disabled={pagination.page >= pagination.totalPages}
+                        onClick={() => setPage(pagination.page + 1)}
+                    >
+                        Trang sau
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
