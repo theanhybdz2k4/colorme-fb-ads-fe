@@ -4,7 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, adAccountsApi } from '@/api';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+
+const formatLocalDate = (date: Date) => {
+    return format(date, 'yyyy-MM-dd');
+};
 
 interface LeadContextType {
     leads: any[];
@@ -48,10 +53,6 @@ interface LeadContextType {
     isSyncingMessages: boolean;
     dateRange: DateRange | undefined;
     setDateRange: (range: DateRange | undefined) => void;
-    startTime: string;
-    setStartTime: (time: string) => void;
-    endTime: string;
-    setEndTime: (time: string) => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -67,24 +68,22 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         from: new Date(),
         to: new Date()
     });
-    const [startTime, setStartTime] = useState("00:00:00");
-    const [endTime, setEndTime] = useState("23:59:59");
     const [page, setPage] = useState(1);
-    const limit = 50;
+    const limit = 200; // Increased to show more leads in stats tab
 
     const activeBranchId = "all";
 
     // Reset page when filters change
     useEffect(() => {
         setPage(1);
-    }, [activeBranchId, selectedAccountId, selectedPageId, activeFilter, searchQuery, startTime, endTime]);
+    }, [activeBranchId, selectedAccountId, selectedPageId, activeFilter, searchQuery]);
 
     // 1. Leads Query
     const { data: leadsData, isLoading: leadsLoading } = useQuery({
-        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange, startTime, endTime],
+        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange],
         queryFn: async () => {
-            const dateStart = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
-            const dateEnd = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined;
+            const dateStart = dateRange?.from ? formatLocalDate(dateRange.from) : undefined;
+            const dateEnd = dateRange?.to ? formatLocalDate(dateRange.to) : undefined;
 
             const res = await leadsApi.list({
                 branchId: activeBranchId,
@@ -96,9 +95,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
                 potential: activeFilter === 'potential' ? true : undefined,
                 today: activeFilter === 'today' ? true : undefined,
                 dateStart,
-                dateEnd,
-                startTime,
-                endTime
+                dateEnd
             });
             return res; // Return full response including pagination
         }
@@ -109,19 +106,17 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Stats Query
     const { data: stats, isLoading: statsLoading } = useQuery({
-        queryKey: ['leads-stats', activeBranchId, selectedAccountId, selectedPageId, dateRange, startTime, endTime],
+        queryKey: ['leads-stats', activeBranchId, selectedAccountId, selectedPageId, dateRange],
         queryFn: async () => {
-            const dateStart = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined;
-            const dateEnd = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined;
+            const dateStart = dateRange?.from ? formatLocalDate(dateRange.from) : undefined;
+            const dateEnd = dateRange?.to ? formatLocalDate(dateRange.to) : undefined;
 
             const res = await leadsApi.getStats({
                 branchId: activeBranchId,
                 accountId: selectedAccountId === "all" ? undefined : selectedAccountId,
                 pageId: selectedPageId === "all" ? undefined : selectedPageId,
                 dateStart,
-                dateEnd,
-                startTime,
-                endTime
+                dateEnd
             } as any);
             return res.data?.result || res.result || {};
         }
@@ -314,11 +309,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         syncMessages: async () => { await syncMessagesMutation.mutateAsync(); },
         isSyncingMessages: syncMessagesMutation.isPending,
         dateRange,
-        setDateRange,
-        startTime,
-        setStartTime,
-        endTime,
-        setEndTime
+        setDateRange
     };
 
     return <LeadContext.Provider value={value}>{children}</LeadContext.Provider>;

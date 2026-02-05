@@ -8,9 +8,11 @@ import {
     DollarSign,
     MessageCircle
 } from 'lucide-react';
+import { format, isToday, isSameDay } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export function LeadStatsHeader() {
-    const { stats } = useLeads();
+    const { stats, dateRange } = useLeads();
 
     const formatCurrency = (val: number) => {
         if (val >= 1000000) return (val / 1000000).toFixed(1) + 'tr';
@@ -18,11 +20,27 @@ export function LeadStatsHeader() {
         return val.toString();
     };
 
+    // Determine if selected range is "today"
+    const isRangeToday = dateRange?.from && dateRange?.to && 
+        isToday(dateRange.from) && isSameDay(dateRange.from, dateRange.to);
+    
+    // Generate label based on date range
+    const getDateLabel = () => {
+        if (!dateRange?.from) return 'KỲ NÀY';
+        if (isRangeToday) return 'HÔM NAY';
+        if (isSameDay(dateRange.from, dateRange.to || dateRange.from)) {
+            return format(dateRange.from, 'dd/MM', { locale: vi }).toUpperCase();
+        }
+        return 'KỲ NÀY';
+    };
+
+    const dateLabel = getDateLabel();
+
     return (
         <div className="space-y-6 shrink-0 z-20">
             <StatsGrid columns={5}>
                 <StatsCard
-                    title="ADS SPENT"
+                    title="CHI PHÍ QUẢNG CÁO"
                     value={`${formatCurrency(stats?.spendTotal || 0)}`}
                     subtitle={`Trung bình ${formatCurrency(stats?.avgDailySpend || 0)} mỗi ngày`}
                     icon={<DollarSign className="h-4 w-4" />}
@@ -30,8 +48,8 @@ export function LeadStatsHeader() {
                 />
                 <StatsCard
                     title="ADS HÔM NAY"
-                    value={`${formatCurrency(stats?.spendToday || 0)}`}
-                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(0)}% so với hôm qua` : 'Mới'}
+                    value={`${formatCurrency(stats?.spendTodayRaw || 0)}`}
+                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(0)}% so với hôm qua` : 'Chưa bao gồm 10% thuế'}
                     trend={stats?.yesterdaySpend > 0 ? { value: Math.round(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100) } : undefined}
                     icon={<MessageSquare className="h-4 w-4" />}
                     className="bg-blue-500/5 border-blue-500/10"
@@ -44,14 +62,14 @@ export function LeadStatsHeader() {
                     className="bg-amber-500/5 border-amber-500/10"
                 />
                 <StatsCard
-                    title="QUALIFIED LEAD HÔM NAY"
-                    value={`${stats?.todayQualified || 0}/${stats?.todayLeads || 0}`}
-                    subtitle="Ok/Lead"
+                    title="QUALIFIED LEAD"
+                    value={`${stats?.todayLeads || 0}`}
+                    subtitle={`${stats?.todayQualified || 0} Ads • ${stats?.todayNewOrganic || 0} Tự nhiên`}
                     icon={<Users className="h-4 w-4" />}
                     className="bg-rose-500/5 border-rose-500/10"
                 />
                 <StatsCard
-                    title="TỔNG TIN NHẮN HÔM NAY"
+                    title={`TIN NHẮN ${dateLabel}`}
                     value={`${stats?.todayMessagesCount || 0}`}
                     subtitle="Mới + Cũ"
                     icon={<MessageCircle className="h-4 w-4" />}

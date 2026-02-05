@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLeads } from '../context/LeadContext';
 import { LoadingState } from '@/components/custom/LoadingState';
 import { LeadStatsHeader } from '../components/LeadStatsHeader';
@@ -7,15 +7,19 @@ import { LeadList } from '../components/LeadList';
 import { ChatWindow } from '../components/ChatWindow';
 import { LeadDetails } from '../components/LeadDetails';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart2, MessageSquare } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart2, MessageSquare, Filter } from 'lucide-react';
 
 import { LeadHeader } from '../components/LeadHeader';
 
 const TABS_STORAGE_KEY = 'lead-insights-active-tab';
 
 export function LeadInsights() {
-  const { leads, leadsLoading, selectedLeadId } = useLeads();
-  
+  const { leads, leadsLoading, selectedLeadId, stats, setSelectedLeadId } = useLeads();
+
+  // Source filter: all, ads, organic
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'ads' | 'organic'>('all');
+
   // Restore tab from localStorage
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -29,6 +33,23 @@ export function LeadInsights() {
     setActiveTab(value);
     localStorage.setItem(TABS_STORAGE_KEY, value);
   };
+
+  // Helper to detect if a lead is from ads
+  // Helper to detect if a lead is from ads
+  const isFromAds = (lead: any) => {
+    return !!lead.source_campaign_id || !!lead.is_qualified;
+  };
+
+  // Filter leads by source (UI local filtering)
+  const filteredLeads = useMemo(() => {
+    if (sourceFilter === 'all') return leads;
+    if (sourceFilter === 'ads') return leads.filter(isFromAds);
+    return leads.filter(l => !isFromAds(l)); // organic
+  }, [leads, sourceFilter]);
+
+  // Count by source (fallback if stats not available)
+  const adsCount = useMemo(() => leads.filter(isFromAds).length, [leads]);
+  const organicCount = useMemo(() => leads.filter(l => !isFromAds(l)).length, [leads]);
 
   if (leadsLoading && !leads.length) {
     return <LoadingState text="Đang tải hệ thống CRM..." />;
@@ -52,8 +73,112 @@ export function LeadInsights() {
           </TabsList>
         </div>
 
-        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0">
+        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0 flex-1">
           <LeadStatsHeader />
+
+          {/* Lead List with latest messages */}
+          <div className="mt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">Khách hàng mới trong kỳ</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm px-2.5 py-0.5 rounded-full bg-muted font-medium">
+                    {stats?.todayLeads ?? leads.length} tổng
+                  </span>
+                  <span className="text-sm px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-medium whitespace-nowrap">
+                    {stats?.todayQualified ?? adsCount} Ads
+                  </span>
+                  <span className="text-sm px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium whitespace-nowrap">
+                    {stats?.todayNewOrganic ?? organicCount} Tự nhiên
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Select value={sourceFilter} onValueChange={(v) => setSourceFilter(v as any)}>
+                  <SelectTrigger className="w-[180px] h-9 bg-card">
+                    <Filter className="h-3.5 w-3.5 mr-2 opacity-50" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả ({leads.length})</SelectItem>
+                    <SelectItem value="ads">Hiển thị Ads ({stats?.todayQualified ?? adsCount})</SelectItem>
+                    <SelectItem value="organic">Hiển thị Tự nhiên ({stats?.todayNewOrganic ?? organicCount})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              {filteredLeads.slice(0, 100).map((lead, index) => (
+                <div
+                  key={lead.id}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all cursor-pointer group"
+                  onClick={() => {
+                    setSelectedLeadId(lead.id);
+                    handleTabChange('chat');
+                  }}
+                >
+                  {/* Sequence Number */}
+                  <div className="shrink-0 w-8 text-sm font-medium text-muted-foreground/50 group-hover:text-primary/50 transition-colors">
+                    {String(index + 1).padStart(2, '0')}
+                  </div>
+
+                  {/* Avatar */}
+                  <img
+                    src={lead.customer_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.customer_name || 'User')}&background=random`}
+                    alt={lead.customer_name}
+                    className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-background shadow-sm"
+                  />
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="font-semibold text-foreground truncate max-w-[200px]">
+                          {lead.customer_name || 'Khách hàng'}
+                        </span>
+                        {isFromAds(lead) ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider shrink-0">Ads</span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-500 font-bold uppercase tracking-wider shrink-0">Organic</span>
+                        )}
+                        {/* Account & Campaign Info */}
+                        <div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground/70">
+                          <span className="truncate max-w-[120px] font-medium opacity-80">
+                            • {lead.platform_accounts?.name}
+                          </span>
+                          {lead.source_campaign_name && lead.source_campaign_name !== 'Tự nhiên' && (
+                            <span className="truncate max-w-[200px] text-blue-500/60 font-medium">
+                              → {lead.source_campaign_name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground/60 whitespace-nowrap">
+                        {lead.first_contact_at ? new Date(lead.first_contact_at).toLocaleString('vi-VN', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          day: '2-digit',
+                          month: '2-digit'
+                        }) : ''}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground line-clamp-1 italic">
+                      {lead.platform_data?.snippet || lead.last_message_content || 'Bắt đầu cuộc trò chuyện...'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {leads.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                  <BarChart2 className="h-12 w-12 mb-4 opacity-10" />
+                  <p>Không có khách hàng mới trong khoảng thời gian này</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="chat" className="flex-1 overflow-hidden border-t mt-0 data-[state=active]:flex">

@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { DatePickerWithRange } from './DatePickerWithRange';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { isSameDay, startOfDay, startOfMonth, endOfMonth, subDays, subMonths } from 'date-fns';
 
 interface DateRangeFilterProps {
     dateRange: DateRange | undefined;
@@ -13,6 +14,7 @@ interface DateRangeFilterProps {
     onPresetChange?: (preset: string | null) => void;
     activePreset?: string | null;
     className?: string;
+    showLabel?: boolean;
 }
 
 export function DateRangeFilter({
@@ -20,10 +22,48 @@ export function DateRangeFilter({
     setDateRange,
     onPresetChange,
     activePreset: propActivePreset,
-    className
+    className,
+    showLabel = true
 }: DateRangeFilterProps) {
     const [internalActivePreset, setInternalActivePreset] = useState<string | null>(null);
-    const activePreset = propActivePreset !== undefined ? propActivePreset : internalActivePreset;
+
+    // Auto-detect preset based on date range
+    const detectedPreset = useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) return null;
+
+        const today = startOfDay(new Date());
+        const from = startOfDay(dateRange.from);
+        const to = startOfDay(dateRange.to);
+
+        // Today
+        if (isSameDay(from, today) && isSameDay(to, today)) return 'today';
+
+        // Yesterday
+        const yesterday = subDays(today, 1);
+        if (isSameDay(from, yesterday) && isSameDay(to, yesterday)) return 'yesterday';
+
+        // 3 days
+        const threeDaysAgo = subDays(today, 2);
+        if (isSameDay(from, threeDaysAgo) && isSameDay(to, today)) return '3days';
+
+        // 7 days
+        const sevenDaysAgo = subDays(today, 6);
+        if (isSameDay(from, sevenDaysAgo) && isSameDay(to, today)) return '7days';
+
+        // This month
+        const firstDayOfMonth = startOfMonth(today);
+        if (isSameDay(from, firstDayOfMonth) && isSameDay(to, today)) return 'thisMonth';
+
+        // Last month
+        const lastMonth = subMonths(today, 1);
+        const firstDayLastMonth = startOfMonth(lastMonth);
+        const lastDayLastMonth = endOfMonth(lastMonth);
+        if (isSameDay(from, firstDayLastMonth) && isSameDay(to, lastDayLastMonth)) return 'lastMonth';
+
+        return null;
+    }, [dateRange]);
+
+    const activePreset = propActivePreset !== undefined ? propActivePreset : (internalActivePreset ?? detectedPreset);
     const setActivePreset = onPresetChange || setInternalActivePreset;
 
     const handlePresetClick = (preset: string, from: Date, to: Date) => {
@@ -37,7 +77,7 @@ export function DateRangeFilter({
     return (
         <div className={cn("flex flex-wrap gap-4 items-end", className)}>
             <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Khoảng thời gian</Label>
+                {showLabel && <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Khoảng thời gian</Label>}
                 <DatePickerWithRange
                     date={dateRange}
                     setDate={(range) => {

@@ -49,11 +49,13 @@ export function LeadHeader() {
                         </Select>
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex flex-col gap-2 flex-1">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Khoảng thời gian</span>
                         <DateRangeFilter 
                             dateRange={dateRange} 
                             setDateRange={setDateRange} 
                             className="w-full"
+                            showLabel={false}
                         />
                     </div>
                 </div>

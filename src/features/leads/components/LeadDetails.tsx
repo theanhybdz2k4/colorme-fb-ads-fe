@@ -58,18 +58,19 @@ export function LeadDetails() {
                             <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
                                 <Calendar className="h-3 w-3" /> Lần đầu liên hệ
                             </label>
-                            <div className="p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/10">
-                                <span className="text-xs font-bold text-orange-700">
-                                    {selectedLead.first_contact_at
-                                        ? new Date(selectedLead.first_contact_at).toLocaleString('vi-VN', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })
-                                        : 'Chưa cập nhật'}
-                                </span>
+                            <div className="flex gap-2">
+                                <Input
+                                    type="datetime-local"
+                                    defaultValue={selectedLead.first_contact_at ? new Date(new Date(selectedLead.first_contact_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                                    className="h-8 text-xs font-bold bg-orange-500/5 border-orange-500/10 text-orange-700"
+                                    onBlur={(e) => {
+                                        if (e.target.value) {
+                                            // Convert to Vietnam time (UTC+7) or just use ISO for DB
+                                            const selectedDate = new Date(e.target.value);
+                                            updateLead({ first_contact_at: selectedDate.toISOString() });
+                                        }
+                                    }}
+                                />
                             </div>
                         </div>
 
