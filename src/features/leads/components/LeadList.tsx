@@ -138,9 +138,9 @@ export function LeadList() {
                                         <div className="flex items-center gap-2 mb-0.5">
                                             <p className={`text-[13px] truncate flex items-center gap-1 min-w-0 ${!lead.is_read ? 'font-black text-foreground' : 'font-semibold text-foreground/80'}`}>
                                                 {lead.customer_name}
-                                                {lead.is_potential && lead.is_manual_potential && (
+                                                {lead.is_potential || lead.is_manual_potential ? (
                                                     <span className="text-amber-500 animate-pulse-slow">⭐</span>
-                                                )}
+                                                ) : null}
                                             </p>
                                             {lead.source_campaign_name && lead.source_campaign_name !== "Tự nhiên" && (
                                                 <Badge variant="outline" className="text-[8px] h-3.5 px-1 border-blue-200 text-blue-600 bg-blue-50 font-bold shrink-0 max-w-[100px] truncate">

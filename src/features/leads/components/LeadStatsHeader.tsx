@@ -38,7 +38,7 @@ export function LeadStatsHeader() {
 
     return (
         <div className="space-y-6 shrink-0 z-20">
-            <StatsGrid columns={5}>
+            <StatsGrid columns={6}>
                 <StatsCard
                     title="CHI PHÍ QUẢNG CÁO"
                     value={`${formatCurrency(stats?.spendTotal || 0)}`}
@@ -62,11 +62,18 @@ export function LeadStatsHeader() {
                     className="bg-amber-500/5 border-amber-500/10"
                 />
                 <StatsCard
-                    title="QUALIFIED LEAD"
-                    value={`${stats?.todayLeads || 0}`}
-                    subtitle={`${stats?.todayQualified || 0} Ads • ${stats?.todayNewOrganic || 0} Tự nhiên`}
+                    title="QUALIFIED LEAD ADS"
+                    value={`${stats?.todayQualified || 0}`}
+                    subtitle={`${stats?.potentialFromAds || 0}/${stats?.todayQualified || 0} tiềm năng`}
                     icon={<Users className="h-4 w-4" />}
                     className="bg-rose-500/5 border-rose-500/10"
+                />
+                <StatsCard
+                    title="QUALIFIED LEAD Organic"
+                    value={`${stats?.todayNewOrganic || 0}`}
+                    subtitle={`${stats?.potentialFromOrganic || 0}/${stats?.todayNewOrganic || 0} tiềm năng`}
+                    icon={<Users className="h-4 w-4" />}
+                    className="bg-green-500/5 border-green-500/10"
                 />
                 <StatsCard
                     title={`TIN NHẮN ${dateLabel}`}
