@@ -43,11 +43,11 @@ export function LeadHeader({ onTabChange }: LeadHeaderProps) {
                         />
 
                         <TabsList className="bg-muted/30 border border-border/50 p-1 rounded-xl h-10">
-                            <TabsTrigger value="stats" onClick={() => onTabChange("stats")} className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8">
+                            <TabsTrigger value="stats" onClick={() => onTabChange("stats")} className="rounded-lg data-[state=active]:bg-primary/90 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8">
                                 <BarChart2 className="h-4 w-4" />
                                 Số liệu
                             </TabsTrigger>
-                            <TabsTrigger value="chat" onClick={() => onTabChange("chat")} className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8">
+                            <TabsTrigger value="chat" onClick={() => onTabChange("chat")} className="rounded-lg data-[state=active]:bg-primary/90 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8">
                                 <MessageSquare className="h-4 w-4" />
                                 Tin nhắn
                             </TabsTrigger>

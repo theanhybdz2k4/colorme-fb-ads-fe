@@ -8,7 +8,7 @@ import { ChatWindow } from '../components/ChatWindow';
 import { LeadDetails } from '../components/LeadDetails';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart2, Filter } from 'lucide-react';
+import { BarChart2, Filter, Star } from 'lucide-react';
 
 import { LeadHeader } from '../components/LeadHeader';
 
@@ -40,11 +40,28 @@ export function LeadInsights() {
     return !!lead.source_campaign_id || !!lead.is_qualified;
   };
 
-  // Filter leads by source (UI local filtering)
+  // Filter and sort leads
   const filteredLeads = useMemo(() => {
-    if (sourceFilter === 'all') return leads;
-    if (sourceFilter === 'ads') return leads.filter(isFromAds);
-    return leads.filter(l => !isFromAds(l)); // organic
+    let result = [...leads];
+    
+    // 1. Filter by source
+    if (sourceFilter === 'ads') {
+      result = result.filter(isFromAds);
+    } else if (sourceFilter === 'organic') {
+      result = result.filter(l => !isFromAds(l));
+    }
+    
+    // 2. Sort: Potential first, then by last message time
+    return result.sort((a, b) => {
+      // Prioritize Potential (Star)
+      if (a.is_potential && !b.is_potential) return -1;
+      if (!a.is_potential && b.is_potential) return 1;
+      
+      // Secondary: Last message time
+      const timeA = new Date(a.last_message_at || 0).getTime();
+      const timeB = new Date(b.last_message_at || 0).getTime();
+      return timeB - timeA;
+    });
   }, [leads, sourceFilter]);
 
   // Count by source (fallback if stats not available)
@@ -123,8 +140,11 @@ export function LeadInsights() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <div className="flex items-center gap-2 overflow-hidden">
-                        <span className="font-semibold text-foreground truncate max-w-[200px]">
+                        <span className="font-semibold text-foreground truncate max-w-[200px] flex items-center gap-1.5">
                           {lead.customer_name || 'Khách hàng'}
+                          {lead.is_potential && (
+                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0 animate-pulse-subtle" />
+                          )}
                         </span>
                         {isFromAds(lead) ? (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider shrink-0">Ads</span>
@@ -153,8 +173,27 @@ export function LeadInsights() {
                       </span>
                     </div>
 
-                    <p className="text-sm text-muted-foreground line-clamp-1 italic">
-                      {lead.platform_data?.snippet || lead.last_message_content || 'Bắt đầu cuộc trò chuyện...'}
+                    {/* Priority: AI Summary -> FB Snippet -> Default */}
+                    <p className="text-sm text-muted-foreground line-clamp-2 italic leading-relaxed">
+                      {(() => {
+                        if (lead.ai_analysis) {
+                          // Try to find "Tóm tắt" or "Summary"
+                          const summaryMatch = lead.ai_analysis.match(/(?:Tóm tắt|Summary):\s*([^\n]+(?:\n(?![A-Z][^:]+:)[^\n]+)*)/i);
+                          if (summaryMatch && summaryMatch[1]) {
+                            return `✨ AI: ${summaryMatch[1].trim()}`;
+                          }
+                          
+                          // Fallback: If it's a "Tổng điểm" format, try to find "Giai đoạn" or "Mức độ quan tâm"
+                          const interestMatch = lead.ai_analysis.match(/(?:Giai đoạn|Mức độ quan tâm):\s*([^\n]+)/i);
+                          if (interestMatch && interestMatch[1]) {
+                             return `✨ AI: ${interestMatch[1].trim()}`;
+                          }
+
+                          // Final fallback: First 150 chars
+                          return `✨ AI: ${lead.ai_analysis.substring(0, 150)}...`;
+                        }
+                        return lead.platform_data?.snippet || lead.last_message_content || 'Bắt đầu cuộc trò chuyện...';
+                      })()}
                     </p>
                   </div>
                 </div>

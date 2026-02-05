@@ -188,7 +188,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
             if (lead && !lead.is_read) {
                 console.log(`[LeadContext] Marking lead ${selectedLeadId} (${lead.customer_name}) as read...`);
                 leadsApi.updateLead(selectedLeadId, { is_read: true })
-                    .then((res) => {
+                    .then(() => {
                         console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully`);
                         // Invalidate both leads and stats to update UI and badges
                         queryClient.invalidateQueries({ queryKey: ['leads'] });
