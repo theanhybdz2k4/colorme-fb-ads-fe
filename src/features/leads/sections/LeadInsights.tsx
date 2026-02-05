@@ -6,9 +6,9 @@ import { LeadStatsHeader } from '../components/LeadStatsHeader';
 import { LeadList } from '../components/LeadList';
 import { ChatWindow } from '../components/ChatWindow';
 import { LeadDetails } from '../components/LeadDetails';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart2, MessageSquare, Filter } from 'lucide-react';
+import { BarChart2, Filter } from 'lucide-react';
 
 import { LeadHeader } from '../components/LeadHeader';
 
@@ -56,24 +56,12 @@ export function LeadInsights() {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <LeadHeader />
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col h-screen overflow-hidden bg-background">
+      <LeadHeader onTabChange={handleTabChange} />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-4 md:px-6 mb-2 md:mb-4">
-          <TabsList className="bg-muted/30 border border-border/50 p-1 rounded-xl">
-            <TabsTrigger value="stats" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-4 md:px-6 gap-2 text-xs md:text-sm">
-              <BarChart2 className="h-4 w-4" />
-              Số liệu
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-4 md:px-6 gap-2 text-xs md:text-sm">
-              <MessageSquare className="h-4 w-4" />
-              Tin nhắn
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
 
-        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0 flex-1">
+        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0 flex-1 bg-white border-t-2 scrollbar-hide">
           <LeadStatsHeader />
 
           {/* Lead List with latest messages */}
@@ -156,8 +144,8 @@ export function LeadInsights() {
                         </div>
                       </div>
                       <span className="text-[11px] text-muted-foreground/60 whitespace-nowrap">
-                        {lead.first_contact_at ? new Date(lead.first_contact_at).toLocaleString('vi-VN', { 
-                          hour: '2-digit', 
+                        {lead.first_contact_at ? new Date(lead.first_contact_at).toLocaleString('vi-VN', {
+                          hour: '2-digit',
                           minute: '2-digit',
                           day: '2-digit',
                           month: '2-digit'
@@ -197,7 +185,7 @@ export function LeadInsights() {
             <LeadDetails />
           </div>
         </TabsContent>
-      </Tabs>
-    </div>
+      </div>
+    </Tabs>
   );
 }
