@@ -42,14 +42,14 @@ export function LeadStatsHeader() {
                 <StatsCard
                     title="CHI PHÍ QUẢNG CÁO"
                     value={`${formatCurrency(stats?.spendTotal || 0)}`}
-                    subtitle={`Trung bình ${formatCurrency(stats?.avgDailySpend || 0)} mỗi ngày`}
+                    subtitle={`Trung bình ${formatCurrency(stats?.avgDailySpend || 0)} mỗi ngày • Đã bao gồm 10% thuế`}
                     icon={<DollarSign className="h-4 w-4" />}
                     className="bg-emerald-500/5 border-emerald-500/10"
                 />
                 <StatsCard
                     title="ADS HÔM NAY"
                     value={`${formatCurrency(stats?.spendTodayRaw || 0)}`}
-                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(0)}% so với hôm qua` : 'Chưa bao gồm 10% thuế'}
+                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(0)}% so với hôm qua` : 'Không bao gồm 10% thuế'}
                     trend={stats?.yesterdaySpend > 0 ? { value: Math.round(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100) } : undefined}
                     icon={<MessageSquare className="h-4 w-4" />}
                     className="bg-blue-500/5 border-blue-500/10"

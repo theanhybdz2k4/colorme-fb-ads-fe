@@ -246,6 +246,7 @@ export function BranchAnalytics() {
                         <p className="text-2xl font-bold text-indigo-400">
                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(totalSpend)}
                         </p>
+                        <p className="text-xs text-muted-foreground">Đã bao gồm 10% thuế</p>
                     </div>
                 </FloatingCard>
                 <FloatingCard className="bg-linear-to-br from-emerald-500/10 to-transparent">
