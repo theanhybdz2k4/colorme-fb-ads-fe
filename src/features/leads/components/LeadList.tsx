@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, RefreshCw, Search, Target } from 'lucide-react';
 import { format } from 'date-fns';
@@ -81,18 +81,16 @@ export function LeadList() {
                             key={filter.id}
                             variant="ghost"
                             size="sm"
-                            className={`h-8 px-4 text-[10px] font-bold rounded-full transition-all shrink-0 ${
-                                activeFilter === filter.id 
-                                ? 'bg-slate-900 text-white shadow-sm' 
+                            className={`h-8 px-4 text-[10px] font-bold rounded-full transition-all shrink-0 ${activeFilter === filter.id
+                                ? 'bg-slate-900 text-white shadow-sm'
                                 : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
-                            }`}
+                                }`}
                             onClick={() => setActiveFilter(filter.id as any)}
                         >
                             {filter.label}
                             {filter.count && filter.count > 0 && (
-                                <span className={`ml-1.5 rounded-full px-1.5 min-w-[18px] h-4 flex items-center justify-center text-[9px] font-bold ${
-                                    activeFilter === filter.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                                }`}>
+                                <span className={`ml-1.5 rounded-full px-1.5 min-w-[18px] h-4 flex items-center justify-center text-[9px] font-bold ${activeFilter === filter.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                                    }`}>
                                     {filter.count}
                                 </span>
                             )}
@@ -120,7 +118,6 @@ export function LeadList() {
                                 >
                                     <div className="relative shrink-0">
                                         <Avatar className="h-12 w-12 border-2 border-border/10">
-                                            <AvatarImage src={lead.customer_avatar} />
                                             <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
                                         </Avatar>
 
@@ -155,7 +152,7 @@ export function LeadList() {
                                                 {(() => {
                                                     const timestamp = lead.last_message_at || lead.created_at;
                                                     if (!timestamp) return '--:--';
-                                                    
+
                                                     const msgDate = new Date(timestamp);
                                                     const today = new Date();
                                                     const isToday = msgDate.toDateString() === today.toDateString();
@@ -234,9 +231,9 @@ export function LeadList() {
             {/* Pagination footer */}
             {pagination && pagination.totalPages > 1 && (
                 <div className="p-2 border-t bg-background/50 backdrop-blur-sm flex items-center justify-between gap-2 shrink-0">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        variant="outline"
+                        size="sm"
                         className="h-7 text-[10px] px-2 rounded-lg"
                         disabled={pagination.page <= 1}
                         onClick={() => setPage(pagination.page - 1)}
@@ -246,9 +243,9 @@ export function LeadList() {
                     <span className="text-[10px] text-muted-foreground font-medium">
                         Trang {pagination.page} / {pagination.totalPages}
                     </span>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        variant="outline"
+                        size="sm"
                         className="h-7 text-[10px] px-2 rounded-lg"
                         disabled={pagination.page >= pagination.totalPages}
                         onClick={() => setPage(pagination.page + 1)}

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft, Target } from 'lucide-react';
 import { format } from 'date-fns';
@@ -65,23 +65,22 @@ export function ChatWindow() {
             {/* Chat Header */}
             <div className="h-14 flex items-center justify-between px-3 md:px-6 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10 w-full">
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="lg:hidden h-8 w-8 -ml-1" 
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:hidden h-8 w-8 -ml-1"
                         onClick={() => setSelectedLeadId(null)}
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0">
-                        <AvatarImage src={selectedLead.customer_avatar} />
                         <AvatarFallback>{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                             <p className="font-bold text-xs md:text-sm truncate">{selectedLead.customer_name}</p>
                             <Badge className="bg-emerald-500 rounded-full h-1.5 w-1.5 md:h-2 md:w-2 p-0 border-none shrink-0" />
-                            
+
                             {/* Status Badges */}
                             {selectedLead.is_potential && (
                                 <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[9px] h-4 px-1.5 font-black flex items-center gap-1 group/tooltip relative">
@@ -108,9 +107,9 @@ export function ChatWindow() {
                     {/* Agent Assignment */}
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 className={`h-8 gap-2 px-2 hidden sm:flex border-dashed ${selectedLead.assigned_agent_id ? 'border-primary/50 bg-primary/5' : 'text-muted-foreground'}`}
                             >
                                 <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -180,7 +179,7 @@ export function ChatWindow() {
                     >
                         <RefreshCw className={`h-4 w-4 ${isSyncingMessages ? 'animate-spin' : ''}`} />
                     </Button>
-                    
+
                     {/* Info Button for Mobile */}
                     <Dialog>
                         <DialogTrigger asChild>
@@ -211,9 +210,9 @@ export function ChatWindow() {
                             <div className="flex items-center gap-2 mb-3">
                                 <Badge className="bg-amber-500 hover:bg-amber-600 text-[10px] font-black tracking-wider px-2 border-none">AI INSIGHT</Badge>
                                 <span className="text-[11px] font-bold text-amber-700 uppercase tracking-tight">Tóm tắt nhu cầu</span>
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
                                     className="ml-auto h-6 text-[10px] text-amber-600 hover:text-amber-700 hover:bg-amber-100/50 gap-1.5 font-bold"
                                     onClick={() => reanalyzeLead()}
                                     disabled={isReanalyzing}
@@ -267,7 +266,6 @@ export function ChatWindow() {
                                 <div className={`flex ${isSystem ? 'justify-end' : 'justify-start'}`}>
                                     {!isSystem && isLastInGroup && (
                                         <Avatar className="h-7 w-7 mr-2 mt-auto shrink-0 border border-border/20">
-                                            <AvatarImage src={selectedLead.customer_avatar} />
                                             <AvatarFallback className="text-[10px]">{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                     )}
@@ -328,12 +326,12 @@ export function ChatWindow() {
                                                     .filter((share: any) => {
                                                         // Hide if this share link is likely the same as the sticker or an attachment image
                                                         const isStickerUrl = msg.sticker && share.link && share.link.includes(msg.sticker.split('?')[0]);
-                                                        const isAttachmentUrl = msg.attachments?.some((att: any) => 
+                                                        const isAttachmentUrl = msg.attachments?.some((att: any) =>
                                                             att.payload?.url && share.link && share.link.includes(att.payload.url.split('?')[0])
                                                         );
                                                         // Also hide if it's a very long CDN URL which is likely just the media itself
                                                         const isCdnUrl = share.link?.includes('fbcdn.net');
-                                                        
+
                                                         return !isStickerUrl && !isAttachmentUrl && !isCdnUrl;
                                                     })
                                                     .map((share: any, idx: number) => (
@@ -355,11 +353,11 @@ export function ChatWindow() {
                                             !msg.message_content.startsWith('[Hình ảnh]') &&
                                             !msg.message_content.startsWith('[Ảnh]') &&
                                             !msg.message_content.startsWith('[Video]') &&
-                                            !(msg.attachments && msg.attachments.length > 0 && 
-                                                (msg.message_content.trim() === '[Hình ảnh]' || 
-                                                 msg.message_content.trim() === '[Ảnh]' || 
-                                                 msg.message_content.trim() === '[Video]' ||
-                                                 msg.message_content.trim() === '[Media]')) &&
+                                            !(msg.attachments && msg.attachments.length > 0 &&
+                                                (msg.message_content.trim() === '[Hình ảnh]' ||
+                                                    msg.message_content.trim() === '[Ảnh]' ||
+                                                    msg.message_content.trim() === '[Video]' ||
+                                                    msg.message_content.trim() === '[Media]')) &&
                                             (
                                                 <div className={`px-4 py-2.5 rounded-2xl text-[14px] shadow-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${isSystem ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background border border-border/50 text-foreground rounded-bl-sm'}`}>
                                                     {msg.message_content}

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Info, Phone, StickyNote, Tag, Target, ExternalLink, RefreshCw, Star, Brain, Sparkles, Calendar } from 'lucide-react';
 
@@ -32,7 +32,6 @@ export function LeadDetails() {
                 <div className="p-5 space-y-6">
                     <div className="text-center pb-2">
                         <Avatar className="h-20 w-20 mx-auto mb-3 border-4 border-muted/30">
-                            <AvatarImage src={selectedLead.customer_avatar} />
                             <AvatarFallback>{selectedLead.customer_name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <h4 className="font-black text-lg flex items-center justify-center gap-1">
