@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLeads } from '../context/LeadContext';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft, Target } from 'lucide-react';
 import { format } from 'date-fns';
@@ -285,7 +286,7 @@ export function ChatWindow() {
 
                                         {/* 2. Attachments (Images/Videos/Files) */}
                                         {msg.attachments && msg.attachments.length > 0 && (
-                                            <div className="flex justify-end flex-wrap gap-1 mb-1">
+                                            <div className="flex flex-col gap-1 mb-1">
                                                 {msg.attachments.map((att: any, idx: number) => {
                                                     if (att.type === 'image' || att.type === 'sticker') {
                                                         return (
@@ -305,6 +306,109 @@ export function ChatWindow() {
                                                                 className="rounded-xl w-full max-w-[240px] h-auto border border-border/10"
                                                                 controls
                                                             />
+                                                        );
+                                                    }
+                                                    if (att.type === 'template') {
+                                                        const templateType = att.payload?.template_type;
+                                                        // BUTTON TEMPLATE
+                                                        if (templateType === 'button') {
+                                                            return (
+                                                                <div key={idx} className="max-w-[280px] rounded-2xl overflow-hidden border border-border/50 bg-background shadow-sm">
+                                                                    {att.title && (
+                                                                        <div className="px-4 py-3 text-[13px] leading-relaxed whitespace-pre-wrap">
+                                                                            {att.title}
+                                                                        </div>
+                                                                    )}
+                                                                    {att.payload?.buttons?.map((btn: any, btnIdx: number) => (
+                                                                        <div key={btnIdx} className="border-t border-border/30">
+                                                                            {btn.type === 'web_url' ? (
+                                                                                <a
+                                                                                    href={btn.url}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-medium text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                                                                                >
+                                                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                                                    {btn.title}
+                                                                                </a>
+                                                                            ) : (
+                                                                                <div className="flex items-center justify-center px-4 py-2.5 text-[13px] font-medium text-primary">
+                                                                                    {btn.title}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        // GENERIC TEMPLATE (single card or carousel)
+                                                        if (templateType === 'generic' && att.payload?.elements) {
+                                                            const elements = att.payload.elements;
+                                                            return (
+                                                                <div key={idx} className={`flex gap-2 ${elements.length > 1 ? 'overflow-x-auto pb-2 snap-x snap-mandatory custom-scrollbar' : ''}`}
+                                                                    style={elements.length > 1 ? { maxWidth: '320px' } : undefined}
+                                                                >
+                                                                    {elements.map((el: any, elIdx: number) => (
+                                                                        <div
+                                                                            key={elIdx}
+                                                                            className={`rounded-2xl overflow-hidden border border-border/50 bg-background shadow-sm shrink-0 snap-start ${elements.length > 1 ? 'w-[220px]' : 'w-full max-w-[280px]'}`}
+                                                                        >
+                                                                            {el.image_url && (
+                                                                                el.default_action?.url ? (
+                                                                                    <a href={el.default_action.url} target="_blank" rel="noreferrer">
+                                                                                        <img
+                                                                                            src={el.image_url}
+                                                                                            alt={el.title || 'Template'}
+                                                                                            className="w-full h-[140px] object-cover hover:opacity-90 transition-opacity"
+                                                                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                                        />
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    <img
+                                                                                        src={el.image_url}
+                                                                                        alt={el.title || 'Template'}
+                                                                                        className="w-full h-[140px] object-cover"
+                                                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                                    />
+                                                                                )
+                                                                            )}
+                                                                            <div className="px-3 py-2.5">
+                                                                                {el.title && (
+                                                                                    <p className="text-[13px] font-bold leading-snug line-clamp-2">{el.title}</p>
+                                                                                )}
+                                                                                {el.subtitle && (
+                                                                                    <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-3">{el.subtitle}</p>
+                                                                                )}
+                                                                            </div>
+                                                                            {el.buttons?.map((btn: any, btnIdx: number) => (
+                                                                                <div key={btnIdx} className="border-t border-border/30">
+                                                                                    {btn.type === 'web_url' ? (
+                                                                                        <a
+                                                                                            href={btn.url}
+                                                                                            target="_blank"
+                                                                                            rel="noreferrer"
+                                                                                            className="flex items-center justify-center gap-1.5 px-3 py-2 text-[12px] font-medium text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                                                                                        >
+                                                                                            <ExternalLink className="h-3 w-3" />
+                                                                                            {btn.title}
+                                                                                        </a>
+                                                                                    ) : (
+                                                                                        <div className="flex items-center justify-center px-3 py-2 text-[12px] font-medium text-primary">
+                                                                                            {btn.title}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        // Fallback for other template types
+                                                        return (
+                                                            <div key={idx} className="max-w-[280px] rounded-2xl overflow-hidden border border-border/50 bg-background shadow-sm px-4 py-3">
+                                                                <p className="text-[13px] whitespace-pre-wrap">{att.title || '[Template]'}</p>
+                                                            </div>
                                                         );
                                                     }
                                                     return (
@@ -353,6 +457,8 @@ export function ChatWindow() {
                                             !msg.message_content.startsWith('[Hình ảnh]') &&
                                             !msg.message_content.startsWith('[Ảnh]') &&
                                             !msg.message_content.startsWith('[Video]') &&
+                                            !msg.message_content.startsWith('[template]') &&
+                                            !msg.message_content.startsWith('[Event]') &&
                                             !(msg.attachments && msg.attachments.length > 0 &&
                                                 (msg.message_content.trim() === '[Hình ảnh]' ||
                                                     msg.message_content.trim() === '[Ảnh]' ||

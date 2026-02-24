@@ -3,6 +3,66 @@ import { Button } from '@/components/ui/button';
 import { Plus, X, Trash2 } from 'lucide-react';
 import type { MessageType, FlowContent, QuickReply, ButtonItem, CarouselElement } from '@/types/chatbot.types';
 
+// Facebook API character limits
+const FB_LIMITS = {
+    BUTTON_TITLE: 20,
+    QUICK_REPLY_TITLE: 20,
+    BUTTON_TEXT: 640,
+    ELEMENT_TITLE: 80,
+    ELEMENT_SUBTITLE: 80,
+};
+
+// Emoji-safe character length
+const charLen = (s: string) => Array.from(s).length;
+// Emoji-safe slice
+const charSlice = (s: string, n: number) => Array.from(s).slice(0, n).join('');
+
+// Char counter badge component
+function CharCount({ value, max }: { value: string; max: number }) {
+    const len = charLen(value || '');
+    const isOver = len > max;
+    const isNear = len >= max - 3;
+    return (
+        <span className={`text-[10px] tabular-nums ${isOver ? 'text-red-500 font-bold' : isNear ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+            {len}/{max}
+        </span>
+    );
+}
+
+// Input with FB limit enforcement (maxLength + paste clipping)
+function LimitedInput({ value, onChange, max, placeholder, className }: {
+    value: string;
+    onChange: (v: string) => void;
+    max: number;
+    placeholder?: string;
+    className?: string;
+}) {
+    return (
+        <div className="flex-1 relative">
+            <input
+                value={value}
+                onChange={e => onChange(charSlice(e.target.value, max))}
+                onPaste={e => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData('text');
+                    const current = value || '';
+                    const cursorStart = (e.target as HTMLInputElement).selectionStart || 0;
+                    const cursorEnd = (e.target as HTMLInputElement).selectionEnd || 0;
+                    const before = Array.from(current).slice(0, cursorStart).join('');
+                    const after = Array.from(current).slice(cursorEnd).join('');
+                    const combined = before + pasted + after;
+                    onChange(charSlice(combined, max));
+                }}
+                placeholder={placeholder}
+                className={className || 'w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm'}
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                <CharCount value={value} max={max} />
+            </span>
+        </div>
+    );
+}
+
 interface ContentEditorProps {
     type: MessageType;
     content: FlowContent;
@@ -33,10 +93,28 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
             {/* Text content */}
             {(type === 'text' || type === 'quick_reply' || type === 'buttons') && (
                 <div className="space-y-2">
-                    <Label>Nội dung tin nhắn</Label>
+                    <div className="flex items-center justify-between">
+                        <Label>Nội dung tin nhắn</Label>
+                        {type === 'buttons' && <CharCount value={content.text || ''} max={FB_LIMITS.BUTTON_TEXT} />}
+                    </div>
                     <textarea
                         value={content.text || ''}
-                        onChange={e => updateText(e.target.value)}
+                        onChange={e => {
+                            if (type === 'buttons') {
+                                updateText(charSlice(e.target.value, FB_LIMITS.BUTTON_TEXT));
+                            } else {
+                                updateText(e.target.value);
+                            }
+                        }}
+                        onPaste={type === 'buttons' ? (e) => {
+                            e.preventDefault();
+                            const pasted = e.clipboardData.getData('text');
+                            const current = content.text || '';
+                            const ta = e.target as HTMLTextAreaElement;
+                            const before = Array.from(current).slice(0, ta.selectionStart || 0).join('');
+                            const after = Array.from(current).slice(ta.selectionEnd || 0).join('');
+                            updateText(charSlice(before + pasted + after, FB_LIMITS.BUTTON_TEXT));
+                        } : undefined}
                         rows={4}
                         className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y"
                         placeholder="Nhập nội dung tin nhắn..."
@@ -69,11 +147,12 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                     </div>
                     {(content.quick_replies || []).map((qr, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                            <input
+                            <LimitedInput
                                 value={qr.title}
-                                onChange={e => updateQuickReply(i, { ...qr, title: e.target.value })}
-                                placeholder="Tiêu đề..."
-                                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
+                                onChange={v => updateQuickReply(i, { ...qr, title: v })}
+                                max={FB_LIMITS.QUICK_REPLY_TITLE}
+                                placeholder="Tiêu đề (tối đa 20)..."
+                                className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm pr-14"
                             />
                             <input
                                 value={qr.payload}
@@ -100,11 +179,12 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                     </div>
                     {(content.buttons || []).map((btn, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                            <input
+                            <LimitedInput
                                 value={btn.title}
-                                onChange={e => updateButton(i, { ...btn, title: e.target.value })}
-                                placeholder="Tiêu đề..."
-                                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
+                                onChange={v => updateButton(i, { ...btn, title: v })}
+                                max={FB_LIMITS.BUTTON_TITLE}
+                                placeholder="Tiêu đề (tối đa 20)..."
+                                className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm pr-14"
                             />
                             <input
                                 value={btn.payload || ''}
@@ -160,20 +240,24 @@ function CarouselElementEditor({ index, element, onChange, onRemove }: {
                 <span className="text-xs font-bold text-muted-foreground">Thẻ #{index + 1}</span>
                 <button onClick={onRemove} className="p-1 hover:text-red-400 text-muted-foreground group cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
             </div>
-            <input
-                value={element.title}
-                onChange={e => onChange({ ...element, title: e.target.value })}
-                placeholder="Tiêu đề (tối đa 80 ký tự)..."
-                maxLength={80}
-                className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
-            />
-            <input
-                value={element.subtitle || ''}
-                onChange={e => onChange({ ...element, subtitle: e.target.value })}
-                placeholder="Mô tả phụ (tối đa 80 ký tự)..."
-                maxLength={80}
-                className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
-            />
+            <div className="relative">
+                <input
+                    value={element.title}
+                    onChange={e => onChange({ ...element, title: charSlice(e.target.value, FB_LIMITS.ELEMENT_TITLE) })}
+                    placeholder="Tiêu đề (tối đa 80 ký tự)..."
+                    className="w-full px-3 py-1.5 pr-14 rounded-lg border border-border bg-background text-sm"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2"><CharCount value={element.title} max={FB_LIMITS.ELEMENT_TITLE} /></span>
+            </div>
+            <div className="relative">
+                <input
+                    value={element.subtitle || ''}
+                    onChange={e => onChange({ ...element, subtitle: charSlice(e.target.value, FB_LIMITS.ELEMENT_SUBTITLE) })}
+                    placeholder="Mô tả phụ (tối đa 80 ký tự)..."
+                    className="w-full px-3 py-1.5 pr-14 rounded-lg border border-border bg-background text-sm"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2"><CharCount value={element.subtitle || ''} max={FB_LIMITS.ELEMENT_SUBTITLE} /></span>
+            </div>
             <input
                 value={element.image_url || ''}
                 onChange={e => onChange({ ...element, image_url: e.target.value })}
@@ -188,11 +272,12 @@ function CarouselElementEditor({ index, element, onChange, onRemove }: {
                 </div>
                 {(element.buttons || []).map((btn, i) => (
                     <div key={i} className="flex gap-2 items-center">
-                        <input
+                        <LimitedInput
                             value={btn.title}
-                            onChange={e => updateButton(i, { ...btn, title: e.target.value })}
-                            placeholder="Tiêu đề..."
-                            className="flex-1 px-2 py-1 rounded border border-border bg-background text-xs"
+                            onChange={v => updateButton(i, { ...btn, title: v })}
+                            max={FB_LIMITS.BUTTON_TITLE}
+                            placeholder="Tiêu đề (tối đa 20)..."
+                            className="w-full px-2 py-1 rounded border border-border bg-background text-xs pr-12"
                         />
                         <input
                             value={btn.payload || ''}
