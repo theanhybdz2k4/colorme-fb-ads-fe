@@ -1,8 +1,10 @@
-import { GripVertical, MessageSquare, Pencil, Trash2, ToggleLeft, ToggleRight, Zap } from 'lucide-react';
+import { GripVertical, MessageSquare, Pencil, Trash2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ChatbotFlow } from '@/types/chatbot.types';
 import { MESSAGE_TYPE_LABELS } from './FlowEditDialog';
 import { useChatbot } from '../context/ChatbotContext';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 
 interface FlowCardProps {
     flow: ChatbotFlow;
@@ -108,32 +110,40 @@ export function FlowCard({ flow }: FlowCardProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col items-center gap-1 self-center">
-                    <button
-                        onClick={() => handleToggleFlow(flow)}
-                        className={cn(
-                            "rounded-xl transition-all active:scale-90 cursor-pointer",
-                            flow.is_active
-                                ? "text-green-500"
-                                : "text-muted-foreground/30 bg-muted"
-                        )}
+                <div className="flex flex-col items-end gap-3 shrink-0 py-1">
+                    <Switch
+                        checked={flow.is_active}
+                        onCheckedChange={() => {
+                            // Using a slight delayed toggle to prevent event propagation issues if needed,
+                            // or simple call:
+                            handleToggleFlow(flow);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                         title={flow.is_active ? 'Đang hoạt động — nhấn để tạm dừng' : 'Đang tạm dừng — nhấn để tiếp tục'}
-                    >
-                        {flow.is_active ? <ToggleRight className="h-6 w-6" /> : <ToggleLeft className="h-6 w-6" />}
-                    </button>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => openEdit(flow)}
-                            className="p-2 rounded-lg hover:bg-muted transition-colors group/btn cursor-pointer"
+                    />
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(flow);
+                            }}
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         >
-                            <Pencil className="h-4 w-4 text-muted-foreground group-hover/btn:text-foreground" />
-                        </button>
-                        <button
-                            onClick={() => handleDeleteFlow(flow.id)}
-                            className="p-2 rounded-lg hover:bg-red-500/10 transition-colors group/btn cursor-pointer"
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteFlow(flow.id);
+                            }}
+                            className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                         >
-                            <Trash2 className="h-4 w-4 text-muted-foreground group-hover/btn:text-red-500" />
-                        </button>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
             </div>
