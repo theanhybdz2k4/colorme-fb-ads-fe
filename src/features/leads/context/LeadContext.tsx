@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, adAccountsApi } from '@/api';
 import { supabase } from '@/lib/supabase';
@@ -101,7 +101,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
                 dateEnd
             });
             return res; // Return full response including pagination
-        }
+        },
+        staleTime: 5000, // Data considered fresh for 5 seconds
+        refetchInterval: 30000, // Auto-refresh every 30 seconds instead of on every DB change
     });
 
     const leads = leadsData?.result || [];
@@ -122,7 +124,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
                 dateEnd
             } as any);
             return res.data?.result || res.result || {};
-        }
+        },
+        staleTime: 10000, // Stats are fresh for 10 seconds
+        refetchInterval: 60000, // Refresh stats every 60 seconds
     });
 
     // 3. Ad Accounts
@@ -164,45 +168,78 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         }
     });
 
-    // Realtime Subscription
+    // Throttled Realtime Subscription — max 1 invalidation per 3 seconds
+    const lastInvalidateRef = useRef<number>(0);
+    const pendingInvalidateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const throttledInvalidate = useCallback((keys: string[][]) => {
+        const now = Date.now();
+        const elapsed = now - lastInvalidateRef.current;
+        const THROTTLE_MS = 3000;
+
+        if (pendingInvalidateRef.current) {
+            clearTimeout(pendingInvalidateRef.current);
+        }
+
+        const doInvalidate = () => {
+            lastInvalidateRef.current = Date.now();
+            keys.forEach(key => queryClient.invalidateQueries({ queryKey: key }));
+        };
+
+        if (elapsed >= THROTTLE_MS) {
+            doInvalidate();
+        } else {
+            pendingInvalidateRef.current = setTimeout(doInvalidate, THROTTLE_MS - elapsed);
+        }
+    }, [queryClient]);
+
     useEffect(() => {
         const channel = supabase
             .channel('leads-realtime-global')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'lead_messages' }, () => {
-                queryClient.invalidateQueries({ queryKey: ['messages'] });
-                queryClient.invalidateQueries({ queryKey: ['leads'] });
+                throttledInvalidate([['messages'], ['leads']]);
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
-                queryClient.invalidateQueries({ queryKey: ['leads'] });
-                queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
+                throttledInvalidate([['leads'], ['leads-stats']]);
             })
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
+            if (pendingInvalidateRef.current) clearTimeout(pendingInvalidateRef.current);
         };
-    }, [queryClient]);
+    }, [queryClient, throttledInvalidate]);
 
     // Auto mark-as-read when lead is selected
+    // KEY FIX: Only trigger on selectedLeadId change, NOT on leads refetch
+    const markedReadRef = useRef<string | null>(null);
     useEffect(() => {
-        if (selectedLeadId && leads.length > 0) {
-            const lead = leads.find((l: any) => l.id === selectedLeadId);
-            // Use falsy check to be robust against null/undefined/0
-            if (lead && !lead.is_read) {
-                console.log(`[LeadContext] Marking lead ${selectedLeadId} (${lead.customer_name}) as read...`);
-                leadsApi.updateLead(selectedLeadId, { is_read: true })
-                    .then(() => {
-                        console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully`);
-                        // Invalidate both leads and stats to update UI and badges
-                        queryClient.invalidateQueries({ queryKey: ['leads'] });
-                        queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
-                    })
-                    .catch(err => {
-                        console.error(`[LeadContext] Failed to mark lead ${selectedLeadId} as read:`, err);
+        if (!selectedLeadId || selectedLeadId === markedReadRef.current) return;
+
+        const lead = leads.find((l: any) => l.id === selectedLeadId);
+        if (lead && !lead.is_read) {
+            markedReadRef.current = selectedLeadId;
+            console.log(`[LeadContext] Marking lead ${selectedLeadId} (${lead.customer_name}) as read...`);
+            leadsApi.updateLead(selectedLeadId, { is_read: true })
+                .then(() => {
+                    console.log(`[LeadContext] Lead ${selectedLeadId} marked as read successfully`);
+                    // Update local cache directly instead of invalidating (avoids refetch cascade)
+                    queryClient.setQueryData(['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange, isRealtime], (old: any) => {
+                        if (!old?.result) return old;
+                        return {
+                            ...old,
+                            result: old.result.map((l: any) =>
+                                l.id === selectedLeadId ? { ...l, is_read: true } : l
+                            )
+                        };
                     });
-            }
+                })
+                .catch(err => {
+                    console.error(`[LeadContext] Failed to mark lead ${selectedLeadId} as read:`, err);
+                    markedReadRef.current = null; // Allow retry
+                });
         }
-    }, [selectedLeadId, leads, queryClient]);
+    }, [selectedLeadId]);
 
     // Mutations
     const syncMutation = useMutation({
