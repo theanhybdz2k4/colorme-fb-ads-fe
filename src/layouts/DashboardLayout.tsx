@@ -28,6 +28,7 @@ import {
   PieChart,
   User,
   Target,
+  Bot,
 } from 'lucide-react';
 
 const navItems = [
@@ -41,6 +42,7 @@ const navItems = [
   { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
   { path: ROUTES.LEADS, label: 'Lead Insights', icon: Target },
   { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
+  { path: ROUTES.CHATBOT, label: 'Chatbot', icon: Bot },
 ];
 
 // Platform tab config with colors

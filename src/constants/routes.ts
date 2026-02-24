@@ -14,5 +14,6 @@ export const ROUTES = {
     SETTINGS: '/settings',
     PROFILE: '/profile',
     LEADS: '/lead-insights',
+    CHATBOT: '/chatbot',
 };
 

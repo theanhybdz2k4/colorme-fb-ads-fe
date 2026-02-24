@@ -15,3 +15,4 @@ export * from './leads.api';
 export * from './users.api';
 export * from './pages.api';
 export * from './analytics.api';
+export * from './chatbot.api';

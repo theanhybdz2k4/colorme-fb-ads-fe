@@ -22,6 +22,7 @@ const LeadInsightsPage = lazy(() => import('@/features/leads').then(m => ({ defa
 const JobsPage = lazy(() => import('@/features/jobs').then(m => ({ default: m.JobsPage })));
 const CronSettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.CronSettingsPage })));
 const ProfilePage = lazy(() => import('@/features/profile/sections/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const ChatbotPage = lazy(() => import('@/features/chatbot'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -118,6 +119,7 @@ function AppRoutes() {
           <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<CronSettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="chatbot" element={<ChatbotPage />} />
         </Route>
       </Routes>
     </Suspense>
