@@ -84,7 +84,7 @@ export function LeadInsights() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
 
-        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0 flex-1 bg-white border-t-2 scrollbar-hide">
+        <TabsContent value="stats" className="overflow-y-auto p-4 md:p-6 pt-0 mt-0 flex-1 bg-background border-t-2 scrollbar-hide">
           <LeadStatsHeader />
 
           {/* Lead List with latest messages */}
@@ -96,8 +96,8 @@ export function LeadInsights() {
                   <span className="text-sm px-2.5 py-0.5 rounded-full bg-muted font-medium">
                     {stats?.todayLeads ?? leads.length} tổng
                   </span>
-                  <span className="text-sm px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-medium whitespace-nowrap">
-                    {stats?.todayQualified ?? adsCount} Ads
+                  <span className="text-sm px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-medium whitespace-nowrap" title="Dữ liệu từ Facebook Ads Insights (Messaging New Conversations)">
+                    {stats?.messagingNewFromAds ?? stats?.todayQualified ?? adsCount} Ads
                   </span>
                   <span className="text-sm px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium whitespace-nowrap">
                     {stats?.todayNewOrganic ?? organicCount} Tự nhiên
@@ -113,7 +113,7 @@ export function LeadInsights() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả ({leads.length})</SelectItem>
-                    <SelectItem value="ads">Hiển thị Ads ({stats?.todayQualified ?? adsCount})</SelectItem>
+                    <SelectItem value="ads">Hiển thị Ads ({stats?.messagingNewFromAds ?? stats?.todayQualified ?? adsCount})</SelectItem>
                     <SelectItem value="organic">Hiển thị Tự nhiên ({stats?.todayNewOrganic ?? organicCount})</SelectItem>
                   </SelectContent>
                 </Select>

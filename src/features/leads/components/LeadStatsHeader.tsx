@@ -21,9 +21,9 @@ export function LeadStatsHeader() {
     };
 
     // Determine if selected range is "today"
-    const isRangeToday = dateRange?.from && dateRange?.to && 
+    const isRangeToday = dateRange?.from && dateRange?.to &&
         isToday(dateRange.from) && isSameDay(dateRange.from, dateRange.to);
-    
+
     // Generate label based on date range
     const getDateLabel = () => {
         if (!dateRange?.from) return 'KỲ NÀY';
@@ -63,8 +63,8 @@ export function LeadStatsHeader() {
                 />
                 <StatsCard
                     title="QUALIFIED LEAD ADS"
-                    value={`${stats?.todayQualified || 0}`}
-                    subtitle={`${stats?.potentialFromAds || 0}/${stats?.todayQualified || 0} tiềm năng`}
+                    value={`${stats?.messagingNewFromAds ?? stats?.todayQualified ?? 0}`}
+                    subtitle={`${stats?.potentialFromAds || 0}/${stats?.messagingNewFromAds ?? stats?.todayQualified ?? 0} tiềm năng • Dữ liệu Ads Insights`}
                     icon={<Users className="h-4 w-4" />}
                     className="bg-rose-500/5 border-rose-500/10"
                 />

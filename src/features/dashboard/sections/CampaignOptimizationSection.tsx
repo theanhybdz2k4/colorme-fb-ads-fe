@@ -1,8 +1,11 @@
 
-import { useState, useEffect } from 'react';
-import { Sparkles, Loader2, BrainCircuit, CheckCircle2, AlertCircle, TrendingUp, Zap, Target, MousePointer2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Sparkles, Loader2, BrainCircuit, CheckCircle2, AlertCircle, TrendingUp, Zap, Target, MousePointer2, Search, ChevronDown } from 'lucide-react';
 import { analyticsApi } from '@/api';
 import { useDashboard } from '../context/DashboardContext';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function CampaignOptimizationSection() {
     const { campaigns } = useDashboard();
@@ -10,25 +13,50 @@ export function CampaignOptimizationSection() {
     const [analysis, setAnalysis] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Process and classification logic
+    const processedCampaigns = useMemo(() => {
+        return campaigns
+            .filter(c => c.effectiveStatus === 'ACTIVE' || c.status === 'ACTIVE')
+            .map(c => {
+                const s = c.stats || {};
+                const clicks = Number(s.clicks || 0);
+                const impressions = Number(s.impressions || 0);
+                const results = Number(s.results || 0);
+                const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+                const cvr = clicks > 0 ? (results / clicks) * 100 : 0;
+
+                let statusClass: 'good' | 'warning' | 'stable' = 'stable';
+                if (ctr > 2.3 || (results > 0 && cvr > 10)) {
+                    statusClass = 'good';
+                } else if (ctr < 1.2 && ctr > 0) {
+                    statusClass = 'warning';
+                }
+
+                return { ...c, ctr, results, statusClass };
+            })
+            .sort((a, b) => {
+                // Priority: Warning (🔴) > Stable (🟡) > Good (🟢)
+                const priority: Record<string, number> = { warning: 0, stable: 1, good: 2 };
+                if (priority[a.statusClass] !== priority[b.statusClass]) {
+                    return priority[a.statusClass] - priority[b.statusClass];
+                }
+                return a.ctr - b.ctr; // Then sort by lowest CTR within same group
+            });
+    }, [campaigns]);
+
+    const filteredCampaigns = processedCampaigns.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     // Get the "worst" performing active campaign as default
     useEffect(() => {
-        if (campaigns.length > 0 && !selectedCampaignId) {
-            const activeCampaigns = campaigns.filter(c => c.effectiveStatus === 'ACTIVE' || c.status === 'ACTIVE');
-            const target = activeCampaigns.length > 0 ? activeCampaigns : campaigns;
-
-            // Sort by lowest CTR
-            const sorted = [...target].sort((a, b) => {
-                const ctrA = (Number(a.stats?.clicks || 0) / Number(a.stats?.impressions || 1)) * 100;
-                const ctrB = (Number(b.stats?.clicks || 0) / Number(b.stats?.impressions || 1)) * 100;
-                return ctrA - ctrB;
-            });
-
-            if (sorted[0]) {
-                setSelectedCampaignId(sorted[0].id);
-            }
+        if (processedCampaigns.length > 0 && !selectedCampaignId) {
+            setSelectedCampaignId(processedCampaigns[0].id);
         }
-    }, [campaigns]);
+    }, [processedCampaigns, selectedCampaignId]);
 
     // Load existing analysis when selected campaign changes
     useEffect(() => {
@@ -89,7 +117,7 @@ export function CampaignOptimizationSection() {
             {/* Animated Background Decor */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
-            
+
             <div className="p-8 relative z-10 flex flex-col h-full">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
@@ -101,10 +129,10 @@ export function CampaignOptimizationSection() {
                         </div>
                         <div>
                             <h3 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                                Tối ưu hóa AI
+                                Phân tích Nội dung AI
                                 <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase font-black">Pro</span>
                             </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 font-medium">Sức mạnh Gemini 2.0 Flash Phân tích & Gợi ý</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 font-medium">Sức mạnh Gemini 2.0 Flash Phân tích Nội dung & Gợi ý</p>
                         </div>
                     </div>
                 </div>
@@ -114,16 +142,78 @@ export function CampaignOptimizationSection() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Chiến dịch</label>
-                            <select
-                                value={selectedCampaignId}
-                                onChange={(e) => setSelectedCampaignId(e.target.value)}
-                                className="w-full bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all appearance-none cursor-pointer"
-                                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.25rem' }}
-                            >
-                                {campaigns.map(c => (
-                                    <option key={c.id} value={c.id} className="bg-card py-2">{c.name}</option>
-                                ))}
-                            </select>
+                            <Popover open={isOpen} onOpenChange={setIsOpen}>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        className="w-full flex items-center justify-between bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all text-left"
+                                    >
+                                        <span className="truncate mr-2 text-foreground">
+                                            {campaign ? campaign.name : 'Chọn chiến dịch...'}
+                                        </span>
+                                        <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-card border-border/50 rounded-2xl shadow-2xl overflow-hidden" align="start">
+                                    <div className="p-3 border-b border-border/30 bg-muted/20">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Tìm tên chiến dịch..."
+                                                className="pl-9 h-9 bg-background/50 border-border/30 focus-visible:ring-primary/20"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <ScrollArea className="h-[300px]">
+                                        <div className="p-2 space-y-1">
+                                            {filteredCampaigns.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => {
+                                                        setSelectedCampaignId(c.id);
+                                                        setIsOpen(false);
+                                                        setSearchTerm('');
+                                                    }}
+                                                    className={`w-full text-left p-3 rounded-xl transition-all hover:bg-primary/5 flex flex-col gap-1 group/item ${selectedCampaignId === c.id ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'}`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-sm font-bold text-foreground truncate flex-1 group-hover/item:text-primary transition-colors">
+                                                            {c.name}
+                                                        </span>
+                                                        <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-background/50 border border-border/30">
+                                                            <span className={`w-2 h-2 rounded-full ${c.statusClass === 'good' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
+                                                                c.statusClass === 'warning' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
+                                                                    'bg-slate-400'
+                                                                }`} />
+                                                            <span className="text-[9px] font-black uppercase text-muted-foreground">
+                                                                {c.statusClass === 'good' ? 'Chạy ngon' :
+                                                                    c.statusClass === 'warning' ? 'Cần tối ưu' : 'Ổn định'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-[10px] font-bold">
+                                                        <span className={`flex items-center gap-1 ${c.statusClass === 'warning' ? 'text-amber-600' : 'text-muted-foreground/70'}`}>
+                                                            CTR: {c.ctr.toFixed(2)}%
+                                                            {c.statusClass === 'warning' && <AlertCircle className="w-3 h-3" />}
+                                                        </span>
+                                                        <span className="text-muted-foreground/70">•</span>
+                                                        <span className="text-muted-foreground/70 flex items-center gap-1">
+                                                            KẾT QUẢ: {c.results}
+                                                            <Target className="w-3 h-3 text-primary/50" />
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                            {filteredCampaigns.length === 0 && (
+                                                <div className="py-8 text-center text-muted-foreground">
+                                                    <p className="text-sm font-medium">Không tìm thấy chiến dịch nào</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </ScrollArea>
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
                         <div className="flex gap-4 items-end">
@@ -175,7 +265,7 @@ export function CampaignOptimizationSection() {
                                     </span>
                                 </div>
                                 <div className="bg-secondary/40 backdrop-blur-xs p-6 rounded-3xl border border-border/50 shadow-inner group-hover:border-primary/20 transition-colors">
-                                    <div 
+                                    <div
                                         className="prose prose-sm prose-invert max-w-none 
                                             prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-4
                                             prose-strong:text-primary prose-strong:font-black
@@ -184,7 +274,7 @@ export function CampaignOptimizationSection() {
                                             prose-li:before:absolute prose-li:before:left-0 prose-li:before:top-[12px] 
                                             prose-li:before:w-5 prose-li:before:h-[1px] prose-li:before:bg-primary/50
                                             text-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent max-h-[400px] overflow-y-auto pr-2"
-                                        dangerouslySetInnerHTML={{ __html: formatMarkdown(analysis.analysis_text) }} 
+                                        dangerouslySetInnerHTML={{ __html: formatMarkdown(analysis.analysis_text) }}
                                     />
                                 </div>
                             </div>
@@ -193,9 +283,9 @@ export function CampaignOptimizationSection() {
                                 <div className="p-5 bg-card border border-border/50 rounded-2xl shadow-float mb-6 transform group-hover:scale-110 transition-transform duration-500">
                                     <Zap className="w-10 h-10 text-primary animate-pulse" />
                                 </div>
-                                <h4 className="text-lg font-bold text-foreground">Khai phá tiềm năng</h4>
+                                <h4 className="text-lg font-bold text-foreground">Khai phá nội dung quảng cáo</h4>
                                 <p className="text-sm text-muted-foreground max-w-[260px] mx-auto mt-2 leading-relaxed">
-                                    Nhận các lời khuyên chuyên sâu để giảm giá lead và tăng tỷ lệ chuyển đổi ngay lập tức.
+                                    Phân tích copy, tiêu đề của các mẫu quảng cáo và nhận đề xuất cải thiện để tăng CTR, giảm giá lead.
                                 </p>
                             </div>
                         )}
@@ -216,7 +306,7 @@ export function CampaignOptimizationSection() {
                             ) : (
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-primary group-hover/btn:rotate-12 transition-transform" />
-                                    <span>{analysis ? 'Làm mới phân tích' : 'Kích hoạt trí tuệ nhân tạo'}</span>
+                                    <span>{analysis ? 'Làm mới phân tích' : 'Phân tích nội dung và hiệu suất'}</span>
                                     <MousePointer2 className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 -translate-x-2 group-hover/btn:translate-x-0 transition-all" />
                                 </div>
                             )}
