@@ -19,7 +19,6 @@ const AdDetailPage = lazy(() => import('@/features/advertisements').then(m => ({
 const InsightsPage = lazy(() => import('@/features/insights').then(m => ({ default: m.InsightsPage })));
 const BranchAnalyticsPage = lazy(() => import('@/features/insights').then(m => ({ default: m.BranchAnalytics })));
 const LeadInsightsPage = lazy(() => import('@/features/leads').then(m => ({ default: m.LeadsPage })));
-const JobsPage = lazy(() => import('@/features/jobs').then(m => ({ default: m.JobsPage })));
 const CronSettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.CronSettingsPage })));
 const ProfilePage = lazy(() => import('@/features/profile/sections/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const ChatbotPage = lazy(() => import('@/features/chatbot'));
@@ -116,7 +115,6 @@ function AppRoutes() {
           <Route path="insights" element={<InsightsPage />} />
           <Route path="branch-analytics" element={<BranchAnalyticsPage />} />
           <Route path="lead-insights" element={<LeadInsightsPage />} />
-          <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<CronSettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="chatbot" element={<ChatbotPage />} />

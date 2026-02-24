@@ -8,7 +8,6 @@ export * from './auth.api';
 export * from './campaigns.api';
 export * from './fbAccounts.api';
 export * from './insights.api';
-export * from './jobs.api';
 export * from './settings.api';
 export * from './branches.api';
 export * from './leads.api';

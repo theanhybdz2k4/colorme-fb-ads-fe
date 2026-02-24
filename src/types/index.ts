@@ -6,5 +6,4 @@ export * from './auth.types';
 export * from './campaigns.types';
 export * from './fbAccounts.types';
 export * from './insights.types';
-export * from './jobs.types';
 export * from './settings.types';

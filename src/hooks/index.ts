@@ -8,7 +8,6 @@ export * from './useAuth';
 export * from './useCampaigns';
 export * from './useAccounts';
 export * from './useInsights';
-export * from './useJobs';
 export * from './useCronSettings';
 export * from './useViewPreference';
 export * from './useDebounce';

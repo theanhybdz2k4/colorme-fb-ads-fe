@@ -40,8 +40,7 @@ const navItems = [
   { path: ROUTES.ADS, label: 'Ads', icon: FileText },
   { path: ROUTES.INSIGHTS, label: 'Insights', icon: BarChart3 },
   { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
-  { path: ROUTES.LEADS, label: 'Lead Insights', icon: Target },
-  { path: ROUTES.JOBS, label: 'Jobs', icon: Settings },
+  { path: ROUTES.LEADS, label: 'Inbox', icon: Target },
   { path: ROUTES.CHATBOT, label: 'Chatbot', icon: Bot },
 ];
 
