@@ -42,11 +42,11 @@ export const AiToggle: React.FC<AiToggleProps> = ({
 
                 <div className="flex flex-col items-start leading-none">
                     <span className="text-sm tracking-tight text-current uppercase">
-                        {label || (enabled ? 'Chatbot Active' : 'Chatbot Paused')}
+                        {label || (enabled ? 'Chatbot đang hoạt động' : 'Chatbot đang tạm dừng')}
                     </span>
                     {description && (
                         <span className="text-[10px] uppercase font-bold opacity-60 mt-0.5">
-                            {description}
+                            {description === 'Syncing...' ? 'Đang đồng bộ...' : description}
                         </span>
                     )}
                 </div>

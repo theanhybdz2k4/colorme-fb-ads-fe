@@ -17,7 +17,7 @@ export function ChatbotHeader() {
                     </h1>
                     <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        Automation for Facebook Messenger
+                        Tự động hóa cho Facebook Messenger
                     </p>
                 </div>
             </div>

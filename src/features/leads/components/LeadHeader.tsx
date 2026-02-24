@@ -3,7 +3,7 @@ import { useLeads } from '../context/LeadContext';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Loader2, Key, BarChart2, MessageSquare } from 'lucide-react';
+import { RefreshCw, Loader2, Key, BarChart2, MessageSquare, Clock } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -50,6 +50,10 @@ export function LeadHeader({ onTabChange }: LeadHeaderProps) {
                             <TabsTrigger value="chat" onClick={() => onTabChange("chat")} className="rounded-lg data-[state=active]:bg-primary/90 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8">
                                 <MessageSquare className="h-4 w-4" />
                                 Tin nhắn
+                            </TabsTrigger>
+                            <TabsTrigger value="realtime" onClick={() => onTabChange("realtime")} className="rounded-lg data-[state=active]:bg-primary/90 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all px-4 gap-2 text-xs md:text-sm h-8 font-bold">
+                                <Clock className="h-4 w-4" />
+                                Realtime
                             </TabsTrigger>
                         </TabsList>
                     </div>

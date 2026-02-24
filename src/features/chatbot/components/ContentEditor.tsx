@@ -62,7 +62,7 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
             {type === 'quick_reply' && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <Label>Quick Replies</Label>
+                        <Label>Phản hồi nhanh (Quick Replies)</Label>
                         <Button size="sm" variant="outline" onClick={addQuickReply} className="gap-1">
                             <Plus className="h-3 w-3" /> Thêm
                         </Button>
@@ -72,13 +72,13 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                             <input
                                 value={qr.title}
                                 onChange={e => updateQuickReply(i, { ...qr, title: e.target.value })}
-                                placeholder="Title..."
+                                placeholder="Tiêu đề..."
                                 className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
                             />
                             <input
                                 value={qr.payload}
                                 onChange={e => updateQuickReply(i, { ...qr, payload: e.target.value })}
-                                placeholder="Payload..."
+                                placeholder="Mã định danh (Payload)..."
                                 className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm font-mono"
                             />
                             <button onClick={() => removeQuickReply(i)} className="p-1 hover:text-red-400 group cursor-pointer">
@@ -93,7 +93,7 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
             {type === 'buttons' && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <Label>Buttons (tối đa 3)</Label>
+                        <Label>Nút bấm (tối đa 3)</Label>
                         <Button size="sm" variant="outline" onClick={addButton} disabled={(content.buttons?.length || 0) >= 3} className="gap-1">
                             <Plus className="h-3 w-3" /> Thêm
                         </Button>
@@ -103,13 +103,13 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                             <input
                                 value={btn.title}
                                 onChange={e => updateButton(i, { ...btn, title: e.target.value })}
-                                placeholder="Title..."
+                                placeholder="Tiêu đề..."
                                 className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
                             />
                             <input
                                 value={btn.payload || ''}
                                 onChange={e => updateButton(i, { ...btn, payload: e.target.value })}
-                                placeholder="Payload..."
+                                placeholder="Mã định danh (Payload)..."
                                 className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-sm font-mono"
                             />
                             <button onClick={() => removeButton(i)} className="p-1 hover:text-red-400 group cursor-pointer">
@@ -124,9 +124,9 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
             {type === 'carousel' && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <Label>Carousel Cards (tối đa 10)</Label>
+                        <Label>Các thẻ Carousel (tối đa 10)</Label>
                         <Button size="sm" variant="outline" onClick={addElement} disabled={(content.elements?.length || 0) >= 10} className="gap-1">
-                            <Plus className="h-3 w-3" /> Thêm Card
+                            <Plus className="h-3 w-3" /> Thêm thẻ
                         </Button>
                     </div>
                     {(content.elements || []).map((el, i) => (
@@ -157,33 +157,33 @@ function CarouselElementEditor({ index, element, onChange, onRemove }: {
     return (
         <div className="p-3 rounded-lg border border-border/50 bg-card space-y-3">
             <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground">Card #{index + 1}</span>
+                <span className="text-xs font-bold text-muted-foreground">Thẻ #{index + 1}</span>
                 <button onClick={onRemove} className="p-1 hover:text-red-400 text-muted-foreground group cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
             </div>
             <input
                 value={element.title}
                 onChange={e => onChange({ ...element, title: e.target.value })}
-                placeholder="Title (max 80 ký tự)..."
+                placeholder="Tiêu đề (tối đa 80 ký tự)..."
                 maxLength={80}
                 className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
             />
             <input
                 value={element.subtitle || ''}
                 onChange={e => onChange({ ...element, subtitle: e.target.value })}
-                placeholder="Subtitle (max 80 ký tự)..."
+                placeholder="Mô tả phụ (tối đa 80 ký tự)..."
                 maxLength={80}
                 className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
             />
             <input
                 value={element.image_url || ''}
                 onChange={e => onChange({ ...element, image_url: e.target.value })}
-                placeholder="Image URL (optional)..."
+                placeholder="URL hình ảnh (không bắt buộc)..."
                 className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm font-mono text-xs"
             />
             {/* Card buttons */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Buttons (tối đa 3)</span>
+                    <span className="text-xs text-muted-foreground">Nút bấm (tối đa 3)</span>
                     <button onClick={addButton} disabled={(element.buttons?.length || 0) >= 3} className="text-xs text-blue-400 hover:underline cursor-pointer">+ Thêm</button>
                 </div>
                 {(element.buttons || []).map((btn, i) => (
@@ -191,13 +191,13 @@ function CarouselElementEditor({ index, element, onChange, onRemove }: {
                         <input
                             value={btn.title}
                             onChange={e => updateButton(i, { ...btn, title: e.target.value })}
-                            placeholder="Title..."
+                            placeholder="Tiêu đề..."
                             className="flex-1 px-2 py-1 rounded border border-border bg-background text-xs"
                         />
                         <input
                             value={btn.payload || ''}
                             onChange={e => updateButton(i, { ...btn, payload: e.target.value })}
-                            placeholder="Payload..."
+                            placeholder="Mã (Payload)..."
                             className="flex-1 px-2 py-1 rounded border border-border bg-background text-xs font-mono"
                         />
                         <button onClick={() => removeButton(i)} className="text-muted-foreground hover:text-red-400 cursor-pointer"><X className="h-3 w-3" /></button>

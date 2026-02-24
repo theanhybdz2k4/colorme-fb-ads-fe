@@ -53,9 +53,9 @@ export function SettingsTab() {
                 {/* PSIDs list */}
                 <div className="space-y-4 pt-2">
                     <Label className="text-sm font-bold tracking-tight text-foreground/70 flex items-center gap-2">
-                        AUTHORIZED TEST PSIDS
+                        DANH SÁCH PSID TEST
                         <span className="px-2 py-0.5 rounded-full bg-muted text-[10px] font-mono">
-                            {config?.test_psids?.length || 0} total
+                            tổng cộng {config?.test_psids?.length || 0}
                         </span>
                     </Label>
 
@@ -75,7 +75,7 @@ export function SettingsTab() {
                             </span>
                         ))}
                         {(config?.test_psids || []).length === 0 && (
-                            <p className="text-xs text-muted-foreground/60 italic self-center">No test PSIDs added yet.</p>
+                            <p className="text-xs text-muted-foreground/60 italic self-center">Chưa có PSID test nào.</p>
                         )}
                     </div>
 

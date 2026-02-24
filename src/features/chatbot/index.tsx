@@ -18,7 +18,7 @@ function ChatbotPageContent() {
     if (configLoading) return (
         <div className="flex flex-col items-center justify-center h-screen gap-4">
             <div className="animate-spin w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full" />
-            <p className="text-xs font-medium text-muted-foreground tracking-tight uppercase">Loading Chatbot...</p>
+            <p className="text-xs font-medium text-muted-foreground tracking-tight uppercase">Đang tải Chatbot...</p>
         </div>
     );
 

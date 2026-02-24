@@ -37,12 +37,12 @@ export function FlowCard({ flow }: FlowCardProps) {
                         <div className="flex gap-1.5 items-center">
                             {flow.is_entry_point && (
                                 <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
-                                    Entry Point
+                                    Điểm bắt đầu
                                 </span>
                             )}
                             {flow.content?.handoff && (
                                 <span className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">
-                                    Handoff
+                                    Chuyển nhân viên
                                 </span>
                             )}
                             <span className={cn(
@@ -57,7 +57,7 @@ export function FlowCard({ flow }: FlowCardProps) {
 
                     <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] font-mono text-muted-foreground border border-border">
-                            key: {flow.flow_key}
+                            mã: {flow.flow_key}
                         </span>
                         <span className="text-[10px] text-muted-foreground/40 font-mono">
                             #{flow.id}
@@ -83,7 +83,7 @@ export function FlowCard({ flow }: FlowCardProps) {
                     {/* Content preview */}
                     <div className="relative group/preview mt-2">
                         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 pl-3 border-l-2 border-border">
-                            {flow.content?.text || flow.content?.text_before || '(no message content)'}
+                            {flow.content?.text || flow.content?.text_before || '(không có nội dung tin nhắn)'}
                         </p>
                     </div>
 
@@ -117,7 +117,7 @@ export function FlowCard({ flow }: FlowCardProps) {
                                 ? "text-green-500"
                                 : "text-muted-foreground/30 bg-muted"
                         )}
-                        title={flow.is_active ? 'Active — click to pause' : 'Paused — click to resume'}
+                        title={flow.is_active ? 'Đang hoạt động — nhấn để tạm dừng' : 'Đang tạm dừng — nhấn để tiếp tục'}
                     >
                         {flow.is_active ? <ToggleRight className="h-6 w-6" /> : <ToggleLeft className="h-6 w-6" />}
                     </button>

@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLeads } from '../context/LeadContext';
 import { LoadingState } from '@/components/custom/LoadingState';
 import { LeadStatsHeader } from '../components/LeadStatsHeader';
@@ -15,7 +15,7 @@ import { LeadHeader } from '../components/LeadHeader';
 const TABS_STORAGE_KEY = 'lead-insights-active-tab';
 
 export function LeadInsights() {
-  const { leads, leadsLoading, selectedLeadId, stats, setSelectedLeadId } = useLeads();
+  const { leads, leadsLoading, selectedLeadId, stats, setSelectedLeadId, setIsRealtime } = useLeads();
 
   // Source filter: all, ads, organic
   const [sourceFilter, setSourceFilter] = useState<'all' | 'ads' | 'organic'>('all');
@@ -31,8 +31,14 @@ export function LeadInsights() {
   // Save tab to localStorage when changed
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    setIsRealtime(value === 'realtime');
     localStorage.setItem(TABS_STORAGE_KEY, value);
   };
+
+  // Ensure isRealtime state matches initial activeTab
+  useEffect(() => {
+    setIsRealtime(activeTab === 'realtime');
+  }, []);
 
   // Helper to detect if a lead is from ads
   // Helper to detect if a lead is from ads
@@ -43,20 +49,20 @@ export function LeadInsights() {
   // Filter and sort leads
   const filteredLeads = useMemo(() => {
     let result = [...leads];
-    
+
     // 1. Filter by source
     if (sourceFilter === 'ads') {
       result = result.filter(isFromAds);
     } else if (sourceFilter === 'organic') {
       result = result.filter(l => !isFromAds(l));
     }
-    
+
     // 2. Sort: Potential first, then by last message time
     return result.sort((a, b) => {
       // Prioritize Potential (Star)
       if (a.is_potential && !b.is_potential) return -1;
       if (!a.is_potential && b.is_potential) return 1;
-      
+
       // Secondary: Last message time
       const timeA = new Date(a.last_message_at || 0).getTime();
       const timeB = new Date(b.last_message_at || 0).getTime();
@@ -182,11 +188,11 @@ export function LeadInsights() {
                           if (summaryMatch && summaryMatch[1]) {
                             return `✨ AI: ${summaryMatch[1].trim()}`;
                           }
-                          
+
                           // Fallback: If it's a "Tổng điểm" format, try to find "Giai đoạn" or "Mức độ quan tâm"
                           const interestMatch = lead.ai_analysis.match(/(?:Giai đoạn|Mức độ quan tâm):\s*([^\n]+)/i);
                           if (interestMatch && interestMatch[1]) {
-                             return `✨ AI: ${interestMatch[1].trim()}`;
+                            return `✨ AI: ${interestMatch[1].trim()}`;
                           }
 
                           // Final fallback: First 150 chars
@@ -209,6 +215,23 @@ export function LeadInsights() {
         </TabsContent>
 
         <TabsContent value="chat" className="flex-1 overflow-hidden border-t mt-0 data-[state=active]:flex">
+          {/* Column 1: Lead List - Show if no lead selected on mobile, or always on desktop */}
+          <div className={`${selectedLeadId ? 'hidden lg:block' : 'block'} w-full lg:w-[360px] border-r shrink-0`}>
+            <LeadList />
+          </div>
+
+          {/* Column 2: Chat Interface - Show if lead selected on mobile, or always on desktop */}
+          <div className={`${selectedLeadId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col h-full bg-muted/5 min-w-0`}>
+            <ChatWindow />
+          </div>
+
+          {/* Column 3: Customer Information - Always hidden on mobile, show on desktop if lead exists */}
+          <div className="hidden xl:block">
+            <LeadDetails />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="realtime" className="flex-1 overflow-hidden border-t mt-0 data-[state=active]:flex">
           {/* Column 1: Lead List - Show if no lead selected on mobile, or always on desktop */}
           <div className={`${selectedLeadId ? 'hidden lg:block' : 'block'} w-full lg:w-[360px] border-r shrink-0`}>
             <LeadList />

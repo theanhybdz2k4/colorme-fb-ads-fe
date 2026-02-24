@@ -53,6 +53,8 @@ interface LeadContextType {
     isSyncingMessages: boolean;
     dateRange: DateRange | undefined;
     setDateRange: (range: DateRange | undefined) => void;
+    isRealtime: boolean;
+    setIsRealtime: (isRealtime: boolean) => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -68,6 +70,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         from: new Date(),
         to: new Date()
     });
+    const [isRealtime, setIsRealtime] = useState(false);
     const [page, setPage] = useState(1);
     const limit = 200; // Increased to show more leads in stats tab
 
@@ -80,10 +83,10 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
 
     // 1. Leads Query
     const { data: leadsData, isLoading: leadsLoading } = useQuery({
-        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange],
+        queryKey: ['leads', activeBranchId, selectedAccountId, selectedPageId, activeFilter, page, dateRange, isRealtime],
         queryFn: async () => {
-            const dateStart = dateRange?.from ? formatLocalDate(dateRange.from) : undefined;
-            const dateEnd = dateRange?.to ? formatLocalDate(dateRange.to) : undefined;
+            const dateStart = (!isRealtime && dateRange?.from) ? formatLocalDate(dateRange.from) : undefined;
+            const dateEnd = (!isRealtime && dateRange?.to) ? formatLocalDate(dateRange.to) : undefined;
 
             const res = await leadsApi.list({
                 branchId: activeBranchId,
@@ -309,7 +312,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         syncMessages: async () => { await syncMessagesMutation.mutateAsync(); },
         isSyncingMessages: syncMessagesMutation.isPending,
         dateRange,
-        setDateRange
+        setDateRange,
+        isRealtime,
+        setIsRealtime
     };
 
     return <LeadContext.Provider value={value}>{children}</LeadContext.Provider>;
