@@ -53,6 +53,7 @@ export interface ChatbotFlow {
     trigger_payloads: string[];
     trigger_keywords: string[];
     is_entry_point: boolean;
+    is_daily_welcome?: boolean;
     sort_order: number;
     is_active: boolean;
     created_at: string;

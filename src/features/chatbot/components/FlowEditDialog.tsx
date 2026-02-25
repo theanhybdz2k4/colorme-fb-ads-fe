@@ -125,7 +125,7 @@ export function FlowEditDialog() {
                     </div>
 
                     {/* Options */}
-                    <div className="flex items-center gap-6 pt-2">
+                    <div className="flex flex-wrap items-center gap-6 pt-2">
                         <label className="flex items-center gap-2 text-sm cursor-pointer">
                             <input
                                 type="checkbox"
@@ -138,8 +138,17 @@ export function FlowEditDialog() {
                         <label className="flex items-center gap-2 text-sm cursor-pointer">
                             <input
                                 type="checkbox"
+                                checked={flow.is_daily_welcome || false}
+                                onChange={e => updateField('is_daily_welcome', e.target.checked)}
+                                className="rounded"
+                            />
+                            Daily Welcome Message
+                        </label>
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                            <input
+                                type="checkbox"
                                 checked={flow.content?.handoff || false}
-                                onChange={e => updateContent('handoff', e.target.checked)}
+                                onChange={updateContent ? (e => updateContent('handoff', e.target.checked)) : (e => updateField('content', { ...flow.content, handoff: e.target.checked }))}
                                 className="rounded"
                             />
                             Handoff (chuyển nhân viên)

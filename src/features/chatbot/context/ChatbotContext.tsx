@@ -154,6 +154,7 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
                 trigger_payloads: [],
                 trigger_keywords: [],
                 is_entry_point: false,
+                is_daily_welcome: false,
                 sort_order: (flows?.length || 0) * 10,
                 is_active: true,
             });
