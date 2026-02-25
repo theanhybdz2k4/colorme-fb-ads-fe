@@ -70,12 +70,20 @@ export function FlowEditDialog() {
                     <div className="space-y-2">
                         <Label>Loại tin nhắn</Label>
                         <Select value={messageType} onValueChange={(v: MessageType) => {
-                            updateField('message_type', v);
+                            const newFlow = { ...flow, message_type: v };
+
                             // Reset content based on type
-                            if (v === 'text') updateField('content', { text: flow.content?.text || '' });
-                            else if (v === 'quick_reply') updateField('content', { text: flow.content?.text || '', quick_replies: flow.content?.quick_replies || [] });
-                            else if (v === 'buttons') updateField('content', { text: flow.content?.text || '', buttons: flow.content?.buttons || [] });
-                            else if (v === 'carousel') updateField('content', { text_before: flow.content?.text_before || '', elements: flow.content?.elements || [] });
+                            if (v === 'text') {
+                                newFlow.content = { text: flow.content?.text || '' };
+                            } else if (v === 'quick_reply') {
+                                newFlow.content = { text: flow.content?.text || '', quick_replies: flow.content?.quick_replies || [] };
+                            } else if (v === 'buttons') {
+                                newFlow.content = { text: flow.content?.text || '', buttons: flow.content?.buttons || [] };
+                            } else if (v === 'carousel') {
+                                newFlow.content = { text_before: flow.content?.text_before || '', elements: flow.content?.elements || [] };
+                            }
+
+                            setFlow(newFlow);
                         }}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
