@@ -39,6 +39,7 @@ export interface FlowContent {
     quick_replies?: QuickReply[];
     buttons?: ButtonItem[];
     elements?: CarouselElement[];
+    image_aspect_ratio?: 'horizontal' | 'square';
     handoff?: boolean;
 }
 

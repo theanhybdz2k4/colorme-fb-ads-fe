@@ -43,4 +43,19 @@ export const chatbotApi = {
         const { data } = await apiClient.post('/chatbot/test', { psid, pageId });
         return data.result || data;
     },
+
+    // Upload image via backend (Cloudflare R2)
+    uploadImage: async (file: File): Promise<{ url: string }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const { data } = await apiClient.post('/chatbot/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (data.success && data.result?.url) {
+            return { url: data.result.url };
+        }
+        throw new Error(data.error || 'Upload failed');
+    },
 };

@@ -1,6 +1,10 @@
+import { useState, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, X, Trash2 } from 'lucide-react';
+import { Plus, X, Trash2, Loader2, ImagePlus, Crop, RectangleHorizontal, Square } from 'lucide-react';
+import { ImageCropModal } from './ImageCropModal';
+import { toast } from 'sonner';
+import { chatbotApi } from '@/api/chatbot.api';
 import type { MessageType, FlowContent, QuickReply, ButtonItem, CarouselElement } from '@/types/chatbot.types';
 
 // Facebook API character limits
@@ -124,15 +128,45 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
 
             {/* Carousel text_before */}
             {type === 'carousel' && (
-                <div className="space-y-2">
-                    <Label>Text giới thiệu (gửi trước carousel)</Label>
-                    <textarea
-                        value={content.text_before || ''}
-                        onChange={e => updateTextBefore(e.target.value)}
-                        rows={2}
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y"
-                        placeholder="VD: Đây là 3 lộ trình chuyên nghiệp..."
-                    />
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        <Label>Text giới thiệu (gửi trước carousel)</Label>
+                        <textarea
+                            value={content.text_before || ''}
+                            onChange={e => updateTextBefore(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y"
+                            placeholder="VD: Đây là 3 lộ trình chuyên nghiệp..."
+                        />
+                    </div>
+                    {/* Image aspect ratio selector */}
+                    <div className="space-y-1.5">
+                        <Label>Tỷ lệ ảnh</Label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => onChange({ ...content, image_aspect_ratio: 'horizontal' })}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${(content.image_aspect_ratio || 'horizontal') === 'horizontal'
+                                        ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/20'
+                                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                                    }`}
+                            >
+                                <RectangleHorizontal className="h-4 w-4" />
+                                <span>Ngang (1.91:1)</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onChange({ ...content, image_aspect_ratio: 'square' })}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${content.image_aspect_ratio === 'square'
+                                        ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary/20'
+                                        : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                                    }`}
+                            >
+                                <Square className="h-4 w-4" />
+                                <span>Vuông (1:1)</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -214,6 +248,7 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                             key={i}
                             index={i}
                             element={el}
+                            imageAspectRatio={content.image_aspect_ratio || 'horizontal'}
                             onChange={e => updateElement(i, e)}
                             onRemove={() => removeElement(i)}
                         />
@@ -224,15 +259,50 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
     );
 }
 
-function CarouselElementEditor({ index, element, onChange, onRemove }: {
+function CarouselElementEditor({ index, element, imageAspectRatio, onChange, onRemove }: {
     index: number;
     element: CarouselElement;
+    imageAspectRatio: 'horizontal' | 'square';
     onChange: (el: CarouselElement) => void;
     onRemove: () => void;
 }) {
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const [cropOpen, setCropOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const isSquare = imageAspectRatio === 'square';
+
     const addButton = () => onChange({ ...element, buttons: [...(element.buttons || []), { type: 'postback', title: '', payload: '' }] });
     const removeButton = (i: number) => onChange({ ...element, buttons: element.buttons?.filter((_, idx) => idx !== i) });
     const updateButton = (i: number, btn: ButtonItem) => onChange({ ...element, buttons: element.buttons?.map((b, idx) => idx === i ? btn : b) });
+
+    const handleUpload = async (file: File) => {
+        if (!file.type.startsWith('image/')) {
+            toast.error('Chỉ hỗ trợ file ảnh');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Ảnh tối đa 5MB');
+            return;
+        }
+        setUploading(true);
+        try {
+            const { url } = await chatbotApi.uploadImage(file);
+            onChange({ ...element, image_url: url });
+            toast.success('Tải ảnh thành công!');
+        } catch (e: any) {
+            toast.error(e.message || 'Tải ảnh thất bại');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleUpload(file);
+    };
 
     return (
         <div className="p-3 rounded-lg border border-border/50 bg-card space-y-3">
@@ -258,12 +328,98 @@ function CarouselElementEditor({ index, element, onChange, onRemove }: {
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2"><CharCount value={element.subtitle || ''} max={FB_LIMITS.ELEMENT_SUBTITLE} /></span>
             </div>
-            <input
-                value={element.image_url || ''}
-                onChange={e => onChange({ ...element, image_url: e.target.value })}
-                placeholder="URL hình ảnh (không bắt buộc)..."
-                className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm font-mono text-xs"
-            />
+
+            {/* Image: FB ratio preview + URL + upload + crop */}
+            <div className="space-y-2">
+                {element.image_url && (
+                    <div
+                        className="relative group rounded-lg overflow-hidden border border-border bg-black/50 cursor-pointer"
+                        style={{ aspectRatio: isSquare ? '1' : '1.91' }}
+                        onClick={() => setCropOpen(true)}
+                    >
+                        <img
+                            src={element.image_url}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                            onError={e => (e.currentTarget.style.display = 'none')}
+                        />
+                        {/* Overlay actions */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                            <span className="bg-white/90 text-black text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                <Crop className="h-3 w-3" /> Chỉnh sửa
+                            </span>
+                        </div>
+                        <button
+                            onClick={e => { e.stopPropagation(); onChange({ ...element, image_url: '' }); }}
+                            className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                        <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
+                            {isSquare ? '1 : 1' : '1.91 : 1'}
+                        </span>
+                    </div>
+                )}
+                <div className="flex gap-2 items-center">
+                    <input
+                        value={element.image_url || ''}
+                        onChange={e => onChange({ ...element, image_url: e.target.value })}
+                        placeholder="Dán link ảnh hoặc tải lên..."
+                        className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                    />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUpload(file);
+                            e.target.value = '';
+                        }}
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-blue-400/50 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={handleDrop}
+                    >
+                        {uploading ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang tải...</>
+                        ) : (
+                            <><ImagePlus className="h-3.5 w-3.5" /> {dragOver ? 'Thả ảnh...' : 'Tải ảnh'}</>
+                        )}
+                    </button>
+                </div>
+
+                {/* Crop modal */}
+                {element.image_url && (
+                    <ImageCropModal
+                        open={cropOpen}
+                        onClose={() => setCropOpen(false)}
+                        imageUrl={element.image_url}
+                        aspectRatio={imageAspectRatio}
+                        isSaving={uploading}
+                        onCropped={async (blob) => {
+                            const file = new File([blob], `crop_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                            setUploading(true);
+                            try {
+                                const { url } = await chatbotApi.uploadImage(file);
+                                onChange({ ...element, image_url: url });
+                                setCropOpen(false);
+                                toast.success('Đã cắt và lưu ảnh!');
+                            } catch (e: any) {
+                                toast.error(e.message || 'Lưu ảnh thất bại');
+                            } finally {
+                                setUploading(false);
+                            }
+                        }}
+                    />
+                )}
+            </div>
+
             {/* Card buttons */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
