@@ -23,6 +23,7 @@ import {
 import { Settings, Clock, Zap, Save, X, AlertTriangle, Plus, Check } from 'lucide-react';
 import { UserBotSettingsSection } from './sections/UserBotSettingsSection';
 import { AISettingsSection } from './sections/AISettingsSection';
+import { ApiTokensSection } from './sections/ApiTokensSection';
 import { leadsApi } from '@/api/leads.api';
 import { cronSettingsApi } from '@/api/settings.api';
 import { RefreshCw } from 'lucide-react';
@@ -307,6 +308,9 @@ export function CronSettingsPage() {
 
             {/* AI Settings */}
             <AISettingsSection />
+
+            {/* API Tokens */}
+            <ApiTokensSection />
 
             {/* Edit Dialog */}
             <Dialog open={!!editingType} onOpenChange={() => setEditingType(null)}>

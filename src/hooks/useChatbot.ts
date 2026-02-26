@@ -5,6 +5,7 @@ import type { ChatbotConfig, ChatbotFlow } from '@/types/chatbot.types';
 const KEYS = {
     config: ['chatbot', 'config'],
     flows: ['chatbot', 'flows'],
+    ads: ['chatbot', 'ads'],
     sessions: ['chatbot', 'sessions'],
 };
 
@@ -43,6 +44,13 @@ export function useDeleteChatbotFlow() {
     return useMutation({
         mutationFn: (id: number) => chatbotApi.deleteFlow(id),
         onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.flows }),
+    });
+}
+
+export function useChatbotAds() {
+    return useQuery({
+        queryKey: KEYS.ads,
+        queryFn: chatbotApi.getAds,
     });
 }
 

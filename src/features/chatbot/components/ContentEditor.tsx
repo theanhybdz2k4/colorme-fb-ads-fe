@@ -119,7 +119,7 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                             const after = Array.from(current).slice(ta.selectionEnd || 0).join('');
                             updateText(charSlice(before + pasted + after, FB_LIMITS.BUTTON_TEXT));
                         } : undefined}
-                        rows={4}
+                        rows={8}
                         className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y"
                         placeholder="Nhập nội dung tin nhắn..."
                     />
@@ -134,7 +134,7 @@ export function ContentEditor({ type, content, onChange }: ContentEditorProps) {
                         <textarea
                             value={content.text_before || ''}
                             onChange={e => updateTextBefore(e.target.value)}
-                            rows={2}
+                            rows={8}
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y"
                             placeholder="VD: Đây là 3 lộ trình chuyên nghiệp..."
                         />

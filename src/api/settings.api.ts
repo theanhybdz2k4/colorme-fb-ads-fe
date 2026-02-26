@@ -1,6 +1,15 @@
 import { apiClient } from '@/lib/apiClient';
 import type { CronSettingsResponse, EstimatedApiCalls, UpsertCronSettingDto, CronSetting, CrawlerCookieStatus } from '@/types/settings.types';
 
+export interface ApiToken {
+    token: string;
+    userId: number;
+    name: string;
+    expiresAt: string | null;
+    isActive: boolean;
+    createdAt: string;
+}
+
 export const cronSettingsApi = {
     /**
      * Get all cron settings for current user
@@ -197,3 +206,30 @@ export const userTelegramBotApi = {
         return data;
     },
 };
+
+export const apiTokenApi = {
+    /**
+     * Get all API tokens for current user
+     */
+    getTokens: async (): Promise<{ success: boolean; result: ApiToken[] }> => {
+        const { data } = await apiClient.get('/fb-settings/api-tokens');
+        return data;
+    },
+
+    /**
+     * Create a new API token
+     */
+    createToken: async (dto: { name: string; expiresAt?: string | null }): Promise<{ success: boolean; result: ApiToken }> => {
+        const { data } = await apiClient.post('/fb-settings/api-tokens', dto);
+        return data;
+    },
+
+    /**
+     * Delete an API token
+     */
+    deleteToken: async (token: string): Promise<{ success: boolean }> => {
+        const { data } = await apiClient.delete(`/fb-settings/api-tokens/${token}`);
+        return data;
+    },
+};
+

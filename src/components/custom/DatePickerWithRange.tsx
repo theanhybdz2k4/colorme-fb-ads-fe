@@ -24,9 +24,30 @@ export function DatePickerWithRange({
     date,
     setDate,
 }: DatePickerWithRangeProps) {
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [tempDate, setTempDate] = React.useState<DateRange | undefined>(date);
+
+    // Sync tempDate with date when popover opens
+    const handleOpenChange = (open: boolean) => {
+        if (open) {
+            setTempDate(date);
+        }
+        setIsOpen(open);
+    };
+
+    const handleApply = () => {
+        setDate(tempDate);
+        setIsOpen(false);
+    };
+
+    const handleCancel = () => {
+        setTempDate(date);
+        setIsOpen(false);
+    };
+
     return (
         <div className={cn("grid gap-2", className)}>
-            <Popover>
+            <Popover open={isOpen} onOpenChange={handleOpenChange}>
                 <PopoverTrigger asChild>
                     <Button
                         id="date"
@@ -52,14 +73,34 @@ export function DatePickerWithRange({
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        autoFocus
-                        mode="range"
-                        defaultMonth={date?.from}
-                        selected={date}
-                        onSelect={setDate}
-                        numberOfMonths={2}
-                    />
+                    <div className="flex flex-col">
+                        <Calendar
+                            autoFocus
+                            mode="range"
+                            defaultMonth={tempDate?.from || date?.from}
+                            selected={tempDate}
+                            onSelect={setTempDate}
+                            numberOfMonths={2}
+                        />
+                        <div className="flex items-center justify-end gap-2 p-3 border-t border-border/50 bg-muted/20">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancel}
+                                className="h-8 px-3 text-xs"
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={handleApply}
+                                className="h-8 px-3 text-xs"
+                                disabled={!tempDate?.from || !tempDate?.to}
+                            >
+                                Áp dụng
+                            </Button>
+                        </div>
+                    </div>
                 </PopoverContent>
             </Popover>
         </div>

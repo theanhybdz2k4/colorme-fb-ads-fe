@@ -43,9 +43,19 @@ export interface FlowContent {
     handoff?: boolean;
 }
 
+export interface ChatbotAd {
+    id: number;
+    external_id: string;
+    name: string;
+    status: string;
+    campaign_name: string;
+    creative_thumbnail?: string;
+}
+
 export interface ChatbotFlow {
     id: number;
     user_id: number;
+    linked_ad_ids: string[];
     flow_key: string;
     display_name: string;
     message_type: MessageType;

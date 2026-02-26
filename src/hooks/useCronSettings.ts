@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cronSettingsApi, userTelegramBotApi } from '@/api/settings.api';
+import { cronSettingsApi, userTelegramBotApi, apiTokenApi } from '@/api/settings.api';
 import type { UpsertCronSettingDto } from '@/types/settings.types';
 
 export function useCronSettings() {
@@ -210,5 +210,35 @@ export function useWebhookInfo(botId: number) {
         queryKey: ['telegram', 'bots', botId, 'webhook-info'],
         queryFn: () => userTelegramBotApi.getWebhookInfo(botId),
         enabled: !!botId,
+    });
+}
+
+// API Token hooks
+export function useApiTokens() {
+    return useQuery({
+        queryKey: ['apiTokens'],
+        queryFn: apiTokenApi.getTokens,
+    });
+}
+
+export function useCreateApiToken() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: apiTokenApi.createToken,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+        },
+    });
+}
+
+export function useDeleteApiToken() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: apiTokenApi.deleteToken,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+        },
     });
 }

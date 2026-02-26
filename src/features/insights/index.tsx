@@ -7,7 +7,7 @@ import { useAds } from '@/hooks/useAds';
 import { useAdAccounts } from '@/hooks/useAdAccounts';
 import { usePlatform } from '@/contexts';
 import { BranchFilter } from '@/features/adAccounts';
-import { insightsApi } from '@/api';
+import { insightsApi, branchesApi } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,6 +104,9 @@ export function InsightsPage() {
                     description: `Đã sync ${activeAccounts.length} accounts`,
                 });
             }
+
+            // Auto-rebuild branch stats after insights sync
+            try { await branchesApi.rebuildStats(); } catch { /* ignore */ }
 
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['insights'] });

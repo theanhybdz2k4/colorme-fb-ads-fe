@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
-import type { ChatbotConfig, ChatbotFlow, ChatbotSession } from '@/types/chatbot.types';
+import type { ChatbotConfig, ChatbotFlow, ChatbotSession, ChatbotAd } from '@/types/chatbot.types';
 
 export const chatbotApi = {
     // Config
@@ -26,6 +26,12 @@ export const chatbotApi = {
 
     deleteFlow: async (id: number): Promise<void> => {
         await apiClient.delete(`/chatbot/flows/${id}`);
+    },
+
+    // Ads
+    getAds: async (): Promise<ChatbotAd[]> => {
+        const { data } = await apiClient.get('/chatbot/ads');
+        return data.result || data;
     },
 
     // Sessions

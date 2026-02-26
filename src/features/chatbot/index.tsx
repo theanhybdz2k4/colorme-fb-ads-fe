@@ -43,6 +43,7 @@ function ChatbotPageContent() {
                 <TabsContent value="flows" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <FlowsTab />
                 </TabsContent>
+
             </Tabs>
 
             <FlowEditDialog />

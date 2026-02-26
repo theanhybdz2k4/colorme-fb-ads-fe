@@ -83,6 +83,9 @@ export function AdAccountsPage() {
       const today = getVietnamDateString();
       await insightsApi.syncAccount(accountId, today, today, 'BOTH');
 
+      // Auto-rebuild branch stats after insights sync
+      try { await branchesApi.rebuildStats(); } catch { /* ignore */ }
+
       toast.success('Đã hoàn thành sync dữ liệu tài khoản');
       queryClient.invalidateQueries({ queryKey: ['ad-accounts'] });
     } catch {
@@ -113,6 +116,8 @@ export function AdAccountsPage() {
     setSyncingAll(true);
     try {
       await Promise.all(activeAccounts.map(account => handleSyncAll(account.id)));
+      // Rebuild branch stats once after all accounts synced
+      try { await branchesApi.rebuildStats(); } catch { /* ignore */ }
       toast.success(`Đã hoàn thành sync ${activeAccounts.length} tài khoản Active`);
     } catch {
       toast.error('Lỗi sync hàng loạt');
