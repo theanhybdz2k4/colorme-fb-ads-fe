@@ -18,8 +18,8 @@ interface DateRangeFilterProps {
 }
 
 export function DateRangeFilter({
-    dateRange: propDateRange,
-    setDateRange: propSetDateRange,
+    dateRange,
+    setDateRange,
     onPresetChange,
     activePreset: propActivePreset,
     className,
@@ -27,27 +27,13 @@ export function DateRangeFilter({
 }: DateRangeFilterProps) {
     const [internalActivePreset, setInternalActivePreset] = useState<string | null>(null);
 
-    // Controlled temp state for "Apply" button
-    const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(propDateRange);
-    const [tempActivePreset, setTempActivePreset] = useState<string | null>(null);
-
-    // Update temp state when props change (initial load or external reset)
-    useMemo(() => {
-        setTempDateRange(propDateRange);
-    }, [propDateRange]);
-
-    useMemo(() => {
-        const active = propActivePreset !== undefined ? propActivePreset : internalActivePreset;
-        setTempActivePreset(active);
-    }, [propActivePreset, internalActivePreset]);
-
-    // Auto-detect preset based on date range (using temp range for the UI highlights)
+    // Auto-detect preset based on date range
     const detectedPreset = useMemo(() => {
-        if (!tempDateRange?.from || !tempDateRange?.to) return null;
+        if (!dateRange?.from || !dateRange?.to) return null;
 
         const today = startOfDay(new Date());
-        const from = startOfDay(tempDateRange.from);
-        const to = startOfDay(tempDateRange.to);
+        const from = startOfDay(dateRange.from);
+        const to = startOfDay(dateRange.to);
 
         // Today
         if (isSameDay(from, today) && isSameDay(to, today)) return 'today';
@@ -75,29 +61,15 @@ export function DateRangeFilter({
         if (isSameDay(from, firstDayLastMonth) && isSameDay(to, lastDayLastMonth)) return 'lastMonth';
 
         return null;
-    }, [tempDateRange]);
+    }, [dateRange]);
 
-    const activePreset = tempActivePreset ?? detectedPreset;
+    const activePreset = propActivePreset !== undefined ? propActivePreset : (internalActivePreset ?? detectedPreset);
+    const setActivePreset = onPresetChange || setInternalActivePreset;
 
     const handlePresetClick = (preset: string, from: Date, to: Date) => {
-        setTempDateRange({ from, to });
-        setTempActivePreset(preset);
+        setDateRange({ from, to });
+        setActivePreset(preset);
     };
-
-    const handleApply = () => {
-        propSetDateRange(tempDateRange);
-        if (onPresetChange) {
-            onPresetChange(tempActivePreset);
-        } else {
-            setInternalActivePreset(tempActivePreset);
-        }
-    };
-
-    const hasChanges = useMemo(() => {
-        if (!tempDateRange || !propDateRange) return tempDateRange !== propDateRange;
-        return !isSameDay(tempDateRange.from || new Date(0), propDateRange.from || new Date(0)) ||
-            !isSameDay(tempDateRange.to || new Date(0), propDateRange.to || new Date(0));
-    }, [tempDateRange, propDateRange]);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -107,10 +79,10 @@ export function DateRangeFilter({
             <div className="space-y-2">
                 {showLabel && <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Khoảng thời gian</Label>}
                 <DatePickerWithRange
-                    date={tempDateRange}
+                    date={dateRange}
                     setDate={(range) => {
-                        setTempDateRange(range);
-                        setTempActivePreset(null);
+                        setDateRange(range);
+                        setActivePreset(null);
                     }}
                 />
             </div>
@@ -185,16 +157,6 @@ export function DateRangeFilter({
                 </Button>
             </div>
 
-            <Button
-                variant="default"
-                className={cn(
-                    "h-9 px-6 font-semibold bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md active:scale-95",
-                    !hasChanges && "opacity-50 pointer-events-none grayscale"
-                )}
-                onClick={handleApply}
-            >
-                Áp dụng
-            </Button>
         </div>
     );
 }

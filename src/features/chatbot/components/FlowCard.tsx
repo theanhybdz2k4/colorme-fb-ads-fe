@@ -1,4 +1,4 @@
-import { GripVertical, MessageSquare, Pencil, Trash2, Zap, Bot } from 'lucide-react';
+import { GripVertical, MessageSquare, Pencil, Trash2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ChatbotFlow } from '@/types/chatbot.types';
 import { MESSAGE_TYPE_LABELS } from './FlowEditDialog';
@@ -11,7 +11,7 @@ interface FlowCardProps {
 }
 
 export function FlowCard({ flow }: FlowCardProps) {
-    const { openEdit, handleDeleteFlow, handleToggleFlow, ads } = useChatbot();
+    const { openEdit, handleDeleteFlow, handleToggleFlow } = useChatbot();
 
     const typeInfo = MESSAGE_TYPE_LABELS[flow.message_type];
     const TypeIcon = typeInfo?.icon || MessageSquare;
@@ -54,49 +54,7 @@ export function FlowCard({ flow }: FlowCardProps) {
                                 <TypeIcon className="h-3 w-3" />
                                 {typeInfo?.label}
                             </span>
-                            {(() => {
-                                const linkedAds = ads?.filter(ad => flow.linked_ad_ids?.includes(ad.external_id)) || [];
-                                if (linkedAds.length === 0) return null;
 
-                                return (
-                                    <div className="flex -space-x-2 overflow-hidden items-center ml-1">
-                                        {linkedAds.slice(0, 3).map(ad => (
-                                            <div key={ad.external_id} className="inline-block h-6 w-6 rounded-md border-2 border-background bg-muted overflow-hidden shadow-sm hover:z-10 transition-all hover:scale-110" title={ad.name}>
-                                                {ad.creative_thumbnail ? (
-                                                    <div className="h-full w-full relative">
-                                                        <img
-                                                            src={ad.creative_thumbnail}
-                                                            className="h-full w-full object-cover"
-                                                            alt=""
-                                                            onError={(e) => {
-                                                                const target = e.target as HTMLImageElement;
-                                                                target.classList.add('hidden');
-                                                                const next = target.nextElementSibling;
-                                                                if (next) next.classList.remove('hidden');
-                                                            }}
-                                                        />
-                                                        <div className="hidden absolute inset-0 flex items-center justify-center bg-muted">
-                                                            <Bot className="h-3 w-3 text-muted-foreground/20" />
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-full w-full flex items-center justify-center bg-primary/10">
-                                                        <Bot className="h-3 w-3 text-primary/50" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                        {linkedAds.length > 3 && (
-                                            <span className="flex items-center justify-center h-6 w-6 rounded-md border-2 border-background bg-muted text-[8px] font-bold text-muted-foreground z-0 ml-1">
-                                                +{linkedAds.length - 3}
-                                            </span>
-                                        )}
-                                        <span className="text-[10px] text-muted-foreground ml-3 font-medium truncate max-w-[120px]">
-                                            {linkedAds.length === 1 ? linkedAds[0].name : `${linkedAds.length} Ads`}
-                                        </span>
-                                    </div>
-                                );
-                            })()}
                         </div>
                     </div>
 

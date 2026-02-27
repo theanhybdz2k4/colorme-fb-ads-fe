@@ -7,9 +7,8 @@ import {
     useSaveChatbotFlow,
     useDeleteChatbotFlow,
     useTestChatbot,
-    useChatbotAds,
 } from '@/hooks/useChatbot';
-import type { ChatbotFlow, ChatbotConfig, ChatbotAd } from '@/types/chatbot.types';
+import type { ChatbotFlow, ChatbotConfig } from '@/types/chatbot.types';
 
 interface ChatbotContextType {
     config: ChatbotConfig | undefined;
@@ -20,8 +19,6 @@ interface ChatbotContextType {
     saveFlow: any;
     deleteFlow: any;
     testChatbot: any;
-    ads: ChatbotAd[] | undefined;
-    adsLoading: boolean;
 
     // UI State
     editingFlow: Partial<ChatbotFlow> | null;
@@ -42,6 +39,7 @@ interface ChatbotContextType {
     handleSaveFlow: () => Promise<void>;
     handleDeleteFlow: (id: number) => Promise<void>;
     handleToggleFlow: (flow: ChatbotFlow) => Promise<void>;
+
     openEdit: (flow?: ChatbotFlow) => void;
 }
 
@@ -55,7 +53,6 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
     const saveFlow = useSaveChatbotFlow();
     const deleteFlow = useDeleteChatbotFlow();
     const testChatbot = useTestChatbot();
-    const { data: ads, isLoading: adsLoading } = useChatbotAds();
 
     // Local State
     const [editingFlow, setEditingFlow] = useState<Partial<ChatbotFlow> | null>(null);
@@ -145,6 +142,8 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
         } catch (e: any) { toast.error('Lỗi: ' + e.message); }
     };
 
+
+
     // removed handleSaveCampaign, handleDeleteCampaign, handleToggleCampaign
 
     // Open edit dialog
@@ -157,7 +156,7 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
                 display_name: '',
                 message_type: 'text',
                 content: { text: '' },
-                linked_ad_ids: [],
+
                 trigger_payloads: [],
                 trigger_keywords: [],
                 is_entry_point: false,
@@ -194,8 +193,7 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
         handleSaveFlow,
         handleDeleteFlow,
         handleToggleFlow,
-        ads,
-        adsLoading,
+
         openEdit
     };
 

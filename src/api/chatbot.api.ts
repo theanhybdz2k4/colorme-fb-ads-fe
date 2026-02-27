@@ -28,6 +28,11 @@ export const chatbotApi = {
         await apiClient.delete(`/chatbot/flows/${id}`);
     },
 
+    bulkToggleAdFlows: async (isActive: boolean): Promise<any> => {
+        const { data } = await apiClient.post('/chatbot/flows/bulk-toggle-ads', { is_active: isActive });
+        return data;
+    },
+
     // Ads
     getAds: async (): Promise<ChatbotAd[]> => {
         const { data } = await apiClient.get('/chatbot/ads');

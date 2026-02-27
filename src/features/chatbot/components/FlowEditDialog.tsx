@@ -1,9 +1,8 @@
-import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Type, MousePointerClick, LayoutGrid, Bot, Search, X } from 'lucide-react';
+import { Type, MousePointerClick, LayoutGrid } from 'lucide-react';
 import type { MessageType } from '@/types/chatbot.types';
 import { ContentEditor } from './ContentEditor';
 import { useChatbot } from '../context/ChatbotContext';
@@ -23,31 +22,7 @@ export function FlowEditDialog() {
         setEditingFlow: setFlow,
         handleSaveFlow: onSave,
         saveFlow,
-        ads,
-        adsLoading
     } = useChatbot();
-
-    const [adSearchQuery, setAdSearchQuery] = useState('');
-
-    const normalizeString = (str?: string) => {
-        if (!str) return '';
-        return String(str)
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .replace(/đ/g, 'd');
-    };
-
-    const filteredAds = useMemo(() => {
-        if (!ads) return [];
-        if (!adSearchQuery.trim()) return ads;
-        const query = normalizeString(adSearchQuery.trim());
-        return ads.filter(ad =>
-            normalizeString(ad.name).includes(query) ||
-            normalizeString(ad.campaign_name).includes(query) ||
-            normalizeString(String(ad.id)).includes(query)
-        );
-    }, [ads, adSearchQuery]);
 
     if (!flow) return null;
 
@@ -89,119 +64,6 @@ export function FlowEditDialog() {
                                 placeholder="VD: welcome"
                             />
                         </div>
-                    </div>
-
-                    {/* Ad Selection */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-4">
-                            <Label>Liên kết với Facebook Ads</Label>
-                            <div className="relative w-48">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm Ads..."
-                                    value={adSearchQuery}
-                                    onChange={e => setAdSearchQuery(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-1.5 text-[11px] rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary/20 outline-none transition-all"
-                                />
-                                {adSearchQuery && (
-                                    <button
-                                        onClick={() => setAdSearchQuery('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-muted rounded"
-                                    >
-                                        <X className="h-3 w-3 text-muted-foreground" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                        <div className="border border-border rounded-xl p-3 bg-background/50 space-y-2 max-h-60 overflow-y-auto shadow-inner">
-                            {adsLoading ? (
-                                <p className="text-xs text-muted-foreground animate-pulse italic py-4 text-center">Đang tải danh sách Ads...</p>
-                            ) : !filteredAds || filteredAds.length === 0 ? (
-                                <div className="text-center py-6">
-                                    <p className="text-xs text-muted-foreground">
-                                        {adSearchQuery ? 'Không tìm thấy Ads phù hợp.' : 'Không tìm thấy Ads nào.'}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground mt-1">Vui lòng kiểm tra kết nối tài khoản Facebook.</p>
-                                </div>
-                            ) : (
-                                (() => {
-                                    // Group ads by campaign
-                                    const grouped = filteredAds.reduce((acc: any, ad) => {
-                                        const campaign = ad.campaign_name || 'Khác';
-                                        if (!acc[campaign]) acc[campaign] = [];
-                                        acc[campaign].push(ad);
-                                        return acc;
-                                    }, {});
-
-                                    return Object.entries(grouped).map(([campaign, ads]) => (
-                                        <div key={campaign} className="space-y-1 pb-3">
-                                            <p className="text-[10px] font-bold text-muted-foreground/60 uppercase px-2 mb-1.5 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                                                {campaign}
-                                            </p>
-                                            <div className="grid grid-cols-1 gap-1">
-                                                {(ads as any[]).map(ad => (
-                                                    <label key={ad.external_id} className="flex items-center gap-4 p-3 hover:bg-muted/80 rounded-2xl cursor-pointer transition-all border border-border/10 hover:border-border/50 group bg-muted/20">
-                                                        <div className="relative flex items-center justify-center p-0.5">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={flow.linked_ad_ids?.includes(ad.id)}
-                                                                onChange={e => {
-                                                                    const current = flow.linked_ad_ids || [];
-                                                                    const updated = e.target.checked
-                                                                        ? [...current, ad.id]
-                                                                        : current.filter(id => id !== ad.id);
-                                                                    updateField('linked_ad_ids', updated);
-                                                                }}
-                                                                className="rounded h-5 w-5 border-muted-foreground/30 accent-primary shrink-0 transition-all cursor-pointer"
-                                                            />
-                                                        </div>
-                                                        {ad.creative_thumbnail ? (
-                                                            <div className="relative shrink-0 w-14 h-14 bg-muted rounded-xl overflow-hidden border border-border/40 shadow-sm">
-                                                                <img
-                                                                    src={ad.creative_thumbnail}
-                                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                                    alt=""
-                                                                    onError={(e) => {
-                                                                        const target = e.target as HTMLImageElement;
-                                                                        target.classList.add('hidden');
-                                                                        const next = target.nextElementSibling;
-                                                                        if (next) next.classList.remove('hidden');
-                                                                    }}
-                                                                />
-                                                                <div className="hidden absolute inset-0 flex items-center justify-center bg-muted">
-                                                                    <Bot className="w-6 h-6 text-muted-foreground/20" />
-                                                                </div>
-                                                                <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-black/5" />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center border border-border/40 shadow-inner">
-                                                                <Bot className="w-6 h-6 text-muted-foreground/20" />
-                                                            </div>
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-[13px] font-bold leading-tight line-clamp-2 group-hover:text-primary transition-colors">{ad.name}</p>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className="text-[9px] font-mono bg-muted/50 px-1.5 py-0.5 rounded border border-border/30 text-muted-foreground/80">
-                                                                    ID: {ad.external_id}
-                                                                </span>
-                                                                <span className="text-[9px] text-muted-foreground/50 font-medium uppercase tracking-tight">
-                                                                    Ready
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ));
-                                })()
-                            )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground px-1 leading-relaxed italic">
-                            💡 Tip: Kịch bản này sẽ tự động được gửi khi khách hàng click vào các Ads đã chọn.
-                        </p>
                     </div>
 
                     {/* Message Type */}

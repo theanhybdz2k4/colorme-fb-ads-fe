@@ -47,6 +47,14 @@ export function useDeleteChatbotFlow() {
     });
 }
 
+export function useBulkToggleAdFlows() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (isActive: boolean) => chatbotApi.bulkToggleAdFlows(isActive),
+        onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.flows }),
+    });
+}
+
 export function useChatbotAds() {
     return useQuery({
         queryKey: KEYS.ads,

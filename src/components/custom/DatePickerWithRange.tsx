@@ -26,6 +26,7 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
     const [isOpen, setIsOpen] = React.useState(false);
     const [tempDate, setTempDate] = React.useState<DateRange | undefined>(date);
+    const [hoveredDate, setHoveredDate] = React.useState<Date | undefined>(undefined);
 
     // Sync tempDate with date when popover opens
     const handleOpenChange = (open: boolean) => {
@@ -33,6 +34,7 @@ export function DatePickerWithRange({
             setTempDate(date);
         }
         setIsOpen(open);
+        if (!open) setHoveredDate(undefined);
     };
 
     const handleApply = () => {
@@ -44,6 +46,16 @@ export function DatePickerWithRange({
         setTempDate(date);
         setIsOpen(false);
     };
+
+    // Calculate preview range if from is selected but to is not
+    const previewRange = React.useMemo(() => {
+        if (tempDate?.from && !tempDate.to && hoveredDate) {
+            const from = tempDate.from;
+            const to = hoveredDate;
+            return from < to ? { from, to } : { from: to, to: from };
+        }
+        return undefined;
+    }, [tempDate, hoveredDate]);
 
     return (
         <div className={cn("grid gap-2", className)}>
@@ -81,6 +93,17 @@ export function DatePickerWithRange({
                             selected={tempDate}
                             onSelect={setTempDate}
                             numberOfMonths={2}
+                            onDayPointerEnter={(day) => setHoveredDate(day)}
+                            onDayPointerLeave={() => setHoveredDate(undefined)}
+                            modifiers={{
+                                preview: (date) => {
+                                    if (!previewRange) return false;
+                                    return date >= previewRange.from && date <= previewRange.to;
+                                }
+                            }}
+                            modifiersClassNames={{
+                                preview: "[&_button]:bg-indigo-500/30 [&_button]:text-indigo-200 rounded-none first:rounded-l-md last:rounded-r-md"
+                            }}
                         />
                         <div className="flex items-center justify-end gap-2 p-3 border-t border-border/50 bg-muted/20">
                             <Button

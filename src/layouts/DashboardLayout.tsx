@@ -168,7 +168,7 @@ function DashboardContent() {
         <button
           onClick={() => setSidebarExpanded(!sidebarExpanded)}
           className={cn(
-            "absolute bottom-4 right-0 translate-x-1/2",
+            "absolute top-18 right-0 translate-x-1/2",
             "p-1.5 rounded-full bg-card border border-border",
             "text-muted-foreground hover:text-foreground",
             "transition-all duration-200 hover:scale-110",

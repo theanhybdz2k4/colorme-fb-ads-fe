@@ -411,11 +411,53 @@ export function ChatWindow() {
                                                             </div>
                                                         );
                                                     }
+                                                    if (att.type === 'fallback' || att.type === 'share') {
+                                                        const linkUrl = att.url || att.payload?.url;
+                                                        const imgSrc = att.media?.image?.src || att.image_data?.url || att.payload?.url;
+                                                        const isImage = imgSrc && (imgSrc.match(/\.(jpg|jpeg|png|gif|webp)/i) || imgSrc.includes('fbcdn'));
+                                                        return (
+                                                            <a key={idx} href={linkUrl} target="_blank" rel="noreferrer" className="block max-w-[260px] rounded-xl overflow-hidden border border-border/50 bg-background shadow-sm hover:shadow-md transition-shadow">
+                                                                {isImage && (
+                                                                    <img src={imgSrc} alt="" className="w-full h-[140px] object-cover" />
+                                                                )}
+                                                                <div className="px-3 py-2">
+                                                                    <p className="font-semibold text-[13px] line-clamp-2">{att.title || 'Shared Link'}</p>
+                                                                    {att.description && <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{att.description}</p>}
+                                                                    {linkUrl && <p className="text-[10px] text-blue-500 mt-1 truncate">{linkUrl}</p>}
+                                                                </div>
+                                                            </a>
+                                                        );
+                                                    }
+                                                    // GENERIC_TEMPLATE: Vimeo/Zoom/Ad link preview cards (no type field)
+                                                    if (att.generic_template) {
+                                                        const gt = att.generic_template;
+                                                        const cardUrl = att.url || gt.url || gt.media_url;
+                                                        const CardWrapper = cardUrl ? 'a' : 'div';
+                                                        return (
+                                                            <CardWrapper key={idx} {...(cardUrl ? { href: cardUrl, target: '_blank', rel: 'noreferrer' } : {})} className="block max-w-[260px] rounded-xl overflow-hidden border border-border/50 bg-background shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                                                {gt.media_url && (
+                                                                    <img src={gt.media_url} alt="" className="w-full h-[140px] object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                                )}
+                                                                <div className="px-3 py-2">
+                                                                    {gt.title && <p className="font-semibold text-[13px] line-clamp-2">{gt.title}</p>}
+                                                                    {gt.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{gt.subtitle}</p>}
+                                                                </div>
+                                                            </CardWrapper>
+                                                        );
+                                                    }
+                                                    // IMAGE_DATA: Direct image attachments
+                                                    if (att.image_data?.url) {
+                                                        return (
+                                                            <div key={idx} className="max-w-[260px] rounded-xl overflow-hidden">
+                                                                <img src={att.image_data.preview_url || att.image_data.url} alt="" className="w-full rounded-xl" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                            </div>
+                                                        );
+                                                    }
                                                     return (
                                                         <div key={idx} className="bg-muted p-3 rounded-xl flex items-center gap-2 text-xs">
                                                             <Info className="h-4 w-4" />
                                                             <a href={att.payload?.url} target="_blank" rel="noreferrer" className="underline truncate max-w-[150px]">
-                                                                File đính kèm ({att.type})
+                                                                File đính kèm ({att.type || 'file'})
                                                             </a>
                                                         </div>
                                                     );
@@ -428,24 +470,24 @@ export function ChatWindow() {
                                             <div className="flex flex-col gap-1 mb-1">
                                                 {msg.shares
                                                     .filter((share: any) => {
-                                                        // Hide if this share link is likely the same as the sticker or an attachment image
                                                         const isStickerUrl = msg.sticker && share.link && share.link.includes(msg.sticker.split('?')[0]);
                                                         const isAttachmentUrl = msg.attachments?.some((att: any) =>
                                                             att.payload?.url && share.link && share.link.includes(att.payload.url.split('?')[0])
                                                         );
-                                                        // Also hide if it's a very long CDN URL which is likely just the media itself
                                                         const isCdnUrl = share.link?.includes('fbcdn.net');
-
                                                         return !isStickerUrl && !isAttachmentUrl && !isCdnUrl;
                                                     })
                                                     .map((share: any, idx: number) => (
-                                                        <div key={idx} className="bg-muted/30 border border-border/50 rounded-xl p-3 max-w-[240px]">
-                                                            <a href={share.link} target="_blank" rel="noreferrer" className="block">
-                                                                <p className="font-bold text-sm truncate">{share.name || 'Shared Link'}</p>
-                                                                <p className="text-xs text-muted-foreground truncate">{share.description}</p>
-                                                                <p className="text-[10px] text-blue-500 mt-1 truncate">{share.link}</p>
-                                                            </a>
-                                                        </div>
+                                                        <a key={idx} href={share.link} target="_blank" rel="noreferrer" className="block max-w-[260px] rounded-xl overflow-hidden border border-border/50 bg-background shadow-sm hover:shadow-md transition-shadow">
+                                                            {share.picture && (
+                                                                <img src={share.picture} alt="" className="w-full h-[140px] object-cover" />
+                                                            )}
+                                                            <div className="px-3 py-2">
+                                                                <p className="font-semibold text-[13px] line-clamp-2">{share.name || 'Shared Link'}</p>
+                                                                {share.description && <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{share.description}</p>}
+                                                                {share.link && <p className="text-[10px] text-blue-500 mt-1 truncate">{share.link}</p>}
+                                                            </div>
+                                                        </a>
                                                     ))}
                                             </div>
                                         )}
@@ -459,6 +501,11 @@ export function ChatWindow() {
                                             !msg.message_content.startsWith('[Video]') &&
                                             !msg.message_content.startsWith('[template]') &&
                                             !msg.message_content.startsWith('[Event]') &&
+                                            !msg.message_content.startsWith('[Link]') &&
+                                            !msg.message_content.startsWith('[Hình ảnh/File]') &&
+                                            !msg.message_content.startsWith('[File]') &&
+                                            !msg.message_content.startsWith('[Audio]') &&
+                                            !msg.message_content.startsWith('[undefined]') &&
                                             !(msg.attachments && msg.attachments.length > 0 &&
                                                 (msg.message_content.trim() === '[Hình ảnh]' ||
                                                     msg.message_content.trim() === '[Ảnh]' ||
