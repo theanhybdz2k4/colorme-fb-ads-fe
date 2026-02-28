@@ -6,7 +6,42 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, RefreshCw, Search, Target } from 'lucide-react';
-import { format } from 'date-fns';
+import { isValid } from 'date-fns';
+
+// Robust utility to format any timestamp (ISO, Space-delimited, etc) to Vietnam Time
+const formatVnTime = (dateInput: any, formatStr: string = 'HH:mm') => {
+    if (!dateInput) return '--:--';
+    const date = new Date(dateInput);
+    if (!isValid(date)) return '--:--';
+
+    // Explicitly format to Vietnam timezone regardless of browser locale
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: formatStr.includes('ss') ? '2-digit' : undefined,
+        hour12: false
+    }).format(date);
+};
+
+// For dates (dd/MM) we need a different config
+const formatVnDateFull = (dateInput: any) => {
+    if (!dateInput) return '--:--';
+    const date = new Date(dateInput);
+    if (!isValid(date)) return '--:--';
+
+    const d = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).formatToParts(date);
+
+    const part = (type: string) => d.find(p => p.type === type)?.value;
+    return `${part('month')}/${part('day')} ${part('hour')}:${part('minute')}`;
+};
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -154,11 +189,15 @@ export function LeadList() {
                                                     if (!timestamp) return '--:--';
 
                                                     const msgDate = new Date(timestamp);
-                                                    const today = new Date();
-                                                    const isToday = msgDate.toDateString() === today.toDateString();
+                                                    const now = new Date();
+
+                                                    // Simple check if same day in ICT
+                                                    const isToday = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }).format(msgDate) ===
+                                                        new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+
                                                     return isToday
-                                                        ? format(msgDate, 'HH:mm')
-                                                        : format(msgDate, 'dd/MM HH:mm');
+                                                        ? formatVnTime(timestamp)
+                                                        : formatVnDateFull(timestamp);
                                                 })()}
                                             </span>
                                         </div>

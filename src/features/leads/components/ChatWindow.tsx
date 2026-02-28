@@ -6,7 +6,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft, Target } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
+
+// Explicit ICT formatting helper
+const formatVnTime = (dateInput: any) => {
+    if (!dateInput) return '';
+    const date = new Date(dateInput);
+    if (!isValid(date)) return '';
+
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(date);
+};
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -241,16 +255,42 @@ export function ChatWindow() {
                         // Date separator logic
                         const msgDate = new Date(msg.sent_at);
                         const prevMsgDate = prevMsg ? new Date(prevMsg.sent_at) : null;
-                        const showDateSeparator = !prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString();
+
+                        const toIctDateOnly = (d: Date) => new Intl.DateTimeFormat('en-US', {
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                        }).format(d);
+
+                        const showDateSeparator = !prevMsgDate || toIctDateOnly(msgDate) !== toIctDateOnly(prevMsgDate);
 
                         const getDateLabel = (date: Date) => {
-                            const today = new Date();
-                            const yesterday = new Date(today);
-                            yesterday.setDate(yesterday.getDate() - 1);
+                            const now = new Date();
+                            const yesterday = new Date(now);
+                            yesterday.setDate(now.getDate() - 1);
 
-                            if (date.toDateString() === today.toDateString()) return 'Hôm nay';
-                            if (date.toDateString() === yesterday.toDateString()) return 'Hôm qua';
-                            return format(date, 'dd/MM/yyyy');
+                            const toIctLabel = (d: Date) => new Intl.DateTimeFormat('en-US', {
+                                timeZone: 'Asia/Ho_Chi_Minh',
+                                day: '2-digit',
+                                month: '2-digit'
+                            }).format(d);
+
+                            const toIctYear = (d: Date) => new Intl.DateTimeFormat('en-US', {
+                                timeZone: 'Asia/Ho_Chi_Minh',
+                                year: 'numeric'
+                            }).format(d);
+
+                            if (toIctDateOnly(date) === toIctDateOnly(now)) return 'Hôm nay';
+                            if (toIctDateOnly(date) === toIctDateOnly(yesterday)) return 'Hôm qua';
+
+                            // For older dates, format in ICT
+                            return new Intl.DateTimeFormat('vi-VN', {
+                                timeZone: 'Asia/Ho_Chi_Minh',
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: toIctYear(date) !== toIctYear(now) ? 'numeric' : undefined
+                            }).format(date);
                         };
 
                         return (
@@ -518,7 +558,7 @@ export function ChatWindow() {
                                             )}
 
                                         <p className={`text-[10px] mt-1 opacity-60 group-hover:opacity-100 transition-opacity ${isSystem ? 'text-right' : 'text-left'} text-muted-foreground`}>
-                                            {format(new Date(msg.sent_at), 'HH:mm')}
+                                            {formatVnTime(msg.sent_at)}
                                         </p>
                                     </div>
 
