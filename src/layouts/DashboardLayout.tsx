@@ -29,6 +29,7 @@ import {
   User,
   Target,
   Bot,
+  Brain,
 } from 'lucide-react';
 
 const navItems = [
@@ -42,6 +43,7 @@ const navItems = [
   { path: ROUTES.BRANCH_ANALYTICS, label: 'Thống kê cơ sở', icon: PieChart },
   { path: ROUTES.LEADS, label: 'Inbox', icon: Target },
   { path: ROUTES.CHATBOT, label: 'Chatbot', icon: Bot },
+  { path: ROUTES.AI_REPORTS, label: 'AI Reports', icon: Brain },
 ];
 
 // Platform tab config with colors

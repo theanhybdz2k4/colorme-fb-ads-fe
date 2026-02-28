@@ -22,6 +22,9 @@ const LeadInsightsPage = lazy(() => import('@/features/leads').then(m => ({ defa
 const CronSettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.CronSettingsPage })));
 const ProfilePage = lazy(() => import('@/features/profile/sections/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const ChatbotPage = lazy(() => import('@/features/chatbot'));
+const AdReportingPage = lazy(() => import('@/features/ad-reporting').then(m => ({ default: m.AdReportingPage })));
+const AccountReportingPage = lazy(() => import('@/features/ad-reporting').then(m => ({ default: m.AccountReportingPage })));
+const AIReportsPage = lazy(() => import('@/features/ad-reporting').then(m => ({ default: m.AIReportsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,8 +110,11 @@ function AppRoutes() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="accounts" element={<AccountsPage />} />
+          <Route path="accounts/:id/report" element={<AccountReportingPage />} />
           <Route path="ad-accounts" element={<AdAccountsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="campaigns/:id/report" element={<AdReportingPage />} />
+          <Route path="ai-reports" element={<AIReportsPage />} />
           <Route path="adsets" element={<AdSetsPage />} />
           <Route path="ads" element={<AdsPage />} />
           <Route path="ads/:adId" element={<AdDetailPage />} />

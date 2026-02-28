@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone, MoreVertical, Loader2, Send, Tag, StickyNote, Info, RefreshCw, ChevronLeft, Target } from 'lucide-react';
-import { format, isValid } from 'date-fns';
+import { isValid } from 'date-fns';
 
 // Explicit ICT formatting helper
 const formatVnTime = (dateInput: any) => {
@@ -269,12 +269,6 @@ export function ChatWindow() {
                             const now = new Date();
                             const yesterday = new Date(now);
                             yesterday.setDate(now.getDate() - 1);
-
-                            const toIctLabel = (d: Date) => new Intl.DateTimeFormat('en-US', {
-                                timeZone: 'Asia/Ho_Chi_Minh',
-                                day: '2-digit',
-                                month: '2-digit'
-                            }).format(d);
 
                             const toIctYear = (d: Date) => new Intl.DateTimeFormat('en-US', {
                                 timeZone: 'Asia/Ho_Chi_Minh',

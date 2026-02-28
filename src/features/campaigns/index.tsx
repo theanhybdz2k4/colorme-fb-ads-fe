@@ -8,8 +8,10 @@ import { campaignsApi, adsApi } from '@/api';
 import { usePlatform } from '@/contexts';
 import { useAdAccounts, BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal, LineChart, Calendar } from 'lucide-react';
+import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal, LineChart, Calendar, Brain } from 'lucide-react';
+import { ROUTES } from '@/constants';
 import { HourlyInsightsDialog } from './HourlyInsightsDialog';
 import { LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
 
@@ -232,9 +234,16 @@ function CampaignRow({
                   </span>
                 </div>
               </div>
-              <Button size="icon" variant="ghost" onClick={() => handleSync(campaign)} disabled={isSyncing}>
-                {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="default" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                  <Link to={ROUTES.AD_REPORTING.replace(':id', campaign.id)}>
+                    <Brain className="w-4 h-4 mr-1.5" /> Phân Tích AI
+                  </Link>
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => handleSync(campaign)} disabled={isSyncing}>
+                  {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 mb-2">

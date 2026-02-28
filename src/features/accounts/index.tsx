@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2, Brain } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '@/constants';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FloatingCard } from '@/components/custom/FloatingCard';
 import { LoadingPage } from '@/components/custom/LoadingState';
@@ -210,6 +212,16 @@ export function AccountsPage() {
                                         <div className="space-y-1">
                                             <p className="text-xs text-muted-foreground">Sub-Accounts</p>
                                             <p className="font-medium">{account._count?.accounts || 0}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs text-muted-foreground">Phân tích</p>
+                                            {account.platform?.code === 'facebook' && (
+                                                <Button size="sm" variant="default" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-7 px-2">
+                                                    <Link to={ROUTES.ACCOUNT_REPORTING.replace(':id', account.id.toString())}>
+                                                        <Brain className="w-3 h-3 mr-1" /> AI Report
+                                                    </Link>
+                                                </Button>
+                                            )}
                                         </div>
                                         {isAddingToken === account.id ? (
                                             <div className="col-span-2 space-y-2 animate-in fade-in zoom-in-95 duration-200">

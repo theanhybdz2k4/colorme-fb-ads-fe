@@ -15,5 +15,8 @@ export const ROUTES = {
     PROFILE: '/profile',
     LEADS: '/lead-insights',
     CHATBOT: '/chatbot',
+    AD_REPORTING: '/campaigns/:id/report',
+    ACCOUNT_REPORTING: '/accounts/:id/report',
+    AI_REPORTS: '/ai-reports',
 };
 
