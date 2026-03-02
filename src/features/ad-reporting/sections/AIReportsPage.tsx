@@ -1,13 +1,17 @@
-import { useState } from 'react';
-import { useAccounts } from '@/hooks/useAccounts';
+import { useState, useEffect } from 'react';
+import { useAdAccounts } from '@/hooks/useAdAccounts';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
-import { Brain, Megaphone, Users, ArrowRight } from 'lucide-react';
+import { Brain, Megaphone, Users, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { ROUTES } from '@/constants';
 import { PageHeader, LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
 import { FloatingCard } from '@/components/custom/FloatingCard';
+import { supabase } from '@/lib/supabase';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export function AIReportsPage() {
     const [activeTab, setActiveTab] = useState('campaigns');
@@ -16,14 +20,46 @@ export function AIReportsPage() {
     const dateStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const dateEnd = new Date().toISOString().split('T')[0];
 
-    const { data: accounts, isLoading: loadingAccounts } = useAccounts();
+    const { data: accounts, isLoading: loadingAccounts } = useAdAccounts({ accountStatus: 'ACTIVE' });
     const { data: campaigns, isLoading: loadingCampaigns } = useCampaigns({
         effectiveStatus: 'ACTIVE',
         dateStart,
         dateEnd
     });
 
-    if (loadingAccounts && loadingCampaigns) return <LoadingPage />;
+    const [existingReports, setExistingReports] = useState<Record<string, { createdAt: string }>>({});
+    const [loadingReports, setLoadingReports] = useState(true);
+
+    useEffect(() => {
+        const fetchExistingReports = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('ai_reports')
+                    .select('reference_id, created_at')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const mapping: Record<string, { createdAt: string }> = {};
+                data?.forEach(report => {
+                    // Only keep the latest report for each reference_id
+                    if (!mapping[report.reference_id]) {
+                        mapping[report.reference_id] = { createdAt: report.created_at };
+                    }
+                });
+
+                setExistingReports(mapping);
+            } catch (err) {
+                console.error('Error fetching existing reports:', err);
+            } finally {
+                setLoadingReports(false);
+            }
+        };
+
+        fetchExistingReports();
+    }, []);
+
+    if (loadingAccounts && loadingCampaigns && loadingReports) return <LoadingPage />;
 
     return (
         <div className="p-8 space-y-6 animate-in fade-in duration-500">
@@ -55,15 +91,36 @@ export function AIReportsPage() {
                                                 <PlatformIcon platformCode={camp.account?.platform?.code || 'facebook'} size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-sm line-clamp-2" title={camp.name}>{camp.name}</h3>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="font-semibold text-sm line-clamp-2" title={camp.name}>{camp.name}</h3>
+                                                    {existingReports[camp.id] && (
+                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                                                            <CheckCircle2 className="w-3 h-3" />
+                                                            Đã có
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-muted-foreground mt-1 truncate">{camp.account?.name}</p>
+                                                {existingReports[camp.id] && (
+                                                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-emerald-600/70">
+                                                        <Clock className="w-3 h-3" />
+                                                        <span>{format(new Date(existingReports[camp.id].createdAt), 'HH:mm dd/MM/yyyy', { locale: vi })}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="mt-auto pt-4 flex gap-2 w-full border-t border-border/50">
-                                            <Button variant="default" asChild className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-900/20 hover:shadow-indigo-900/40">
+                                            <Button
+                                                variant={existingReports[camp.id] ? "outline" : "default"}
+                                                asChild
+                                                className={`w-full font-medium shadow-md transition-all duration-300 ${existingReports[camp.id]
+                                                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
+                                                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-900/20 hover:shadow-indigo-900/40"
+                                                    }`}
+                                            >
                                                 <Link to={ROUTES.AD_REPORTING.replace(':id', camp.id)}>
                                                     <Brain className="w-4 h-4 mr-2" />
-                                                    Tạo Báo Cáo AI
+                                                    {existingReports[camp.id] ? "Xem Báo Cáo AI" : "Tạo Báo Cáo AI"}
                                                     <ArrowRight className="w-3 h-3 ml-2 opacity-50" />
                                                 </Link>
                                             </Button>
@@ -77,7 +134,7 @@ export function AIReportsPage() {
 
                 <TabsContent value="accounts" className="space-y-4">
                     {accounts?.length === 0 ? (
-                        <EmptyState title="Không tìm thấy tài khoản hệ thống" description="Vui lòng kết nối tài khoản ở mục Accounts" icon={<Users className="w-8 h-8" />} />
+                        <EmptyState title="Không tìm thấy tài khoản quảng cáo" description="Vui lòng kiểm tra lại danh sách tài khoản quảng cáo" icon={<Users className="w-8 h-8" />} />
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {accounts?.map((acc: any) => (
@@ -88,26 +145,41 @@ export function AIReportsPage() {
                                                 <PlatformIcon platformCode={acc.platform?.code || 'facebook'} size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-sm line-clamp-2" title={acc.name || acc.externalId}>{acc.name || acc.externalId}</h3>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    Kết nối: {new Date(acc.createdAt).toLocaleDateString()}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="font-semibold text-sm line-clamp-2" title={acc.name || acc.externalId}>{acc.name || acc.externalId}</h3>
+                                                    {existingReports[acc.id] && (
+                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                                                            <CheckCircle2 className="w-3 h-3" />
+                                                            Đã có
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-1 lowercase">
+                                                    ID: {acc.externalId}
                                                 </p>
+                                                {existingReports[acc.id] && (
+                                                    <div className="flex items-center gap-1 mt-1.5 text-[10px] text-emerald-600/70">
+                                                        <Clock className="w-3 h-3" />
+                                                        <span>{format(new Date(existingReports[acc.id].createdAt), 'HH:mm dd/MM/yyyy', { locale: vi })}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="mt-auto pt-4 flex gap-2 w-full border-t border-border/50">
-                                            {acc.platform?.code === 'facebook' ? (
-                                                <Button variant="default" asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-900/20 hover:shadow-blue-900/40">
-                                                    <Link to={ROUTES.ACCOUNT_REPORTING.replace(':id', acc.id.toString())}>
-                                                        <Brain className="w-4 h-4 mr-2" />
-                                                        Báo cáo Tài Khoản
-                                                        <ArrowRight className="w-3 h-3 ml-2 opacity-50" />
-                                                    </Link>
-                                                </Button>
-                                            ) : (
-                                                <Button variant="secondary" disabled className="w-full">
-                                                    Chưa hỗ trợ nền tảng này
-                                                </Button>
-                                            )}
+                                            <Button
+                                                variant={existingReports[acc.id] ? "outline" : "default"}
+                                                asChild
+                                                className={`w-full font-medium shadow-md transition-all duration-300 ${existingReports[acc.id]
+                                                        ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
+                                                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 hover:shadow-blue-900/40"
+                                                    }`}
+                                            >
+                                                <Link to={ROUTES.ACCOUNT_REPORTING.replace(':id', acc.id.toString())}>
+                                                    <Brain className="w-4 h-4 mr-2" />
+                                                    {existingReports[acc.id] ? "Xem Báo Cáo Tài Khoản" : "Báo cáo Tài Khoản"}
+                                                    <ArrowRight className="w-3 h-3 ml-2 opacity-50" />
+                                                </Link>
+                                            </Button>
                                         </div>
                                     </div>
                                 </FloatingCard>
