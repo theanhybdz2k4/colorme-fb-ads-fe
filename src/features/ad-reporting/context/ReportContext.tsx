@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { supabase, supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
 
@@ -249,8 +249,9 @@ export function ReportProvider({ children }: { children: ReactNode }) {
 
             const {
                 spend, impressions, clicks, totalResults,
-                insights: filteredInsights, internalAccountIds = [],
-                name, dateStart, dateEnd
+                insights: filteredInsights,
+                name, dateStart, dateEnd,
+                potentialCount, totalLeadCount
             } = await fetchBaseMetrics(id, type);
 
             let campaignName = name;
@@ -282,39 +283,11 @@ export function ReportProvider({ children }: { children: ReactNode }) {
             const avgCpc = clicks > 0 ? spend / clicks : 0;
 
             // 2. LEAD QUALITY ANALYSIS (Exhaustive DB Query - Only for Branch and Account)
-            let leadQuality: any = null;
-            let potentialCount = 0;
+            // Note: potentialCount and totalLeadCount are already fetched in fetchBaseMetrics in the latest update
+            // so we don't necessarily need to re-query here, but keeping for logic consistency if needed.
+            // For now, let's rely on what fetchBaseMetrics returned.
 
-            if ((type === 'branch' || type === 'account') && internalAccountIds.length > 0) {
-                const { data: leadStats } = await supabase
-                    .from('leads')
-                    .select('id, is_potential, is_manual_potential, ai_analysis, platform_data, messages')
-                    .in('platform_account_id', internalAccountIds);
-
-                const leadsRaw = leadStats || [];
-                const potentialLeads = leadsRaw.filter(l => l.is_potential || l.is_manual_potential);
-                const nonPotentialLeads = leadsRaw.filter(l => !l.is_potential && !l.is_manual_potential);
-                potentialCount = potentialLeads.length;
-
-                const formatLead = (l: any) => {
-                    const msgs = l.messages || l.platform_data?.messages;
-                    let lastMsgs = Array.isArray(msgs) ? msgs.slice(-3).map((m: any) => m.text || m.message || '').filter(Boolean).join(' → ') : "";
-                    const summary = l.ai_analysis?.split('\n').find((line: string) => line.includes('Tóm tắt:')) || l.ai_analysis?.substring(0, 150);
-                    return summary ? `${summary}${lastMsgs ? ` | Chat: ${lastMsgs}` : ''}` : lastMsgs;
-                };
-
-                leadQuality = {
-                    totalCount: totalResults,
-                    potentialCount: potentialLeads.length,
-                    totalInDB: leadsRaw.length,
-                    summaries: [
-                        ...potentialLeads.slice(0, 5).map(l => ({ type: 'CHẤT LƯỢNG', content: formatLead(l) })),
-                        ...nonPotentialLeads.slice(0, 5).map(l => ({ type: 'RÁC', content: formatLead(l) }))
-                    ].filter(l => l.content)
-                };
-            }
-
-            setStats({ potential: potentialCount, total: totalResults });
+            setStats({ potential: potentialCount || 0, total: totalLeadCount || totalResults });
             setLocalMetrics({ spend, impressions, clicks, totalResults, ctr: avgCtr, cpl: avgCpl, cpc: avgCpc });
 
             // 3. GENERATE VIA EDGE FUNCTION
