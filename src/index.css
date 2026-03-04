@@ -21,9 +21,15 @@
   --animate-fade-in: fade-in 0.5s ease-out;
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
+
   --radius-2xl: calc(var(--radius) + 8px);
 
   /* Color mappings */
@@ -74,38 +80,38 @@
 
   /* Layered backgrounds - depth system (High Contrast Dark) */
   /* Main background: Very dark cool grey, not pitch black */
-  --background: hsl(222 17% 8%);         
+  --background: hsl(222 17% 8%);
   /* Card/Surface: Slightly lighter cool grey */
-  --card: hsl(222 17% 11%);              
+  --card: hsl(222 17% 11%);
   /* Popover: Same as card or slightly elevated */
-  --popover: hsl(222 17% 11%);           
-  
+  --popover: hsl(222 17% 11%);
+
   /* Foreground colors */
   --foreground: hsl(210 20% 98%);
   --card-foreground: hsl(210 20% 98%);
   --popover-foreground: hsl(210 20% 98%);
-  
+
   /* Primary - Vivid Blue (Facebook-ish but modern) */
   --primary: hsl(215 90% 58%);
   --primary-foreground: hsl(0 0% 100%);
-  
+
   /* Secondary - Used for subtle backgrounds/buttons */
   --secondary: hsl(217 19% 16%);
   --secondary-foreground: hsl(210 20% 90%);
-  
+
   /* Muted - For de-emphasized text/elements */
   --muted: hsl(217 19% 16%);
   /* Muted foreground: readable grey */
-  --muted-foreground: hsl(215 20% 70%); 
-  
+  --muted-foreground: hsl(215 20% 70%);
+
   /* Accent - Hover states or highlights */
   --accent: hsl(217 19% 16%);
   --accent-foreground: hsl(210 20% 95%);
-  
+
   /* Destructive */
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
-  
+
   /* Borders & inputs - Subtle but defined */
   --border: hsl(217 19% 18%);
   --input: hsl(217 19% 18%);
@@ -132,30 +138,32 @@
 /* Light mode override */
 .light {
   color-scheme: light;
-  --background: hsl(210 20% 98%); /* Slightly off-white for less eye strain */
+  --background: hsl(210 20% 98%);
+  /* Slightly off-white for less eye strain */
   --foreground: hsl(222 20% 10%);
-  
+
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(222 20% 10%);
-  
+
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(222 20% 10%);
-  
-  --primary: hsl(221 83% 53%); /* Facebook Blue */
+
+  --primary: hsl(221 83% 53%);
+  /* Facebook Blue */
   --primary-foreground: hsl(0 0% 100%);
-  
+
   --secondary: hsl(210 20% 94%);
   --secondary-foreground: hsl(222 20% 15%);
-  
+
   --muted: hsl(210 20% 94%);
   --muted-foreground: hsl(215 16% 40%);
-  
+
   --accent: hsl(210 20% 92%);
   --accent-foreground: hsl(222 20% 15%);
-  
+
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
-  
+
   --border: hsl(214 32% 90%);
   --input: hsl(214 32% 90%);
   --ring: hsl(221 83% 53%);
@@ -178,7 +186,7 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -189,16 +197,17 @@
    CUSTOM UTILITIES
 ======================================== */
 @layer utilities {
+
   /* Floating panel shadows */
   .shadow-float {
-    box-shadow: 
+    box-shadow:
       0 4px 6px -1px hsl(0 0% 0% / 0.2),
       0 10px 20px -2px hsl(0 0% 0% / 0.3),
       0 20px 40px -4px hsl(0 0% 0% / 0.15);
   }
 
   .shadow-float-lg {
-    box-shadow: 
+    box-shadow:
       0 8px 16px -2px hsl(0 0% 0% / 0.25),
       0 20px 40px -4px hsl(0 0% 0% / 0.35),
       0 40px 60px -8px hsl(0 0% 0% / 0.2);
@@ -232,35 +241,47 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 5px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 10px;
   }
+
   .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
   }
-  
+
   .animate-slide-in-right {
     animation: slideInRight 0.3s ease-out forwards;
   }
-  
+
   @keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
+
 @keyframes float-up {
   from {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -271,6 +292,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -280,15 +302,19 @@
   from {
     transform: scaleX(0);
   }
+
   to {
     transform: scaleX(1);
   }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -299,12 +325,10 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    hsl(225 10% 14%) 0%,
-    hsl(225 10% 18%) 50%,
-    hsl(225 10% 14%) 100%
-  );
+  background: linear-gradient(90deg,
+      hsl(225 10% 14%) 0%,
+      hsl(225 10% 18%) 50%,
+      hsl(225 10% 14%) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -325,17 +349,17 @@
 /* Cards with depth */
 .card-floating {
   @apply bg-card border border-border/50;
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px hsl(0 0% 0% / 0.2),
     0 10px 20px -2px hsl(0 0% 0% / 0.3),
     0 20px 40px -4px hsl(0 0% 0% / 0.15);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-floating:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 16px -2px hsl(0 0% 0% / 0.25),
     0 20px 40px -4px hsl(0 0% 0% / 0.35);
 }
@@ -380,8 +404,10 @@
 
 /* Scrollbar Hide Utility */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -391,6 +417,6 @@
 }
 
 /* Fix Radix ScrollArea display:table issue */
-[data-radix-scroll-area-viewport] > div {
+[data-radix-scroll-area-viewport]>div {
   display: block !important;
 }

@@ -110,10 +110,11 @@ function AppRoutes() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="accounts" element={<AccountsPage />} />
-          <Route path="accounts/:id/report" element={<AccountReportingPage />} />
           <Route path="ad-accounts" element={<AdAccountsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
-          <Route path="campaigns/:id/report" element={<AdReportingPage />} />
+          <Route path="reporting/branch/:id" element={<AccountReportingPage />} />
+          <Route path="reporting/ad-account/:id" element={<AccountReportingPage />} />
+          <Route path="reporting/campaign/:id" element={<AdReportingPage />} />
           <Route path="ai-reports" element={<AIReportsPage />} />
           <Route path="adsets" element={<AdSetsPage />} />
           <Route path="ads" element={<AdsPage />} />

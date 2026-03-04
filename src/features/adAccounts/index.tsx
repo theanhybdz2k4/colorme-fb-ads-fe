@@ -14,7 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, CreditCard, Image, Key, Link as LinkIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '@/constants';
+import { Loader2, RefreshCw, CreditCard, Image, Key, Link as LinkIcon, Brain } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FilterBar } from '@/components/custom/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
@@ -426,6 +428,16 @@ export function AdAccountsPage() {
                                   <Image className="h-4 w-4 mr-1" />
                                 )}
                                 Creatives
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                asChild
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-8"
+                              >
+                                <Link to={ROUTES.AD_ACCOUNT_REPORTING.replace(':id', account.externalId)}>
+                                  <Brain className="w-3.5 h-3.5 mr-1.5" /> Báo cáo AI
+                                </Link>
                               </Button>
                               <Button
                                 size="sm"
