@@ -12,6 +12,8 @@ export interface ReportMetrics {
     ctr: number;
     cpl: number;
     cpc: number;
+    dateStart?: string;
+    dateEnd?: string;
 }
 
 export interface ReportData {
@@ -29,8 +31,8 @@ interface ReportContextValue {
     completedSections: string[];
     localMetrics: ReportMetrics | null;
     stats: { potential: number; total: number };
-    loadCachedReport: (id: string, type: 'campaign' | 'account' | 'branch') => Promise<void>;
-    generateReport: (id: string, type: 'campaign' | 'account' | 'branch') => Promise<void>;
+    loadCachedReport: (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => Promise<void>;
+    generateReport: (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => Promise<void>;
 }
 
 const ReportContext = createContext<ReportContextValue | null>(null);
@@ -52,9 +54,9 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     const [stats, setStats] = useState({ potential: 0, total: 0 });
 
     // Load fresh KPI metrics logic
-    const fetchBaseMetrics = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch') => {
-        const dateEnd = new Date().toISOString().split('T')[0];
-        const dateStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const fetchBaseMetrics = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', customDateStart?: string, customDateEnd?: string) => {
+        const dateEnd = customDateEnd || new Date().toISOString().split('T')[0];
+        const dateStart = customDateStart || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         if (type === 'campaign') {
             // 1. Fetch campaign info to get the name
@@ -80,8 +82,32 @@ export function ReportProvider({ children }: { children: ReactNode }) {
             const impressions = campaignInsights.reduce((s: number, i: any) => s + (Number(i.impressions) || 0), 0);
             const clicks = campaignInsights.reduce((s: number, i: any) => s + (Number(i.clicks) || 0), 0);
             const totalResults = campaignInsights.reduce((s: number, i: any) => s + (Number(i.results || i.messagingStarted) || 0), 0);
+            let potentialCount = 0;
+            let totalLeadCount = 0;
+            let messagingNewFromAds = 0;
 
-            return { spend, impressions, clicks, totalResults, insights: campaignInsights, name: campaignName };
+            try {
+                const { data: statsData } = await apiClient.get('/leads/stats', {
+                    params: { campaignId: id, dateStart, dateEnd }
+                });
+                const s = statsData.result || statsData.data || statsData || {};
+                potentialCount = (s.potentialFromAds || 0) + (s.potentialFromOrganic || 0);
+                totalLeadCount = s.totalLeads || 0;
+                messagingNewFromAds = s.messagingNewFromAds || 0;
+            } catch (e) {
+                console.error("[Report] Error fetching lead stats for campaign:", e);
+            }
+
+            return {
+                spend, impressions, clicks, totalResults,
+                insights: campaignInsights,
+                name: campaignName,
+                dateStart,
+                dateEnd,
+                potentialCount,
+                totalLeadCount,
+                messagingNewFromAds
+            };
         } else {
             let fbAccountIds: string[] = [];
             let internalAccountIds: number[] = [];
@@ -157,23 +183,32 @@ export function ReportProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const loadFreshMetrics = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch') => {
+    const loadFreshMetrics = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => {
         try {
-            const result = await fetchBaseMetrics(id, type);
+            const result = await fetchBaseMetrics(id, type, dateStart, dateEnd);
             const { spend, impressions, clicks, totalResults, name } = result;
             const potentialCount = (result as any).potentialCount || 0;
             const totalLeadCount = (result as any).totalLeadCount || 0;
             const avgCtr = impressions > 0 ? (clicks / impressions) * 100 : 0;
             const avgCpl = totalResults > 0 ? spend / totalResults : 0;
             const avgCpc = clicks > 0 ? spend / clicks : 0;
+            const updatedDateStart = result.dateStart;
+            const updatedDateEnd = result.dateEnd;
 
-            setLocalMetrics({ spend, impressions, clicks, totalResults, ctr: avgCtr, cpl: avgCpl, cpc: avgCpc } as ReportMetrics);
-            setData({ campaignName: name || '', metrics: { spend, impressions, clicks, totalResults, ctr: avgCtr, cpl: avgCpl, cpc: avgCpc } as ReportMetrics, report: '', createdAt: '' });
+            const activeMetrics = {
+                spend, impressions, clicks, totalResults,
+                ctr: avgCtr, cpl: avgCpl, cpc: avgCpc,
+                dateStart: updatedDateStart,
+                dateEnd: updatedDateEnd
+            } as ReportMetrics;
 
-            // Stats for Lead Quality KPI (Denominator should be Total Leads from DB to match Lead Insights)
+            setLocalMetrics(activeMetrics);
+            setData({ campaignName: name || '', metrics: activeMetrics, report: '', createdAt: '' });
+
+            // Stats for Lead Quality KPI (For campaigns, trust totalResults from Insights. For others, fallback to database if necessary)
             setStats({
                 potential: potentialCount,
-                total: totalLeadCount > 0 ? totalLeadCount : totalResults
+                total: type === 'campaign' ? totalResults : (totalLeadCount > 0 ? totalLeadCount : totalResults)
             });
         } catch (err) {
             console.error("[Report] Fresh metrics load error:", err);
@@ -181,7 +216,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     }, [fetchBaseMetrics]);
 
     // Load cached report from DB (no Gemini call)
-    const loadCachedReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch') => {
+    const loadCachedReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => {
         try {
             setLoading(true);
             const { data: cached } = await supabase
@@ -193,16 +228,11 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                 .maybeSingle();
 
             if (cached) {
-                setData({
-                    campaignName: cached.campaign_name,
-                    metrics: cached.metrics,
-                    report: cached.report_content,
-                    createdAt: cached.created_at
-                });
-
                 // Refresh KPI metrics to show live database counts (potential vs total)
                 try {
-                    const result = await fetchBaseMetrics(id, type);
+                    const fallbackDateStart = cached.metrics?.dateStart;
+                    const fallbackDateEnd = cached.metrics?.dateEnd;
+                    const result = await fetchBaseMetrics(id, type, dateStart || fallbackDateStart, dateEnd || fallbackDateEnd);
                     const { spend, impressions, clicks, totalResults } = result;
                     const potentialCount = (result as any).potentialCount || 0;
                     const totalLeadCount = (result as any).totalLeadCount || 0;
@@ -211,26 +241,34 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                         spend, impressions, clicks, totalResults,
                         ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
                         cpl: totalResults > 0 ? spend / totalResults : 0,
-                        cpc: clicks > 0 ? spend / clicks : 0
+                        cpc: clicks > 0 ? spend / clicks : 0,
+                        dateStart: result.dateStart,
+                        dateEnd: result.dateEnd
                     } as ReportMetrics;
 
+                    // Update everything at once to prevent multiple renders/flickers
                     setLocalMetrics(activeMetrics);
+                    setData({
+                        campaignName: cached.campaign_name,
+                        metrics: activeMetrics, // Use fresh metrics instead of cached ones
+                        report: cached.report_content,
+                        createdAt: cached.created_at
+                    });
                     setStats({
                         potential: potentialCount,
-                        total: totalLeadCount > 0 ? totalLeadCount : totalResults
+                        total: type === 'campaign' ? totalResults : (totalLeadCount > 0 ? totalLeadCount : totalResults)
                     });
                 } catch (e) {
                     console.error("[Report] Error refreshing live metrics for cached report:", e);
-                    if (cached.metrics) {
-                        setLocalMetrics(cached.metrics);
-                        setStats({
-                            potential: (cached.metrics as any).leadQuality?.potentialCount || 0,
-                            total: cached.metrics.totalResults || 0
-                        });
-                    }
+                    // Only if fetch fails do we fallback to cached stats to avoid showing 0
+                    setLocalMetrics(cached.metrics);
+                    setStats({
+                        potential: (cached.metrics as any).leadQuality?.potentialCount || 0,
+                        total: cached.metrics.totalResults || 0
+                    });
                 }
             } else {
-                await loadFreshMetrics(id, type);
+                await loadFreshMetrics(id, type, dateStart, dateEnd);
             }
         } catch (err: any) {
             console.error("[Report] Cache load error:", err);
@@ -240,7 +278,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     }, [loadFreshMetrics]);
 
     // Generate new report via Edge Function (Gemini)
-    const generateReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch') => {
+    const generateReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => {
         try {
             setLoading(true);
             setError('');
@@ -250,9 +288,9 @@ export function ReportProvider({ children }: { children: ReactNode }) {
             const {
                 spend, impressions, clicks, totalResults,
                 insights: filteredInsights,
-                name, dateStart, dateEnd,
+                name, dateStart: fetchedDateStart, dateEnd: fetchedDateEnd,
                 potentialCount, totalLeadCount
-            } = await fetchBaseMetrics(id, type);
+            } = await fetchBaseMetrics(id, type, dateStart, dateEnd);
 
             let campaignName = name;
 
@@ -287,8 +325,16 @@ export function ReportProvider({ children }: { children: ReactNode }) {
             // so we don't necessarily need to re-query here, but keeping for logic consistency if needed.
             // For now, let's rely on what fetchBaseMetrics returned.
 
-            setStats({ potential: potentialCount || 0, total: totalLeadCount || totalResults });
-            setLocalMetrics({ spend, impressions, clicks, totalResults, ctr: avgCtr, cpl: avgCpl, cpc: avgCpc });
+            setStats({
+                potential: potentialCount || 0,
+                total: type === 'campaign' ? totalResults : (totalLeadCount || totalResults)
+            });
+            setLocalMetrics({
+                spend, impressions, clicks, totalResults,
+                ctr: avgCtr, cpl: avgCpl, cpc: avgCpc,
+                dateStart: fetchedDateStart,
+                dateEnd: fetchedDateEnd
+            });
 
             // 3. GENERATE VIA EDGE FUNCTION
             const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ads-analytics-report/report/generate`, {
@@ -306,8 +352,8 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                         ctr: avgCtr, cpl: avgCpl, cpc: avgCpc,
                         entityBreakdown,
                         leadQuality: { potentialCount, totalCount: totalLeadCount },
-                        dateStart,
-                        dateEnd
+                        dateStart: fetchedDateStart,
+                        dateEnd: fetchedDateEnd
                     }
                 })
             });
@@ -362,7 +408,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             setStatus('');
         }
-    }, []);
+    }, [fetchBaseMetrics]);
 
     return (
         <ReportContext.Provider value={{

@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, useCallback } from 'react';
+import { useState, useMemo, memo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { useAdsets } from '@/hooks/useAdSets';
@@ -14,6 +14,11 @@ import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizo
 import { ROUTES } from '@/constants';
 import { HourlyInsightsDialog } from './HourlyInsightsDialog';
 import { LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
+import { supabase } from '@/lib/supabase';
+import { CheckCircle2, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 export function CampaignsPage() {
   const queryClient = useQueryClient();
@@ -23,6 +28,7 @@ export function CampaignsPage() {
   const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
   const [expandedAdSet, setExpandedAdSet] = useState<string | null>(null);
   const [selectedAdForHourly, setSelectedAdForHourly] = useState<{ id: string, name: string, date?: Date } | null>(null);
+  const [existingReports, setExistingReports] = useState<Record<string, { createdAt: string }>>({});
   const { activePlatform } = usePlatform();
 
   const { data: accounts } = useAdAccounts();
@@ -78,6 +84,33 @@ export function CampaignsPage() {
     });
 
   }, [campaigns, activePlatform]);
+
+  // Fetch existing reports
+  useEffect(() => {
+    const fetchExistingReports = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ai_reports')
+          .select('reference_id, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const mapping: Record<string, { createdAt: string }> = {};
+        data?.forEach(report => {
+          if (!mapping[report.reference_id]) {
+            mapping[report.reference_id] = { createdAt: report.created_at };
+          }
+        });
+
+        setExistingReports(mapping);
+      } catch (err) {
+        console.error('Error fetching existing reports:', err);
+      }
+    };
+
+    fetchExistingReports();
+  }, []);
 
   const handleSyncAllActive = useCallback(async () => {
     if (!accounts || accounts.length === 0) {
@@ -175,6 +208,9 @@ export function CampaignsPage() {
               expandedAdSet={expandedAdSet}
               setExpandedAdSet={setExpandedAdSet}
               onViewHourly={(ad: any) => setSelectedAdForHourly(ad)}
+              existingReport={existingReports[campaign.id]}
+              dateStart={dateStart}
+              dateEnd={dateEnd}
             />
           ))
         )}
@@ -204,7 +240,10 @@ function CampaignRow({
   isLoadingAdSets,
   expandedAdSet,
   setExpandedAdSet,
-  onViewHourly
+  onViewHourly,
+  existingReport,
+  dateStart,
+  dateEnd
 }: any) {
   return (
     <div className="bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-lg transition-all">
@@ -221,7 +260,15 @@ function CampaignRow({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-bold text-lg mb-1">{campaign.name}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-lg">{campaign.name}</h3>
+                  {existingReport && (
+                    <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Đã có báo cáo
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(campaign.status)}`}>
                     {campaign.status}
@@ -232,12 +279,27 @@ function CampaignRow({
                   <span className="text-[10px] text-muted-foreground">
                     Synced: {new Date(campaign.account?.syncedAt || campaign.syncedAt).toLocaleString()}
                   </span>
+                  {existingReport && (
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-600/70">
+                      <Clock className="w-3 h-3" />
+                      {format(new Date(existingReport.createdAt), 'HH:mm dd/MM/yyyy', { locale: vi })}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="default" asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
-                  <Link to={ROUTES.AD_REPORTING.replace(':id', campaign.id)}>
-                    <Brain className="w-4 h-4 mr-1.5" /> Phân Tích AI
+                <Button
+                  size="sm"
+                  variant={existingReport ? "outline" : "default"}
+                  asChild
+                  className={`font-semibold ${existingReport
+                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                    }`}
+                >
+                  <Link to={`${ROUTES.AD_REPORTING.replace(':id', campaign.id)}?dateStart=${dateStart}&dateEnd=${dateEnd}`}>
+                    <Brain className="w-4 h-4 mr-1.5" />
+                    {existingReport ? "Xem Báo Cáo AI" : "Phân Tích AI"}
                   </Link>
                 </Button>
                 <Button size="icon" variant="ghost" onClick={() => handleSync(campaign)} disabled={isSyncing}>

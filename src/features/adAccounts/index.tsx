@@ -1,6 +1,6 @@
 export { useAdAccounts } from '@/hooks/useAdAccounts';
 export { BranchFilter } from './components/BranchFilter';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdAccounts } from '@/hooks/useAdAccounts';
 import { adAccountsApi, campaignsApi, adsApi, insightsApi, branchesApi } from '@/api';
@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants';
-import { Loader2, RefreshCw, CreditCard, Image, Key, Link as LinkIcon, Brain } from 'lucide-react';
+import { Loader2, RefreshCw, CreditCard, Image, Key, Link as LinkIcon, Brain, CheckCircle2 } from 'lucide-react';
 import { PageHeader } from '@/components/custom/PageHeader';
 import { FilterBar } from '@/components/custom/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
@@ -28,6 +28,9 @@ import { pagesApi } from '@/api/pages.api';
 import type { FBPage } from '@/api/pages.api';
 
 import { getVietnamDateString } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 // Platform filter moved to global PlatformContext (header tabs)
 
@@ -55,6 +58,7 @@ export function AdAccountsPage() {
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [newPageToken, setNewPageToken] = useState('');
   const [updatingPageToken, setUpdatingPageToken] = useState(false);
+  const [existingReports, setExistingReports] = useState<Record<string, { createdAt: string }>>({});
 
 
   const { data: branches } = useBranches();
@@ -272,6 +276,34 @@ export function AdAccountsPage() {
     }
   };
 
+  // Fetch existing reports
+  useEffect(() => {
+    const fetchExistingReports = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ai_reports')
+          .select('reference_id, type, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const mapping: Record<string, { createdAt: string }> = {};
+        data?.forEach(report => {
+          const key = `${report.type}:${report.reference_id}`;
+          if (!mapping[key]) {
+            mapping[key] = { createdAt: report.created_at };
+          }
+        });
+
+        setExistingReports(mapping);
+      } catch (err) {
+        console.error('Error fetching existing reports:', err);
+      }
+    };
+
+    fetchExistingReports();
+  }, []);
+
 
 
   if (isLoading) {
@@ -382,9 +414,17 @@ export function AdAccountsPage() {
                           <TableCell className="font-mono text-xs text-muted-foreground">{account.externalId}</TableCell>
                           <TableCell className="font-medium">{account.name || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.variant || 'secondary'}>
-                              {PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.label || account.accountStatus}
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.variant || 'secondary'}>
+                                {PLATFORM_ACCOUNT_STATUS_MAP[account.accountStatus]?.label || account.accountStatus}
+                              </Badge>
+                              {existingReports[`account:${account.externalId}`] && (
+                                <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium whitespace-nowrap">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Đã có BC
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
                             {account.branch?.name || 'Chưa gán'}
@@ -431,12 +471,17 @@ export function AdAccountsPage() {
                               </Button>
                               <Button
                                 size="sm"
-                                variant="default"
+                                variant={existingReports[`account:${account.externalId}`] ? "outline" : "default"}
                                 asChild
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-8"
+                                className={`h-8 font-semibold ${existingReports[`account:${account.externalId}`]
+                                  ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
+                                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                  }`}
+                                title={existingReports[`account:${account.externalId}`] ? `Báo cáo lúc: ${format(new Date(existingReports[`account:${account.externalId}`].createdAt), 'HH:mm dd/MM/yyyy', { locale: vi })}` : 'Tạo phân tích AI'}
                               >
                                 <Link to={ROUTES.AD_ACCOUNT_REPORTING.replace(':id', account.externalId)}>
-                                  <Brain className="w-3.5 h-3.5 mr-1.5" /> Báo cáo AI
+                                  <Brain className="w-3.5 h-3.5 mr-1.5" />
+                                  {existingReports[`account:${account.externalId}`] ? "Xem báo cáo" : "Báo cáo AI"}
                                 </Link>
                               </Button>
                               <Button
@@ -623,6 +668,20 @@ export function AdAccountsPage() {
                                         <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                                       ) : null}
                                       Xóa
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant={existingReports[`branch:${branch.id}`] ? "outline" : "default"}
+                                      asChild
+                                      className={`h-8 font-semibold ${existingReports[`branch:${branch.id}`]
+                                        ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
+                                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        }`}
+                                    >
+                                      <Link to={ROUTES.AD_ACCOUNT_REPORTING.replace(':id', String(branch.id))}>
+                                        <Brain className="w-3.5 h-3.5 mr-1.5" />
+                                        {existingReports[`branch:${branch.id}`] ? "Xem báo cáo" : "Báo cáo AI"}
+                                      </Link>
                                     </Button>
                                   </div>
                                 )}

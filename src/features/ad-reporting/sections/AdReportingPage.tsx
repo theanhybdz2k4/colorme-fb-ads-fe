@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Document, Packer, Paragraph, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,10 @@ export function AdReportingPage() {
 
 function AdReportingPageInner() {
     const { id } = useParams<{ id: string }>();
+    const [searchParams] = useSearchParams();
+    const dateStart = searchParams.get('dateStart') || undefined;
+    const dateEnd = searchParams.get('dateEnd') || undefined;
+
     const {
         loading, data, error, status, completedSections,
         localMetrics, stats,
@@ -30,8 +34,12 @@ function AdReportingPageInner() {
 
     useEffect(() => {
         if (!id) return;
-        loadCachedReport(id, 'campaign');
-    }, [id, loadCachedReport]);
+        loadCachedReport(id, 'campaign', dateStart, dateEnd);
+    }, [id, loadCachedReport, dateStart, dateEnd]);
+
+    const handleGenerateNew = () => {
+        if (id) generateReport(id, 'campaign', dateStart, dateEnd);
+    };
 
     const handleDownloadWord = async () => {
         if (!data || !data.report) {
@@ -92,7 +100,7 @@ function AdReportingPageInner() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>
-                        <Button onClick={() => id && generateReport(id, 'campaign')} variant="outline">Thử lại</Button>
+                        <Button onClick={handleGenerateNew} variant="outline">Thử lại</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -113,7 +121,7 @@ function AdReportingPageInner() {
                         <Download className="w-4 h-4 mr-2" />
                         Tải Báo Cáo
                     </Button>
-                    <Button onClick={() => id && generateReport(id, 'campaign')} variant="default">
+                    <Button onClick={handleGenerateNew} variant="default">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Tạo mới báo cáo
                     </Button>
@@ -123,15 +131,21 @@ function AdReportingPageInner() {
             {/* Header + KPI */}
             <div className="space-y-6">
                 <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium mb-3">
-                        <SparklesIcon className="w-3 h-3" />
-                        AI Analytics Report
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+                            <SparklesIcon className="w-3 h-3" />
+                            AI Analytics Report
+                        </div>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-semibold border border-blue-100 dark:border-blue-800">
+                            <CalendarDays className="w-3 h-3" />
+                            Dữ liệu {(localMetrics?.dateStart && localMetrics?.dateEnd) ? `từ ${new Date(localMetrics.dateStart).toLocaleDateString('vi-VN')} đến ${new Date(localMetrics.dateEnd).toLocaleDateString('vi-VN')}` : (dateStart && dateEnd ? `từ ${new Date(dateStart).toLocaleDateString('vi-VN')} đến ${new Date(dateEnd).toLocaleDateString('vi-VN')}` : '30 ngày qua')}
+                        </div>
                     </div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{campaignName}</h1>
                     {createdAt && (
                         <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
                             <CalendarDays className="w-3.5 h-3.5" />
-                            Được tạo lúc: {new Date(createdAt).toLocaleString('vi-VN')}
+                            Được báo cáo lúc: {new Date(createdAt).toLocaleString('vi-VN')}
                         </p>
                     )}
                 </div>
@@ -150,7 +164,7 @@ function AdReportingPageInner() {
                 createdAt={createdAt}
                 status={status}
                 completedSections={completedSections}
-                onGenerate={() => id && generateReport(id, 'campaign')}
+                onGenerate={handleGenerateNew}
             />
         </div>
     );
