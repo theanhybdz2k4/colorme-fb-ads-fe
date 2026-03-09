@@ -1,43 +1,76 @@
-
+import { useMemo } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { PerformanceList, PerformanceItem, StatusBadge } from '@/components/shared/common';
 import Icon from '@/components/shared/common/Icon';
 import { formatPercent } from '@/lib/format';
 
 export function QuickInsightsSection() {
-    const { campaigns, metrics, ageGenderBreakdown } = useDashboard();
+    const { campaigns, metrics, ageGenderBreakdown, adGroups, dailyInsights } = useDashboard();
 
-    // Find campaign with highest CTR using nested stats from API
-    const campaignWithStats = campaigns.map(c => {
-        const stats = c.stats || {};
-        const impressions = Number(stats.impressions || 0);
-        const clicks = Number(stats.clicks || 0);
-        const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-        return { ...c, ctr };
-    });
+    // Find campaign with highest CTR
+    const campaignWithStats = useMemo(() => {
+        return campaigns.map(c => {
+            const stats = c.stats || {};
+            const impressions = Number(stats.impressions || 0);
+            const clicks = Number(stats.clicks || 0);
+            const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+            return { ...c, ctr };
+        });
+    }, [campaigns]);
 
-    const bestCTRCampaign = [...campaignWithStats]
-        .filter(c => c.ctr > 0)
-        .sort((a, b) => b.ctr - a.ctr)[0];
+    const bestCTRCampaign = useMemo(() => {
+        return [...campaignWithStats]
+            .filter(c => c.ctr > 0)
+            .sort((a, b) => b.ctr - a.ctr)[0];
+    }, [campaignWithStats]);
 
-    const bestResultsCampaign = [...campaigns]
-        .map(c => ({ ...c, results: Number(c.stats?.results || 0) }))
-        .sort((a, b) => b.results - a.results)[0];
+    const bestResultsCampaign = useMemo(() => {
+        return [...campaigns]
+            .map(c => ({ ...c, results: Number(c.stats?.results || 0) }))
+            .sort((a, b) => b.results - a.results)[0];
+    }, [campaigns]);
 
     const avgCTR = metrics.overallCTR;
     const ctrStatus = bestCTRCampaign && avgCTR > 0
         ? ((bestCTRCampaign.ctr - avgCTR) / avgCTR) * 100
         : 0;
 
-    // Best Audience
-    const bestAudience = ageGenderBreakdown?.[0];
-    let audienceLabel = bestAudience
-        ? `Độ tuổi ${bestAudience.age} (${bestAudience.gender === 'female' ? 'Nữ' : 'Nam'})`
-        : null;
+    // Best Audience (Ad Set)
+    const audienceLabel = useMemo(() => {
+        if (!dailyInsights || !dailyInsights.length || !adGroups) return null;
 
-    if (!audienceLabel && bestResultsCampaign && bestResultsCampaign.results > 0) {
-        audienceLabel = "Nhóm đối tượng tiềm năng nhất";
-    }
+        // Group results by ad_group_id
+        const groupResults: Record<string, number> = {};
+        dailyInsights.forEach((insight: any) => {
+            const groupId = insight.unified_ad_group_id || insight.unifiedAdGroupId;
+            if (groupId) {
+                groupResults[groupId] = (groupResults[groupId] || 0) + (Number(insight.results) || 0);
+            }
+        });
+
+        // Find the group ID with most results
+        const topGroupId = Object.entries(groupResults)
+            .filter(([, results]) => results > 0)
+            .sort(([, a], [, b]) => b - a)[0]?.[0];
+
+        if (topGroupId) {
+            const group = adGroups.find((g: any) => g.id === topGroupId);
+            if (group) return `Nhóm "${group.name}"`;
+        }
+
+        // Fallback 1: Age Gender Breakdown
+        const bestAgeGender = ageGenderBreakdown?.[0];
+        if (bestAgeGender) {
+            return `Độ tuổi ${bestAgeGender.age} (${bestAgeGender.gender === 'female' ? 'Nữ' : 'Nam'})`;
+        }
+
+        // Fallback 2: Best Results Campaign
+        if (bestResultsCampaign && bestResultsCampaign.results > 0) {
+            return "Nhóm đối tượng tiềm năng nhất";
+        }
+
+        return null;
+    }, [dailyInsights, adGroups, ageGenderBreakdown, bestResultsCampaign]);
 
     return (
         <div className="space-y-6">
@@ -86,13 +119,14 @@ export function QuickInsightsSection() {
                 </div>
             </div>
 
-            {/* Top & Bottom Campaigns - now using PerformanceList */}
+           <div className="grid grid-cols-2 gap-4">
+             {/* Top & Bottom Campaigns - now using PerformanceList */}
             <PerformanceList title="Campaign Chạy ngon" icon="arrow-up-right">
                 {campaignWithStats
                     .filter(c => c.ctr > 2.3 || (Number(c.stats?.results || 0) > 0 && (Number(c.stats?.results || 0) / Number(c.stats?.clicks || 1)) * 100 > 10))
-                    .sort((a, b) => b.ctr - a.ctr)
+                    .sort((a: any, b: any) => b.ctr - a.ctr)
                     .slice(0, 3)
-                    .map((c, i) => (
+                    .map((c: any, i: number) => (
                         <PerformanceItem
                             key={c.id}
                             rank={i + 1}
@@ -101,11 +135,12 @@ export function QuickInsightsSection() {
                             secondaryStats={[
                                 { label: 'Results', value: String(c.stats?.results || 0) },
                             ]}
+                            status="success"
                             icon="send"
                         />
                     ))
                 }
-                {campaignWithStats.filter(c => c.ctr > 2.3 || (Number(c.stats?.results || 0) > 0 && (Number(c.stats?.results || 0) / Number(c.stats?.clicks || 1)) * 100 > 10)).length === 0 && (
+                {campaignWithStats.filter((c: any) => c.ctr > 2.3 || (Number(c.stats?.results || 0) > 0 && (Number(c.stats?.results || 0) / Number(c.stats?.clicks || 1)) * 100 > 10)).length === 0 && (
                     <p className="text-caption text-t-tertiary italic text-center py-6">Chưa có campaign vượt benchmark</p>
                 )}
             </PerformanceList>
@@ -113,9 +148,9 @@ export function QuickInsightsSection() {
             <PerformanceList title="Cần tối ưu thêm" icon="info">
                 {campaignWithStats
                     .filter(c => c.ctr < 1.2 && c.ctr > 0)
-                    .sort((a, b) => a.ctr - b.ctr)
+                    .sort((a: any, b: any) => a.ctr - b.ctr)
                     .slice(0, 3)
-                    .map((c, i) => (
+                    .map((c: any, i: number) => (
                         <PerformanceItem
                             key={c.id}
                             rank={i + 1}
@@ -124,14 +159,16 @@ export function QuickInsightsSection() {
                             secondaryStats={[
                                 { label: 'CTR', value: formatPercent(c.ctr) },
                             ]}
+                            status="warning"
                             icon="cube"
                         />
                     ))
                 }
-                {campaignWithStats.filter(c => c.ctr < 1.2 && c.ctr > 0).length === 0 && (
+                {campaignWithStats.filter((c: any) => c.ctr < 1.2 && c.ctr > 0).length === 0 && (
                     <p className="text-caption text-t-tertiary italic text-center py-6">Tất cả đều đạt mức ổn định</p>
                 )}
             </PerformanceList>
+           </div>
         </div>
     );
 }

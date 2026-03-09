@@ -126,9 +126,9 @@ export function AIReportsPage() {
                                                 <div className="flex items-start justify-between gap-2">
                                                     <h3 className="font-semibold text-sm line-clamp-2" title={camp.name}>{camp.name}</h3>
                                                     {existingReports[`campaign:${camp.id}`] && (
-                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1 px-2 py-0.5 rounded-full font-medium">
                                                             <CheckCircle2 className="w-3 h-3" />
-                                                            Đã có
+                                                            Đã có báo cáo
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -143,11 +143,11 @@ export function AIReportsPage() {
                                         </div>
                                         <div className="mt-auto pt-4 flex gap-2 w-full border-t border-border/50">
                                             <Button
-                                                variant={existingReports[camp.id] ? "outline" : "default"}
+                                                variant={existingReports[`campaign:${camp.id}`] ? "outline" : "default"}
                                                 asChild
-                                                className={`w-full font-medium shadow-md transition-all duration-300 ${existingReports[camp.id]
-                                                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
-                                                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-900/20 hover:shadow-indigo-900/40"
+                                                className={`w-full font-medium rounded-full shadow-md transition-all duration-300 ${existingReports[`campaign:${camp.id}`]
+                                                    ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-600"
+                                                    : "bg-primary-01 hover:bg-primary-01/90 text-white shadow-primary-01/20 hover:shadow-primary-01/40"
                                                     }`}
                                             >
                                                 <Link to={`${ROUTES.AD_REPORTING.replace(':id', camp.id)}?dateStart=${dateStart}&dateEnd=${dateEnd}`}>
@@ -180,9 +180,9 @@ export function AIReportsPage() {
                                                 <div className="flex items-start justify-between gap-2">
                                                     <h3 className="font-semibold text-sm line-clamp-2" title={acc.name || acc.externalId}>{acc.name || acc.externalId}</h3>
                                                     {existingReports[`account:${acc.externalId}`] && (
-                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1 px-2 py-0.5 rounded-full font-medium">
                                                             <CheckCircle2 className="w-3 h-3" />
-                                                            Đã có
+                                                            Đã có báo cáo
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -199,11 +199,11 @@ export function AIReportsPage() {
                                         </div>
                                         <div className="mt-auto pt-4 flex gap-2 w-full border-t border-border/50">
                                             <Button
-                                                variant={existingReports[acc.externalId] ? "outline" : "default"}
+                                                variant={existingReports[`account:${acc.externalId}`] ? "outline" : "default"}
                                                 asChild
-                                                className={`w-full font-medium shadow-md transition-all duration-300 ${existingReports[acc.externalId]
-                                                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
-                                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 hover:shadow-blue-900/40"
+                                                className={`w-full font-medium rounded-full shadow-md transition-all duration-300 ${existingReports[`account:${acc.externalId}`]
+                                                    ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-600"
+                                                    : "bg-primary-01 hover:bg-primary-01/90 text-white shadow-primary-01/20 hover:shadow-primary-01/40"
                                                     }`}
                                             >
                                                 <Link to={`${ROUTES.AD_ACCOUNT_REPORTING.replace(':id', acc.externalId)}?dateStart=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&dateEnd=${new Date().toISOString().split('T')[0]}`}>
@@ -236,9 +236,9 @@ export function AIReportsPage() {
                                                 <div className="flex items-start justify-between gap-2">
                                                     <h3 className="font-semibold text-sm truncate" title={branch.name}>{branch.name}</h3>
                                                     {existingReports[`branch:${branch.id}`] && (
-                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                                                        <Badge variant="outline" className="shrink-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1 px-2 py-0.5 rounded-full font-medium">
                                                             <CheckCircle2 className="w-3 h-3" />
-                                                            Đã có
+                                                            Đã có báo cáo
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -255,11 +255,11 @@ export function AIReportsPage() {
                                         </div>
                                         <div className="mt-auto pt-4 flex gap-2 w-full border-t border-border/50">
                                             <Button
-                                                variant={existingReports[branch.id.toString()] ? "outline" : "default"}
+                                                variant={existingReports[`branch:${branch.id}`] ? "outline" : "default"}
                                                 asChild
-                                                className={`w-full font-medium shadow-md transition-all duration-300 ${existingReports[branch.id.toString()]
-                                                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
-                                                    : "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-900/20 hover:shadow-orange-900/40"
+                                                className={`w-full font-medium rounded-full shadow-md transition-all duration-300 ${existingReports[`branch:${branch.id}`]
+                                                    ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-600"
+                                                    : "bg-primary-01 hover:bg-primary-01/90 text-white shadow-primary-01/20 hover:shadow-primary-01/40"
                                                     }`}
                                             >
                                                 <Link to={`${ROUTES.ACCOUNT_REPORTING.replace(':id', branch.id.toString())}?dateStart=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&dateEnd=${new Date().toISOString().split('T')[0]}`}>

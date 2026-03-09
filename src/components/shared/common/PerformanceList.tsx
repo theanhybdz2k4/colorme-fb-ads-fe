@@ -12,6 +12,7 @@ interface PerformanceItemProps {
     trend?: number;
     icon?: string;
     secondaryStats?: { label: string; value: string | number }[];
+    status?: 'success' | 'warning' | 'danger' | 'neutral';
     className?: string;
 }
 
@@ -23,26 +24,45 @@ export function PerformanceItem({
     trend,
     icon,
     secondaryStats,
+    status = 'neutral',
     className,
 }: PerformanceItemProps) {
+    const getStatusIconStyles = () => {
+        switch (status) {
+            case 'success': return 'bg-accent-green/10 [&>svg]:fill-accent-green';
+            case 'warning': return 'bg-accent-orange/10 [&>svg]:fill-accent-orange';
+            case 'danger': return 'bg-accent-red/10 [&>svg]:fill-accent-red';
+            default: return 'bg-b-depth2 [&>svg]:fill-primary-01';
+        }
+    };
+
+    const getStatusTitleStyles = () => {
+        switch (status) {
+            case 'success': return 'group-hover:text-accent-green';
+            case 'warning': return 'group-hover:text-accent-orange';
+            case 'danger': return 'group-hover:text-accent-red';
+            default: return 'group-hover:text-primary-01';
+        }
+    };
+
     return (
         <div className={cn("group relative flex items-center py-4 px-3 -mx-3 rounded-2xl cursor-pointer transition-all duration-300", className)}>
             <div className="box-hover"></div>
 
             {rank !== undefined && (
-                <div className="relative z-2 w-10 shrink-0 text-button font-bold text-t-primary/40 group-hover:text-primary-01 transition-colors">
+                <div className={cn("relative z-2 w-10 shrink-0 text-button font-bold text-t-primary/40 transition-colors", getStatusTitleStyles())}>
                     {rank.toString().padStart(2, '0')}
                 </div>
             )}
 
             {icon && (
-                <div className="relative z-2 size-10 rounded-xl bg-b-depth2 flex items-center justify-center mr-4 shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                    <Icon name={icon} className="size-5 fill-primary-01" />
+                <div className={cn("relative z-2 size-10 rounded-xl flex items-center justify-center mr-4 shrink-0 shadow-sm transition-transform group-hover:scale-105", getStatusIconStyles())}>
+                    <Icon name={icon} className="size-5" />
                 </div>
             )}
 
             <div className="relative z-2 flex-1 min-w-0 mr-4">
-                <h4 className="text-body-2 font-bold text-t-primary truncate leading-tight group-hover:text-primary-01 transition-colors">
+                <h4 className={cn("text-body-2 font-bold text-t-primary truncate leading-tight transition-colors", getStatusTitleStyles())}>
                     {title}
                 </h4>
                 {(subtitle || (secondaryStats && secondaryStats.length > 0)) && (
@@ -89,7 +109,7 @@ export function PerformanceList({
     className?: string;
 }) {
     return (
-        <div className={cn("card p-0 overflow-hidden", className)}>
+        <div className={cn("card m-0 p-0 overflow-hidden", className)}>
             {(title || icon) && (
                 <div className="flex items-center justify-between px-6 h-12 bg-b-depth2/10">
                     <div className="flex items-center gap-3">

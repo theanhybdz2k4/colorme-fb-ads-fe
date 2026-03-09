@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adAccountsApi, campaignsApi, analyticsApi } from '@/api';
+import { adAccountsApi, campaignsApi, analyticsApi, adGroupsApi } from '@/api';
 import { useInsights } from '@/hooks/useInsights';
 import { useAuth } from '@/features/auth';
 import { usePlatform } from '@/contexts';
@@ -15,6 +15,7 @@ interface DashboardContextType {
     dailyInsights: any[];
     prevInsights: any[];
     prevDailyInsights: any[];
+    adGroups: any[];
     ageGenderBreakdown: any[];
     isLoading: boolean;
     metrics: {
@@ -24,6 +25,7 @@ interface DashboardContextType {
         totalImpressions: number;
         overallCPL: number;
         overallCTR: number;
+        overallCPC: number;
         activeCampaignsCount: number;
     };
     trends: {
@@ -32,6 +34,7 @@ interface DashboardContextType {
         clicks: number;
         cpl: number;
         ctr: number;
+        cpc: number;
     };
     user: any;
     activePlatform: string;
@@ -135,6 +138,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         },
     });
 
+    const { data: adGroups = [], isLoading: loadingAdGroups } = useQuery({
+        queryKey: ['ad-groups', activePlatform],
+        queryFn: async () => {
+            const { data } = await adGroupsApi.list();
+            const groups = data.result || data.data || data || [];
+            return groups;
+        },
+    });
+
     const TAX_MULTIPLIER = 1.1;
 
     const campaigns = useMemo(() => {
@@ -184,7 +196,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         granularity: 'DAILY'
     });
 
-    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingDailyInsights || loadingPrevInsights || loadingPrevDailyInsights || loadingBreakdown;
+    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingDailyInsights || loadingPrevInsights || loadingPrevDailyInsights || loadingBreakdown || loadingAdGroups;
 
     // Derived Metrics (Use Daily Insights for Aggregate Totals to ensure reliability)
     const metrics = useMemo(() => {
@@ -199,6 +211,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
         const overallCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
         const overallCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+        const overallCPC = totalClicks > 0 ? totalSpend / totalClicks : 0;
         const activeCampaignsCount = safeCampaigns.filter((c: any) => c.effectiveStatus === 'ACTIVE' || c.status === 'ACTIVE').length;
 
         return {
@@ -208,6 +221,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             totalImpressions,
             overallCPL,
             overallCTR,
+            overallCPC,
             activeCampaignsCount
         };
     }, [dailyInsights, campaigns]);
@@ -223,6 +237,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
         const prevCPL = prevLeads > 0 ? prevSpend / prevLeads : 0;
         const prevCTR = prevImpressions > 0 ? (prevClicks / prevImpressions) * 100 : 0;
+        const prevCPC = prevClicks > 0 ? prevSpend / prevClicks : 0;
 
         const calculateTrend = (current: number, previous: number) => {
             if (previous === 0) return current > 0 ? 100 : 0;
@@ -235,6 +250,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             clicks: calculateTrend(metrics.totalClicks, prevClicks),
             cpl: calculateTrend(metrics.overallCPL, prevCPL),
             ctr: calculateTrend(metrics.overallCTR, prevCTR),
+            cpc: calculateTrend(metrics.overallCPC, prevCPC),
         };
     }, [metrics, prevDailyInsights]);
 
@@ -245,6 +261,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         dailyInsights,
         prevInsights,
         prevDailyInsights,
+        adGroups,
         ageGenderBreakdown,
         isLoading,
         metrics,

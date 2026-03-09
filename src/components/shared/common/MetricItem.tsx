@@ -44,7 +44,7 @@ export function MetricItem({
             <div
                 onClick={onClick}
                 className={cn(
-                    "group flex-1 px-12 py-8 rounded-4xl cursor-pointer transition-all max-2xl:p-6 max-xl:pr-3 max-md:p-4",
+                    "group flex-1 px-8 py-6 rounded-4xl cursor-pointer transition-all max-2xl:p-6 max-xl:pr-3 max-md:p-4",
                     isActive ? "bg-b-surface2 shadow-depth-toggle" : "",
                     className
                 )}
@@ -67,7 +67,7 @@ export function MetricItem({
                     <div className="">{title}</div>
                 </div>
                 <div className="flex items-center gap-4 max-md:flex-col max-md:items-stretch max-md:gap-1">
-                    <div className="text-h2 max-md:text-h3 whitespace-nowrap">
+                    <div className="text-h3 max-md:text-h5 whitespace-nowrap">
                         {value}
                     </div>
                     <div>

@@ -9,9 +9,9 @@ interface TrendIndicatorProps {
     isInverted?: boolean;
 }
 
-export function TrendIndicator({ value, className, size = "md", label }: TrendIndicatorProps) {
+export function TrendIndicator({ value, className, size = "md", label, isInverted = false }: TrendIndicatorProps) {
     const isPositive = value >= 0;
-    const isGood = isPositive;
+    const isGood = isInverted ? !isPositive : isPositive;
 
     return (
         <div className={cn("flex items-center gap-2", className)}>

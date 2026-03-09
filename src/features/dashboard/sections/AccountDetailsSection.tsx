@@ -30,7 +30,7 @@ export function AccountDetailsSection() {
             </MetricGrid>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="card p-0 overflow-hidden">
+                <div className="card m-0 p-0 overflow-hidden">
                     <div className="flex items-center justify-between px-5 h-12">
                         <div className="flex items-center gap-3">
                             <Icon name="chart" className="size-5 fill-primary-01" />

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MetricItem, MetricGrid } from '@/components/shared/common';
+import { MetricItem, MetricGrid, TrendIndicator } from '@/components/shared/common';
 import { useDashboard } from '../context/DashboardContext';
 import { formatCurrency, formatNumber, formatPercent, formatCompactCurrency, formatCompactNumber } from '@/lib/format';
 import { DateRangeSelector } from '../components/DateRangeSelector';
@@ -178,17 +178,29 @@ export function KpiSection() {
                         {/* Secondary Stats Group */}
                         <div className="mt-8 px-4 py-4 flex items-center justify-around rounded-[20px] bg-b-depth2/30">
                             <div className="flex flex-col items-center">
-                                <div className="text-[10px] font-bold text-t-tertiary uppercase tracking-widest mb-1">Active Campaigns</div>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <div className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
+                                    </div>
+                                    <div className="text-[10px] font-bold text-t-tertiary uppercase tracking-widest">Active Campaigns</div>
+                                </div>
                                 <div className="text-subtitle-1 font-bold text-t-primary text-[20px]">{metrics.activeCampaignsCount}</div>
                             </div>
                             <div className="flex flex-col items-center">
                                 <div className="text-[10px] font-bold text-t-tertiary uppercase tracking-widest mb-1">Avg CTR</div>
-                                <div className="text-subtitle-1 font-bold text-t-primary text-[20px]">{formatPercent(metrics.overallCTR)}</div>
+                                <div className="flex items-center gap-2">
+                                    <div className="text-subtitle-1 font-bold text-t-primary text-[20px]">{formatPercent(metrics.overallCTR)}</div>
+                                    <TrendIndicator value={trends.ctr} size="sm" />
+                                </div>
                             </div>
                             <div className="flex flex-col items-center">
                                 <div className="text-[10px] font-bold text-t-tertiary uppercase tracking-widest mb-1">Avg CPC</div>
-                                <div className="text-subtitle-1 font-bold text-t-primary text-[20px]">
-                                    {metrics.totalClicks > 0 ? formatCurrency(metrics.totalSpend / metrics.totalClicks) : '0 đ'}
+                                <div className="flex items-center gap-2">
+                                    <div className="text-subtitle-1 font-bold text-t-primary text-[20px]">
+                                        {formatCurrency(metrics.overallCPC)}
+                                    </div>
+                                    <TrendIndicator value={trends.cpc} isInverted={true} size="sm" />
                                 </div>
                             </div>
                         </div>

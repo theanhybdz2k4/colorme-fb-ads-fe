@@ -258,12 +258,12 @@ function CampaignRow({
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-bold text-lg">{campaign.name}</h3>
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center flex-wrap gap-2 mb-2">
+                  <h3 className="font-bold text-lg line-clamp-2 leading-tight" title={campaign.name}>{campaign.name}</h3>
                   {existingReport && (
-                    <Badge variant="outline" className="shrink-0 bg-emerald-500/5 text-emerald-600 border-emerald-500/20 gap-1 px-1.5 py-0">
+                    <Badge variant="outline" className="shrink-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1 px-2 py-0.5 rounded-full font-medium">
                       <CheckCircle2 className="w-3 h-3" />
                       Đã có báo cáo
                     </Badge>
@@ -287,14 +287,14 @@ function CampaignRow({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 border-l border-border/50 pl-4 ml-2">
                 <Button
                   size="sm"
                   variant={existingReport ? "outline" : "default"}
                   asChild
-                  className={`font-semibold ${existingReport
-                    ? "border-emerald-500/20 hover:bg-emerald-500/5 text-emerald-600 hover:text-emerald-700 hover:border-emerald-500/40"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className={`font-semibold rounded-full shadow-sm transition-all ${existingReport
+                    ? "border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-600"
+                    : "bg-primary-01 hover:bg-primary-01/90 text-white"
                     }`}
                 >
                   <Link to={`${ROUTES.AD_REPORTING.replace(':id', campaign.id)}?dateStart=${dateStart}&dateEnd=${dateEnd}`}>
