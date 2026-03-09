@@ -1,6 +1,6 @@
 
 import { useLeads } from '../context/LeadContext';
-import { StatsGrid, StatsCard } from '@/components/custom/StatsCard';
+import { StatsGrid, StatsCard } from '@/components/shared/common/StatsCard';
 import {
     Users,
     Target,
@@ -15,8 +15,8 @@ export function LeadStatsHeader() {
     const { stats, dateRange } = useLeads();
 
     const formatCurrency = (val: number) => {
-        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'tr';
-        if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
+        if (val >= 1000000) return (val / 1000000).toFixed(2) + 'tr';
+        if (val >= 1000) return (val / 1000).toFixed(2) + 'k';
         return val.toString();
     };
 
@@ -49,14 +49,14 @@ export function LeadStatsHeader() {
                 <StatsCard
                     title="ADS HÔM NAY"
                     value={`${formatCurrency(stats?.spendTodayRaw || 0)}`}
-                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(0)}% so với hôm qua` : 'Không bao gồm 10% thuế'}
+                    subtitle={stats?.yesterdaySpend > 0 ? `${(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100).toFixed(2)}% so với hôm qua` : 'Không bao gồm 10% thuế'}
                     trend={stats?.yesterdaySpend > 0 ? { value: Math.round(((stats.spendToday - stats.yesterdaySpend) / stats.yesterdaySpend) * 100) } : undefined}
                     icon={<MessageSquare className="h-4 w-4" />}
                     className="bg-blue-500/5 border-blue-500/10"
                 />
                 <StatsCard
                     title="ADS/REVENUE"
-                    value={`${(stats?.roas * 100 || 0).toFixed(0)}%`}
+                    value={`${(stats?.roas * 100 || 0).toFixed(2)}%`}
                     subtitle={`ROAS ${stats?.roas || 0}`}
                     icon={<Target className="h-4 w-4" />}
                     className="bg-amber-500/5 border-amber-500/10"

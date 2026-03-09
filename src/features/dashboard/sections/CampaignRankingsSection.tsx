@@ -1,6 +1,8 @@
 
 import { useDashboard } from '../context/DashboardContext';
-import { TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { PerformanceList, PerformanceItem } from '@/components/shared/common';
+import { formatPercent } from '@/lib/format';
+import Icon from '@/components/shared/common/Icon';
 
 export function CampaignRankingsSection() {
     const { campaigns } = useDashboard();
@@ -24,63 +26,60 @@ export function CampaignRankingsSection() {
 
     const goodCampaigns = campaignPerformance.filter(c => c.status === 'good').slice(0, 5);
     const badCampaigns = campaignPerformance.filter(c => c.status === 'bad').slice(0, 5);
+    const maxCtr = Math.max(...campaignPerformance.map(c => c.ctr), 1);
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900">Bảng xếp hạng</h2>
+            <h2 className="text-lg font-bold text-t-primary uppercase tracking-widest">Bảng xếp hạng</h2>
 
             {/* Top Performers */}
-            <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-emerald-500/10 rounded-lg">
-                        <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <h3 className="font-bold text-emerald-700">🚀 Chạy ngon</h3>
-                </div>
-
-                <div className="space-y-3">
-                    {goodCampaigns.length > 0 ? goodCampaigns.map(campaign => (
-                        <div key={campaign.id} className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-100/50">
-                            <p className="text-sm font-medium line-clamp-1">{campaign.name}</p>
-                            <div className="flex gap-3 mt-1.5 text-[10px] font-bold text-emerald-600 uppercase">
-                                <span>CTR: {campaign.ctr.toFixed(2)}%</span>
-                                <span>CVR: {campaign.cvr.toFixed(1)}%</span>
-                            </div>
-                        </div>
-                    )) : (
-                        <p className="text-xs text-muted-foreground italic p-2 text-center">Chưa có campaign đạt đỉnh</p>
-                    )}
-                </div>
-            </div>
+            <PerformanceList
+                title="Chạy ngon"
+                icon="arrow-up-right"
+            >
+                {goodCampaigns.length > 0 ? goodCampaigns.map((campaign, index) => (
+                    <PerformanceItem
+                        key={campaign.id}
+                        rank={index + 1}
+                        title={campaign.name}
+                        value={formatPercent(campaign.ctr)}
+                        progress={(campaign.ctr / maxCtr) * 100}
+                        secondaryStats={[
+                            { label: 'CTR', value: formatPercent(campaign.ctr) },
+                            { label: 'CVR', value: formatPercent(campaign.cvr) },
+                        ]}
+                    />
+                )) : (
+                    <p className="text-caption text-t-tertiary italic p-6 text-center">Chưa có campaign đạt đỉnh</p>
+                )}
+            </PerformanceList>
 
             {/* Need Optimization */}
-            <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="p-2 bg-amber-500/10 rounded-lg">
-                        <TrendingDown className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <h3 className="font-bold text-amber-700">⚠️ Cần tối ưu</h3>
-                </div>
-
-                <div className="space-y-3">
-                    {badCampaigns.length > 0 ? badCampaigns.map(campaign => (
-                        <div key={campaign.id} className="p-3 bg-amber-500/5 rounded-xl border border-amber-100/50">
-                            <p className="text-sm font-medium line-clamp-1">{campaign.name}</p>
-                            <div className="flex gap-3 mt-1.5 text-[10px] font-bold text-amber-600 uppercase">
-                                <span>CTR: {campaign.ctr.toFixed(2)}%</span>
-                                <span>CVR: {campaign.cvr.toFixed(1)}%</span>
-                            </div>
-                        </div>
-                    )) : (
-                        <p className="text-xs text-muted-foreground italic p-2 text-center">Tất cả đều ổn định</p>
-                    )}
-                </div>
-            </div>
+            <PerformanceList
+                title="Cần tối ưu"
+                icon="info"
+            >
+                {badCampaigns.length > 0 ? badCampaigns.map((campaign, index) => (
+                    <PerformanceItem
+                        key={campaign.id}
+                        rank={index + 1}
+                        title={campaign.name}
+                        value={formatPercent(campaign.ctr)}
+                        progress={(campaign.ctr / maxCtr) * 100}
+                        secondaryStats={[
+                            { label: 'CTR', value: formatPercent(campaign.ctr) },
+                            { label: 'CVR', value: formatPercent(campaign.cvr) },
+                        ]}
+                    />
+                )) : (
+                    <p className="text-caption text-t-tertiary italic p-6 text-center">Tất cả đều ổn định</p>
+                )}
+            </PerformanceList>
 
             {/* Benchmark Info */}
-            <div className="flex items-start gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <Info className="w-4 h-4 text-slate-400 mt-0.5" />
-                <p className="text-[10px] text-slate-500 leading-tight">
+            <div className="flex items-start gap-3 p-4 card">
+                <Icon name="info" className="size-4 fill-t-tertiary mt-0.5 shrink-0" />
+                <p className="text-caption text-t-tertiary leading-relaxed">
                     * Đánh giá dựa trên trung bình ngành giáo dục: CTR {'>'} 2.3% và CVR {'>'} 10%.
                 </p>
             </div>

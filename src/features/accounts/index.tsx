@@ -11,10 +11,10 @@ import { toast } from 'sonner';
 import { Plus, RefreshCw, Trash2, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { FloatingCard } from '@/components/custom/FloatingCard';
-import { LoadingPage } from '@/components/custom/LoadingState';
-import { EmptyState } from '@/components/custom/EmptyState';
+import { PageHeader } from '@/components/shared/common/PageHeader';
+import { FloatingCard } from '@/components/shared/common/FloatingCard';
+import { LoadingPage } from '@/components/shared/common/LoadingState';
+import { EmptyState } from '@/components/shared/common/EmptyState';
 
 // Supported platforms configuration
 const PLATFORMS = [

@@ -14,7 +14,7 @@ import {
     FloatingCardHeader,
     FloatingCardTitle,
     FloatingCardContent,
-} from '@/components/custom';
+} from '@/components/shared/common';
 import { Send, RefreshCw, Plus, Users, Loader2, MessageCircle } from 'lucide-react';
 
 export function TelegramSettingsSection() {

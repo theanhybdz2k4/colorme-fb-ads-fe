@@ -23,18 +23,18 @@ export const PremiumSearch = React.forwardRef<HTMLInputElement, PremiumSearchPro
                 )}
             >
                 {/* Background & Glow */}
-                <div 
+                <div
                     className={cn(
-                        "absolute inset-0 rounded-xl transition-all duration-500 blur-md opacity-0",
+                        "absolute inset-0 rounded-full transition-all duration-500 blur-md opacity-0",
                         isFocused && "bg-primary/20 opacity-100"
-                    )} 
+                    )}
                 />
-                
+
                 <div className={cn(
-                    "relative flex items-center w-full rounded-xl border transition-all duration-300",
+                    "relative flex items-center w-full rounded-full border transition-all duration-300",
                     "bg-muted/20 backdrop-blur-md",
-                    isFocused 
-                        ? "border-primary shadow-[0_0_15px_rgba(59,130,246,0.3)] bg-muted/40" 
+                    isFocused
+                        ? "border-primary shadow-[0_0_15px_rgba(59,130,246,0.3)] bg-muted/40"
                         : "border-border/40 hover:border-border/80 group-hover:bg-muted/30"
                 )}>
                     {/* Icon */}
@@ -74,14 +74,14 @@ export const PremiumSearch = React.forwardRef<HTMLInputElement, PremiumSearchPro
                         {hasValue && onClear && (
                             <button
                                 onClick={onClear}
-                                className="p-1 rounded-md hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                                className="p-1 rounded-full hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground transition-all active:scale-95"
                                 type="button"
                                 aria-label="Clear search"
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         )}
-                        
+
                         {!hasValue && showShortcut && (
                             <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded border border-border/50 bg-muted/50 text-[10px] font-medium text-muted-foreground/60 select-none">
                                 <Command className="h-2.5 w-2.5" />

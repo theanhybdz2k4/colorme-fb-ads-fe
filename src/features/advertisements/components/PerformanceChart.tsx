@@ -27,23 +27,23 @@ type TimeRange = '3d' | '7d' | '30d' | 'today' | 'yesterday';
 const formatCurrency = (value: number | undefined) => {
   if (value === undefined) return '';
   if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+    return `${(value / 1000000).toFixed(2)}M`;
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(0)}K`;
+    return `${(value / 1000).toFixed(2)}K`;
   }
-  return value.toFixed(0);
+  return value.toFixed(2);
 };
 
 const formatNumber = (value: number | undefined) => {
   if (value === undefined) return '';
   if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+    return `${(value / 1000000).toFixed(2)}M`;
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
+    return `${(value / 1000).toFixed(2)}K`;
   }
-  return value.toFixed(0);
+  return value.toFixed(2);
 };
 
 const getDateForRange = (range: TimeRange): { isHourly: boolean; date?: string; days?: number } => {

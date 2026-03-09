@@ -24,55 +24,51 @@ export function StatsCard({
 }: StatsCardProps) {
     const getTrendIcon = () => {
         if (!trend) return null;
-        if (trend.value > 0) return <TrendingUp className="h-3 w-3" />;
-        if (trend.value < 0) return <TrendingDown className="h-3 w-3" />;
-        return <Minus className="h-3 w-3" />;
+        if (trend.value > 0) return <TrendingUp className="h-3 w-3 mr-1" />;
+        if (trend.value < 0) return <TrendingDown className="h-3 w-3 mr-1" />;
+        return <Minus className="h-3 w-3 mr-1" />;
     };
 
-    const getTrendColor = () => {
-        if (!trend) return "";
-        if (trend.value > 0) return "text-emerald-400";
-        if (trend.value < 0) return "text-red-400";
-        return "text-muted-foreground";
+    const getTrendColorClass = () => {
+        if (!trend) return "label-gray";
+        if (trend.value > 0) return "label-green";
+        if (trend.value < 0) return "label-red";
+        return "label-gray";
     };
 
     return (
         <div
             className={cn(
-                "relative rounded-lg bg-card border border-border/50",
-                "p-4 shadow-lg",
-                "transition-all duration-300 ease-out",
-                "hover:-translate-y-0.5 hover:shadow-xl",
-                "group",
+                "card relative group hover:scale-[1.02] active:scale-[0.98]",
                 className
             )}
         >
             {/* Icon - top right, subtle */}
             {icon && (
-                <div className="absolute top-3 right-3 p-2 rounded-md bg-muted/50 text-muted-foreground group-hover:text-foreground transition-colors">
+                <div className="absolute top-4 right-4 p-2 rounded-xl bg-b-surface1/50 text-t-tertiary group-hover:text-t-primary transition-all shadow-sm">
                     {icon}
                 </div>
             )}
 
             {/* Content */}
-            <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="space-y-2">
+                <p className="text-overline text-t-tertiary uppercase tracking-widest font-bold">
                     {title}
                 </p>
-                <p className="text-2xl font-semibold text-foreground tracking-tight">
+                <p className="text-h5 font-bold text-t-primary tracking-tight">
                     {value}
                 </p>
 
                 {/* Trend & Subtitle */}
                 <div className="flex items-center gap-2 pt-1">
                     {trend && (
-                        <span className={cn("flex items-center gap-1 text-xs font-medium", getTrendColor())}>
+                        <span className={cn("label py-0.5 h-5", getTrendColorClass())}>
                             {getTrendIcon()}
                             {trend.value > 0 ? "+" : ""}{trend.value}%
                         </span>
                     )}
                     {subtitle && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-caption text-t-tertiary">
                             {subtitle}
                         </span>
                     )}
@@ -81,6 +77,7 @@ export function StatsCard({
         </div>
     );
 }
+
 
 interface StatsGridProps {
     children: React.ReactNode;

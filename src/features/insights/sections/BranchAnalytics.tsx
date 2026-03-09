@@ -3,12 +3,12 @@ import { useState, useMemo } from 'react';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { branchesApi, insightsApi } from '@/api';
 import { usePlatform } from '@/contexts';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
-import { LoadingState } from '@/components/custom/LoadingState';
-import { EmptyState } from '@/components/custom/EmptyState';
+import { PageHeader } from '@/components/shared/common/PageHeader';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/shared/common/FloatingCard';
+import { LoadingState } from '@/components/shared/common/LoadingState';
+import { EmptyState } from '@/components/shared/common/EmptyState';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DateRangeFilter } from '@/components/custom';
+import { DateRangeFilter } from '@/components/shared/common';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ import {
 import { DeviceBreakdownChart } from '@/features/insights/components/DeviceBreakdownChart';
 import { AgeGenderBreakdownChart } from '@/features/insights/components/AgeGenderBreakdownChart';
 import { RegionBreakdownList } from '@/features/insights/components/RegionBreakdownList';
-import { PlatformIcon } from '@/components/custom/PlatformIcon';
+import { PlatformIcon } from '@/components/shared/common/PlatformIcon';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
 

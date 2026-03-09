@@ -10,6 +10,7 @@ export const insightsApi = {
     dateStart?: string;
     dateEnd?: string;
     platformCode?: string;
+    granularity?: 'DAILY' | 'HOURLY';
   }) =>
     apiClient.get('/insights', { params }),
 

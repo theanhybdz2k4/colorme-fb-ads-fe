@@ -2,7 +2,7 @@ import { useAdAnalytics } from '@/hooks/useAdDetail';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp } from 'lucide-react';
-import { LoadingPage, EmptyState } from '@/components/custom';
+import { LoadingPage, EmptyState } from '@/components/shared/common';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 

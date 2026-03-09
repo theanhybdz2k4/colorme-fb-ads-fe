@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal, LineChart, Calendar, Brain } from 'lucide-react';
 import { ROUTES } from '@/constants';
 import { HourlyInsightsDialog } from './HourlyInsightsDialog';
-import { LoadingPage, EmptyState, PlatformIcon } from '@/components/custom';
+import { LoadingPage, EmptyState, PlatformIcon } from '@/components/shared/common';
 import { supabase } from '@/lib/supabase';
 import { CheckCircle2, Clock } from 'lucide-react';
 import { format } from 'date-fns';

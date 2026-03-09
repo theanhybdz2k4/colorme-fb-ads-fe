@@ -35,8 +35,8 @@ const formatCurrency = (value: number) => {
 };
 
 const formatNumber = (value: number) => {
-    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-    if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+    if (value >= 1000000) return (value / 1000000).toFixed(2) + 'M';
+    if (value >= 1000) return (value / 1000).toFixed(2) + 'K';
     return new Intl.NumberFormat('vi-VN').format(value);
 };
 

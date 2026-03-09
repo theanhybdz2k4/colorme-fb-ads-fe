@@ -1,7 +1,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useLeads } from '../context/LeadContext';
-import { LoadingState } from '@/components/custom/LoadingState';
+import { LoadingState } from '@/components/shared/common/LoadingState';
 import { LeadStatsHeader } from '../components/LeadStatsHeader';
 import { LeadList } from '../components/LeadList';
 import { ChatWindow } from '../components/ChatWindow';

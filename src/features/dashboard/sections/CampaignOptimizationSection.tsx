@@ -113,12 +113,12 @@ export function CampaignOptimizationSection() {
     const ctrValue = stats.impressions ? (Number(stats.clicks) / Number(stats.impressions) * 100).toFixed(2) : '0';
 
     return (
-        <div className="relative group overflow-hidden rounded-3xl border border-border/50 bg-card shadow-float-lg transition-all duration-500 hover:shadow-primary/5">
+        <div className="card p-0 overflow-hidden relative group transition-all duration-500 hover:shadow-primary/5">
             {/* Animated Background Decor */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
 
-            <div className="p-8 relative z-10 flex flex-col h-full">
+            <div className="p-6 relative z-10 flex flex-col h-full">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <div className="relative">
@@ -153,7 +153,7 @@ export function CampaignOptimizationSection() {
                                         <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                                     </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-card border-border/50 rounded-2xl shadow-2xl overflow-hidden" align="start">
+                                <PopoverContent className="w-(--radix-popover-trigger-width) p-0 bg-card border-border/50 rounded-2xl shadow-2xl overflow-hidden" align="start">
                                     <div className="p-3 border-b border-border/30 bg-muted/20">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -19,7 +19,7 @@ import {
   EmptyState,
   StatsCard,
   StatsGrid,
-} from '@/components/custom';
+} from '@/components/shared/common';
 
 const formatCurrency = (value: number, currency = 'VND') => {
   return new Intl.NumberFormat('vi-VN', {

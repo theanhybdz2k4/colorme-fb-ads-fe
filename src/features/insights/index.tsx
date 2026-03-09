@@ -21,11 +21,11 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, BarChart3 } from 'lucide-react';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
-import { LoadingState } from '@/components/custom/LoadingState';
-import { EmptyState } from '@/components/custom/EmptyState';
-import { PlatformIcon } from '@/components/custom/PlatformIcon';
+import { PageHeader } from '@/components/shared/common/PageHeader';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/shared/common/FloatingCard';
+import { LoadingState } from '@/components/shared/common/LoadingState';
+import { EmptyState } from '@/components/shared/common/EmptyState';
+import { PlatformIcon } from '@/components/shared/common/PlatformIcon';
 import { getVietnamDateString, getVietnamYesterdayString } from '@/lib/utils';
 
 // Platform filter moved to global PlatformContext (header tabs)

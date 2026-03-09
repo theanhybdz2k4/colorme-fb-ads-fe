@@ -24,7 +24,7 @@ export function FloatingCard({
     return (
         <div
             className={cn(
-                "rounded-lg bg-card border border-border/50",
+                "rounded-4xl bg-card border border-border/50",
                 "shadow-lg",
                 "transition-all duration-300 ease-out",
                 hover && "hover:-translate-y-0.5 hover:shadow-xl hover:border-border/80",

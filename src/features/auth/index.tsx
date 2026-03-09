@@ -44,7 +44,7 @@ export function LoginPage() {
             Đăng nhập để quản lý tài khoản Facebook Ads
           </CardDescription>
         </CardHeader>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4 pb-6" onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

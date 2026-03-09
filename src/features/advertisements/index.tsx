@@ -10,7 +10,7 @@ import { BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-import { DateRangeFilter } from '@/components/custom/DateRangeFilter';
+import { DateRangeFilter } from '@/components/shared/common/DateRangeFilter';
 import {
   Select,
   SelectContent,
@@ -20,16 +20,16 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, FileText } from 'lucide-react';
-import { PageHeader } from '@/components/custom/PageHeader';
-import { FilterBar } from '@/components/custom/FilterBar';
-import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/custom/FloatingCard';
-import { LoadingPage } from '@/components/custom/LoadingState';
-import { EmptyState } from '@/components/custom/EmptyState';
-import { ViewToggle } from '@/components/custom/ViewToggle';
+import { PageHeader } from '@/components/shared/common/PageHeader';
+import { FilterBar } from '@/components/shared/common/FilterBar';
+import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/shared/common/FloatingCard';
+import { LoadingPage } from '@/components/shared/common/LoadingState';
+import { EmptyState } from '@/components/shared/common/EmptyState';
+import { ViewToggle } from '@/components/shared/common/ViewToggle';
 import { useViewPreference } from '@/hooks/useViewPreference';
-import { AdCard, AdCardGrid } from '@/components/custom/AdCard';
-import { AdTable, AdTableRow } from '@/components/custom/AdTableRow';
-import { PlatformIcon } from '@/components/custom/PlatformIcon';
+import { AdCard, AdCardGrid } from '@/components/shared/common/AdCard';
+import { AdTable, AdTableRow } from '@/components/shared/common/AdTableRow';
+import { PlatformIcon } from '@/components/shared/common/PlatformIcon';
 import { getVietnamDateString } from '@/lib/utils';
 
 // Platform filter moved to global PlatformContext (header tabs)
@@ -51,7 +51,7 @@ export function AdsPage() {
   });
   const [activePreset, setActivePreset] = useState<string | null>('today');
   const { activePlatform } = usePlatform();
-  
+
   const debouncedSearch = useDebounce(searchQuery, 600);
 
   // View toggle with localStorage persistence
@@ -91,7 +91,7 @@ export function AdsPage() {
       }
 
       const results = await Promise.all(accountIds.map(accountId => adsApi.syncAccount(accountId)));
-      
+
       let totalAdded = 0;
       let totalUpdated = 0;
       let totalCleanedUp = 0;
@@ -114,7 +114,7 @@ export function AdsPage() {
         if (totalCleanedUp > 0) msg += `, xoá ${totalCleanedUp} cũ`;
         toast.success(`${msg} cho ${accountIds.length} tài khoản`);
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['ads'] });
     } catch {
       toast.error('Lỗi sync');
@@ -180,7 +180,7 @@ export function AdsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleSyncAllActive} disabled={syncingAll}>
+        <Button onClick={handleSyncAllActive} disabled={syncingAll} size="lg">
           {syncingAll ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -189,12 +189,12 @@ export function AdsPage() {
           Sync Ads
         </Button>
       </PageHeader>
-      
+
       <FloatingCard>
-        <DateRangeFilter 
-          dateRange={dateRange} 
-          setDateRange={setDateRange} 
-          activePreset={activePreset} 
+        <DateRangeFilter
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          activePreset={activePreset}
           onPresetChange={setActivePreset}
         />
       </FloatingCard>

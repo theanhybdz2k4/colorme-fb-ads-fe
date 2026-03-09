@@ -1,6 +1,6 @@
 
 import { useLeads } from '../context/LeadContext';
-import { PageHeader } from '@/components/custom/PageHeader';
+import { PageHeader } from '@/components/shared/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, Loader2, Key, BarChart2, MessageSquare, Clock } from 'lucide-react';
@@ -13,7 +13,7 @@ import { cronSettingsApi } from '@/api/settings.api';
 import { toast } from 'sonner';
 import type { CrawlerCookieStatus } from '@/types/settings.types';
 import { format } from 'date-fns';
-import { DateRangeFilter } from '@/components/custom';
+import { DateRangeFilter } from '@/components/shared/common';
 
 interface LeadHeaderProps {
     onTabChange: (value: string) => void;

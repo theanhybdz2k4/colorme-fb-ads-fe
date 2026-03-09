@@ -51,7 +51,7 @@ export function FilterBar({
     return (
         <div
             className={cn(
-                "rounded-lg bg-card border border-border/50 p-4",
+                "rounded-4xl bg-card border border-border/50 p-4",
                 "shadow-lg",
                 className
             )}
@@ -133,7 +133,7 @@ export function FilterPanel({
     className,
 }: FilterPanelProps) {
     return (
-        <div className={cn("rounded-lg bg-card border border-border/50 overflow-hidden", className)}>
+        <div className={cn("rounded-4xl bg-card border border-border/50 overflow-hidden", className)}>
             {/* Header */}
             <button
                 onClick={onToggle}

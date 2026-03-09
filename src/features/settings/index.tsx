@@ -12,7 +12,7 @@ import {
     FloatingCardTitle,
     FloatingCardContent,
     LoadingState,
-} from '@/components/custom';
+} from '@/components/shared/common';
 import {
     Dialog,
     DialogContent,

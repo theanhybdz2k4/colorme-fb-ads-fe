@@ -18,7 +18,7 @@ import {
     FloatingCardHeader,
     FloatingCardTitle,
     FloatingCardContent,
-} from '@/components/custom';
+} from '@/components/shared/common';
 import {
     Dialog,
     DialogContent,

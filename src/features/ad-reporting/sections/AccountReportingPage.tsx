@@ -114,18 +114,18 @@ function AccountReportingPageInner() {
     const { campaignName, metrics, report, createdAt } = data || {};
 
     return (
-        <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+        <div className="space-y-6">
             {/* Nav */}
             <div className="flex items-center justify-between">
-                <Button variant="ghost" asChild className="px-0 hover:bg-transparent text-muted-foreground hover:text-foreground">
-                    <Link to={`${ROUTES.AI_REPORTS}?tab=${isBranchReport ? 'branches' : 'accounts'}`}><ArrowLeft className="w-4 h-4 mr-2" /> Trở về danh sách báo cáo</Link>
+                <Button variant="ghost" asChild className="px-0 hover:bg-transparent text-t-tertiary hover:text-t-primary">
+                    <Link to={`${ROUTES.AI_REPORTS}?tab=${isBranchReport ? 'branches' : 'accounts'}`} className="flex items-center"><ArrowLeft className="w-4 h-4 mr-2" /> Trở về danh sách báo cáo</Link>
                 </Button>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleDownloadWord}>
+                    <Button variant="outline" onClick={handleDownloadWord} className="rounded-xl border-s-subtle">
                         <Download className="w-4 h-4 mr-2" />
                         Tải Báo Cáo
                     </Button>
-                    <Button onClick={handleGenerateNew} variant="default">
+                    <Button onClick={handleGenerateNew} className="rounded-xl shadow-depth-toggle">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Tạo mới báo cáo
                     </Button>

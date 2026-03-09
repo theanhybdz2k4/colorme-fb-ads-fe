@@ -5,12 +5,16 @@ import { adAccountsApi, campaignsApi, analyticsApi } from '@/api';
 import { useInsights } from '@/hooks/useInsights';
 import { useAuth } from '@/features/auth';
 import { usePlatform } from '@/contexts';
+import type { DateRange } from 'react-day-picker';
+import { subDays, format, isSameDay } from 'date-fns';
 
 interface DashboardContextType {
     adAccounts: any[];
     campaigns: any[];
     insights: any[];
+    dailyInsights: any[];
     prevInsights: any[];
+    prevDailyInsights: any[];
     ageGenderBreakdown: any[];
     isLoading: boolean;
     metrics: {
@@ -31,6 +35,9 @@ interface DashboardContextType {
     };
     user: any;
     activePlatform: string;
+    dateRange: DateRange | undefined;
+    setDateRange: (range: DateRange | undefined) => void;
+    granularity: 'DAILY' | 'HOURLY';
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -39,22 +46,69 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
     const { activePlatform } = usePlatform();
 
-    // Date ranges
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+    // Date range state
+    const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
+        from: subDays(new Date(), 29),
+        to: new Date(),
+    });
 
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(today.getDate() - 60);
+    // Detect granularity
+    const granularity = React.useMemo<'DAILY' | 'HOURLY'>(() => {
+        if (!dateRange?.from || !dateRange?.to) return 'DAILY';
+        return isSameDay(dateRange.from, dateRange.to) ? 'HOURLY' : 'DAILY';
+    }, [dateRange]);
 
-    const thirtyOneDaysAgo = new Date();
-    thirtyOneDaysAgo.setDate(today.getDate() - 31);
+    // Date ranges for queries
+    const dateStart = React.useMemo(() =>
+        dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : format(subDays(new Date(), 29), 'yyyy-MM-dd'),
+        [dateRange]);
 
-    const dateEnd = today.toISOString().split('T')[0];
-    const dateStart = thirtyDaysAgo.toISOString().split('T')[0];
+    const dateEnd = React.useMemo(() =>
+        dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        [dateRange]);
 
-    const prevDateEnd = thirtyOneDaysAgo.toISOString().split('T')[0];
-    const prevDateStart = sixtyDaysAgo.toISOString().split('T')[0];
+    // Previous period calculation (smart comparison)
+    const prevDateRange = React.useMemo(() => {
+        if (!dateRange?.from || !dateRange?.to) return null;
+
+        const duration = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        // Smart offset logic
+        let prevTo = subDays(dateRange.from, 1);
+        let prevFrom = subDays(prevTo, duration - 1);
+
+        // If it's "Today", comparison should be "Yesterday"
+        const isToday = (range: { from?: Date, to?: Date }) => {
+            const today = new Date();
+            return range.from && range.to &&
+                format(range.from, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') &&
+                format(range.to, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+        };
+
+        // If it's "Yesterday", comparison should be "Day Before Yesterday"
+        const isYesterday = (range: { from?: Date, to?: Date }) => {
+            const yesterday = subDays(new Date(), 1);
+            return range.from && range.to &&
+                format(range.from, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd') &&
+                format(range.to, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd');
+        };
+
+        if (isToday(dateRange)) {
+            prevTo = subDays(new Date(), 1);
+            prevFrom = prevTo;
+        } else if (isYesterday(dateRange)) {
+            prevTo = subDays(new Date(), 2);
+            prevFrom = prevTo;
+        }
+
+        return {
+            from: format(prevFrom, 'yyyy-MM-dd'),
+            to: format(prevTo, 'yyyy-MM-dd')
+        };
+    }, [dateRange]);
+
+    const prevDateStart = prevDateRange?.from || dateStart;
+    const prevDateEnd = prevDateRange?.to || dateEnd;
 
     // Data Fetching
     const { data: adAccounts = [], isLoading: loadingAccounts } = useQuery({
@@ -69,7 +123,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         },
     });
 
-    const { data: campaigns = [], isLoading: loadingCampaigns } = useQuery({
+    const { data: rawCampaigns = [], isLoading: loadingCampaigns } = useQuery({
         queryKey: ['campaigns', activePlatform],
         queryFn: async () => {
             const { data } = await campaignsApi.list();
@@ -81,10 +135,30 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         },
     });
 
+    const TAX_MULTIPLIER = 1.1;
+
+    const campaigns = useMemo(() => {
+        return rawCampaigns.map((c: any) => ({
+            ...c,
+            stats: c.stats ? {
+                ...c.stats,
+                spend: (Number(c.stats.spend) || 0) * TAX_MULTIPLIER
+            } : c.stats
+        }));
+    }, [rawCampaigns]);
+
     const { data: insights = [], isLoading: loadingInsights } = useInsights({
         dateStart,
         dateEnd,
-        platformCode: activePlatform
+        platformCode: activePlatform,
+        granularity
+    });
+
+    const { data: dailyInsights = [], isLoading: loadingDailyInsights } = useInsights({
+        dateStart,
+        dateEnd,
+        platformCode: activePlatform,
+        granularity: 'DAILY'
     });
 
     const { data: ageGenderBreakdown = [], isLoading: loadingBreakdown } = useQuery({
@@ -99,17 +173,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const { data: prevInsights = [], isLoading: loadingPrevInsights } = useInsights({
         dateStart: prevDateStart,
         dateEnd: prevDateEnd,
-        platformCode: activePlatform
+        platformCode: activePlatform,
+        granularity
     });
 
-    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingPrevInsights || loadingBreakdown;
+    const { data: prevDailyInsights = [], isLoading: loadingPrevDailyInsights } = useInsights({
+        dateStart: prevDateStart,
+        dateEnd: prevDateEnd,
+        platformCode: activePlatform,
+        granularity: 'DAILY'
+    });
 
-    // Derived Metrics
+    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingDailyInsights || loadingPrevInsights || loadingPrevDailyInsights || loadingBreakdown;
+
+    // Derived Metrics (Use Daily Insights for Aggregate Totals to ensure reliability)
     const metrics = useMemo(() => {
-        const safeInsights = Array.isArray(insights) ? insights : [];
+        const safeInsights = Array.isArray(dailyInsights) ? dailyInsights : [];
         const safeCampaigns = Array.isArray(campaigns) ? campaigns : [];
 
-        const totalSpend = safeInsights.reduce((sum, item) => sum + (Number(item.spend) || 0), 0);
+        // Apply tax markup consistently with Branch Analytics
+        const totalSpend = safeInsights.reduce((sum, item) => sum + (Number(item.spend) || 0), 0) * TAX_MULTIPLIER;
         const totalLeads = safeInsights.reduce((sum, item) => sum + (Number(item.results || item.messagingStarted) || 0), 0);
         const totalClicks = safeInsights.reduce((sum, item) => sum + (Number(item.clicks) || 0), 0);
         const totalImpressions = safeInsights.reduce((sum, item) => sum + (Number(item.impressions) || 0), 0);
@@ -131,9 +214,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
     // Trend Calculations
     const trends = useMemo(() => {
-        const safePrev = Array.isArray(prevInsights) ? prevInsights : [];
+        const safePrev = Array.isArray(prevDailyInsights) ? prevDailyInsights : [];
 
-        const prevSpend = safePrev.reduce((sum, item) => sum + (Number(item.spend) || 0), 0);
+        const prevSpend = safePrev.reduce((sum, item) => sum + (Number(item.spend) || 0), 0) * TAX_MULTIPLIER;
         const prevLeads = safePrev.reduce((sum, item) => sum + (Number(item.results || item.messagingStarted) || 0), 0);
         const prevClicks = safePrev.reduce((sum, item) => sum + (Number(item.clicks) || 0), 0);
         const prevImpressions = safePrev.reduce((sum, item) => sum + (Number(item.impressions) || 0), 0);
@@ -159,13 +242,18 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         adAccounts,
         campaigns,
         insights,
+        dailyInsights,
         prevInsights,
+        prevDailyInsights,
         ageGenderBreakdown,
         isLoading,
         metrics,
         trends,
         user,
-        activePlatform
+        activePlatform,
+        dateRange,
+        setDateRange,
+        granularity
     };
 
     return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

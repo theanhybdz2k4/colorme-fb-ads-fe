@@ -9,7 +9,7 @@ import {
     FloatingCardHeader,
     FloatingCardTitle,
     FloatingCardContent,
-} from '@/components/custom';
+} from '@/components/shared/common';
 import { Sparkles, Save, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export function AISettingsSection() {

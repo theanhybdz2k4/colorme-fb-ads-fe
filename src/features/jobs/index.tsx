@@ -8,7 +8,7 @@ import {
   FloatingCardHeader,
   FloatingCardTitle,
   FloatingCardContent,
-} from '@/components/custom';
+} from '@/components/shared/common';
 import { Button } from '@/components/ui/button';
 import { JobTable } from './components/JobTable';
 import { toast } from 'sonner';

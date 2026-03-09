@@ -16,7 +16,7 @@
     font-weight: 700;
     margin: 2rem 0 1rem;
     padding: 0.5rem 0 0.5rem 1rem;
-    border-left: 4px solid #6366f1;
+    border-left: 4px solid var(--primary-01);
     letter-spacing: -0.02em;
 }
 
@@ -30,7 +30,7 @@
     font-weight: 700;
     margin: 1.75rem 0 0.75rem;
     padding: 0.35rem 0 0.35rem 0.875rem;
-    border-left: 3px solid #8b5cf6;
+    border-left: 3px solid var(--primary-02);
     letter-spacing: -0.01em;
 }
 
@@ -39,7 +39,8 @@
     font-weight: 600;
     margin: 1.4rem 0 0.5rem;
     padding-left: 0.75rem;
-    border-left: 3px solid #a78bfa;
+    border-left: 3px solid var(--primary-02);
+    opacity: 0.8;
 }
 
 .report-content h4 {
@@ -66,7 +67,7 @@
 }
 
 .report-content thead {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, var(--primary-01) 0%, var(--primary-02) 100%);
 }
 
 .report-content thead th {
@@ -117,7 +118,7 @@
     content: '▸';
     position: absolute;
     left: -1rem;
-    color: #8b5cf6;
+    color: var(--primary-02);
     font-weight: 700;
 }
 
@@ -139,7 +140,7 @@
     content: counter(report-ol) '.';
     position: absolute;
     left: -1.35rem;
-    color: #6366f1;
+    color: var(--primary-01);
     font-weight: 700;
     font-size: 0.85rem;
 }
@@ -161,10 +162,11 @@
 
 /* ---- HR ---- */
 .report-content hr {
-    margin: 1.5rem 0;
+    margin: 2rem 0;
     border: none;
-    height: 2px;
-    background: linear-gradient(90deg, #6366f1 0%, #a78bfa 50%, transparent 100%);
+    height: 1px;
+    background: linear-gradient(90deg, var(--primary-01) 0%, var(--primary-02) 50%, transparent 100%);
+    opacity: 0.3;
 }
 
 /* ---- Code ---- */

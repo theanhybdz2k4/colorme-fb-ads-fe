@@ -22,7 +22,7 @@ import {
     Cell
 } from 'recharts';
 import { useAdAnalytics } from '@/hooks/useAdAnalytics';
-import { LoadingState, EmptyState, FloatingCard } from '@/components/custom';
+import { LoadingState, EmptyState, FloatingCard } from '@/components/shared/common';
 import {
     Smartphone,
     Monitor,
@@ -93,7 +93,7 @@ export function AdAnalyticsDetail({ adId, adName, dateStart, dateEnd, onClose }:
                         growthVal >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                     )}>
                         {growthVal >= 0 ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
-                        {Math.abs(growthVal).toFixed(1)}%
+                        {Math.abs(growthVal).toFixed(2)}%
                     </div>
                 )}
             </div>
@@ -229,7 +229,7 @@ export function AdAnalyticsDetail({ adId, adName, dateStart, dateEnd, onClose }:
                                                             paddingAngle={5}
                                                             dataKey="spend"
                                                             nameKey="device"
-                                                            label={({ device, percent }: any) => `${device} (${((percent || 0) * 100).toFixed(0)}%)`}
+                                                            label={({ device, percent }: any) => `${device} (${((percent || 0) * 100).toFixed(2)}%)`}
                                                         >
                                                             {data.deviceBreakdown.map((_entry: any, index: number) => (
                                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
