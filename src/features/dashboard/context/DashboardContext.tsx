@@ -210,7 +210,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             overallCTR,
             activeCampaignsCount
         };
-    }, [insights, campaigns]);
+    }, [dailyInsights, campaigns]);
 
     // Trend Calculations
     const trends = useMemo(() => {
@@ -236,7 +236,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             cpl: calculateTrend(metrics.overallCPL, prevCPL),
             ctr: calculateTrend(metrics.overallCTR, prevCTR),
         };
-    }, [metrics, prevInsights]);
+    }, [metrics, prevDailyInsights]);
 
     const value = {
         adAccounts,

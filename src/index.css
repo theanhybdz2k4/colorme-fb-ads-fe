@@ -6,14 +6,14 @@
 
 /* Global Scrollbar Hide Utility */
 .scrollbar-hide {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  -ms-overflow-style: none!important;
+  scrollbar-width: none!important;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none!important;
+  width: 0!important;
+  height: 0!important;
 }
 
 :root {
@@ -548,11 +548,11 @@
   }
 
   .action svg {
-    @apply size-4 ! fill-inherit;
+    @apply size-4! fill-inherit;
   }
 
   .react-tooltip {
-    @apply z-50 bg-b-dark1 ! opacity-100 ! px-2 ! py-0.5 ! rounded-[6px] ! text-caption ! text-t-light !;
+    @apply z-50 bg-b-dark1! opacity-100! px-2! py-0.5! rounded-[6px]! text-caption! text-t-light!;
   }
 
   .tiptap {
@@ -638,11 +638,11 @@
 
   .epr-header,
   .epr-emoji-category-label {
-    @apply hidden !;
+    @apply hidden!;
   }
 
   .epr-emoji-category-content {
-    @apply py-2.75 !;
+    @apply py-2.75!;
   }
 
   .epr-body {
