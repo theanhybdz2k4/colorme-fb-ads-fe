@@ -1,11 +1,12 @@
-
 import { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Loader2, BrainCircuit, CheckCircle2, AlertCircle, TrendingUp, Zap, Target, MousePointer2, Search, ChevronDown } from 'lucide-react';
+import { Sparkles, Loader2, BrainCircuit, CheckCircle2, AlertCircle, Zap, Search, ChevronDown } from 'lucide-react';
+import { marked } from 'marked';
+import { cn } from '@/lib/utils';
 import { analyticsApi } from '@/api';
 import { useDashboard } from '../context/DashboardContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatCurrency } from '@/lib/format';
+import Icon from '@/components/shared/common/Icon';
 
 export function CampaignOptimizationSection() {
     const { campaigns } = useDashboard();
@@ -38,12 +39,11 @@ export function CampaignOptimizationSection() {
                 return { ...c, ctr, results, statusClass };
             })
             .sort((a, b) => {
-                // Priority: Warning (🔴) > Stable (🟡) > Good (🟢)
                 const priority: Record<string, number> = { warning: 0, stable: 1, good: 2 };
                 if (priority[a.statusClass] !== priority[b.statusClass]) {
                     return priority[a.statusClass] - priority[b.statusClass];
                 }
-                return a.ctr - b.ctr; // Then sort by lowest CTR within same group
+                return a.ctr - b.ctr;
             });
     }, [campaigns]);
 
@@ -51,14 +51,12 @@ export function CampaignOptimizationSection() {
         c.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Get the "worst" performing active campaign as default
     useEffect(() => {
         if (processedCampaigns.length > 0 && !selectedCampaignId) {
             setSelectedCampaignId(processedCampaigns[0].id);
         }
     }, [processedCampaigns, selectedCampaignId]);
 
-    // Load existing analysis when selected campaign changes
     useEffect(() => {
         if (selectedCampaignId) {
             loadAnalysis(selectedCampaignId);
@@ -108,224 +106,212 @@ export function CampaignOptimizationSection() {
         }
     };
 
-    const campaign = campaigns.find(c => c.id === selectedCampaignId);
-    const stats = campaign?.stats || {};
-    const ctrValue = stats.impressions ? (Number(stats.clicks) / Number(stats.impressions) * 100).toFixed(2) : '0';
+    const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId);
+    const selectedStats = selectedCampaign?.stats || {};
+    const ctrValue = selectedStats.impressions ? (Number(selectedStats.clicks) / Number(selectedStats.impressions) * 100).toFixed(2) : '0';
 
     return (
-        <div className="card p-0 overflow-hidden relative group transition-all duration-500 hover:shadow-primary/5">
+        <div className="card p-0 overflow-hidden relative group transition-all duration-500 hover:shadow-depth border border-s-subtle/30">
             {/* Animated Background Decor */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-01/5 rounded-full blur-3xl -mr-32 -mt-32 animate-pulse" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-01/5 rounded-full blur-3xl -ml-24 -mb-24" />
 
-            <div className="p-6 relative z-10 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
+            <div className="p-8 relative z-1 flex flex-col h-full min-h-[600px]">
+                <div className="flex items-center justify-between mb-8 group/header">
+                    <div className="flex items-center gap-5">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-primary/20 blur-lg rounded-xl animate-pulse" />
-                            <div className="p-3 bg-linear-to-br from-primary to-primary/80 rounded-xl relative shadow-lg shadow-primary/20">
-                                <BrainCircuit className="w-6 h-6 text-white" />
+                            <div className="absolute inset-0 bg-primary-01/20 blur-xl rounded-2xl animate-pulse" />
+                            <div className="p-4 bg-linear-to-br from-primary-01 to-primary-02 rounded-2xl relative shadow-glow-primary border border-white/20">
+                                <BrainCircuit className="w-7 h-7 text-white animate-bounce-slow" />
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
-                                Phân tích Nội dung AI
-                                <span className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full uppercase font-black">Pro</span>
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 font-medium">Sức mạnh Gemini 2.0 Flash Phân tích Nội dung & Gợi ý</p>
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-h5 font-black text-t-primary tracking-tighter">AI CAMPAIGN ADVISOR</h3>
+                                <span className="text-[10px] px-2 py-0.5 bg-primary-01/10 text-primary-01 border border-primary-01/20 rounded-full uppercase font-black tracking-widest">Flash 2.0</span>
+                            </div>
+                            <p className="text-body-2 text-t-tertiary mt-1 font-bold">Phân tích nội dung & Gợi ý tối ưu tự động</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-6 flex-1">
-                    {/* Campaign Selector with Stats Preview */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+                    {/* Left: Campaign Selection & Mini Stats */}
+                    <div className="lg:col-span-4 space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Chiến dịch</label>
+                            <label className="text-[10px] font-black text-t-tertiary uppercase tracking-widest ml-1 opacity-50">Lựa chọn chiến dịch</label>
                             <Popover open={isOpen} onOpenChange={setIsOpen}>
                                 <PopoverTrigger asChild>
                                     <button
-                                        className="w-full flex items-center justify-between bg-secondary/50 border border-border/50 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all text-left"
+                                        className="w-full h-14 flex items-center justify-between bg-b-surface1/60 border border-s-subtle/50 rounded-2xl px-5 text-sm font-bold outline-none focus:ring-2 focus:ring-primary-01/20 focus:border-primary-01/50 transition-all text-left group/trigger"
                                     >
-                                        <span className="truncate mr-2 text-foreground">
-                                            {campaign ? campaign.name : 'Chọn chiến dịch...'}
+                                        <span className="truncate mr-2 text-t-primary group-hover/trigger:text-primary-01 transition-colors">
+                                            {selectedCampaign ? selectedCampaign.name : 'Chọn chiến dịch...'}
                                         </span>
-                                        <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                        <ChevronDown className={cn("h-4 w-4 shrink-0 opacity-50 transition-transform duration-300", isOpen && "rotate-180")} />
                                     </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-(--radix-popover-trigger-width) p-0 bg-card border-border/50 rounded-2xl shadow-2xl overflow-hidden" align="start">
-                                    <div className="p-3 border-b border-border/30 bg-muted/20">
+                                <PopoverContent className="w-(--radix-popover-trigger-width) p-2 bg-b-surface2 border-s-subtle rounded-3xl shadow-depth-menu overflow-hidden z-50">
+                                    <div className="p-2 border-b border-s-subtle/20 mb-2">
                                         <div className="relative">
-                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input
+                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-t-tertiary" />
+                                            <input
                                                 placeholder="Tìm tên chiến dịch..."
-                                                className="pl-9 h-9 bg-background/50 border-border/30 focus-visible:ring-primary/20"
+                                                className="w-full pl-9 pr-4 py-2 bg-b-surface1/50 border border-s-subtle/30 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary-01/20 outline-none"
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                             />
                                         </div>
                                     </div>
-                                    <ScrollArea className="h-[300px]">
-                                        <div className="p-2 space-y-1">
-                                            {filteredCampaigns.map((c) => (
-                                                <button
-                                                    key={c.id}
-                                                    onClick={() => {
-                                                        setSelectedCampaignId(c.id);
-                                                        setIsOpen(false);
-                                                        setSearchTerm('');
-                                                    }}
-                                                    className={`w-full text-left p-3 rounded-xl transition-all hover:bg-primary/5 flex flex-col gap-1 group/item ${selectedCampaignId === c.id ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'}`}
-                                                >
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="text-sm font-bold text-foreground truncate flex-1 group-hover/item:text-primary transition-colors">
-                                                            {c.name}
-                                                        </span>
-                                                        <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-background/50 border border-border/30">
-                                                            <span className={`w-2 h-2 rounded-full ${c.statusClass === 'good' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
-                                                                c.statusClass === 'warning' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
-                                                                    'bg-slate-400'
-                                                                }`} />
-                                                            <span className="text-[9px] font-black uppercase text-muted-foreground">
-                                                                {c.statusClass === 'good' ? 'Chạy ngon' :
-                                                                    c.statusClass === 'warning' ? 'Cần tối ưu' : 'Ổn định'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 text-[10px] font-bold">
-                                                        <span className={`flex items-center gap-1 ${c.statusClass === 'warning' ? 'text-amber-600' : 'text-muted-foreground/70'}`}>
-                                                            CTR: {c.ctr.toFixed(2)}%
-                                                            {c.statusClass === 'warning' && <AlertCircle className="w-3 h-3" />}
-                                                        </span>
-                                                        <span className="text-muted-foreground/70">•</span>
-                                                        <span className="text-muted-foreground/70 flex items-center gap-1">
-                                                            KẾT QUẢ: {c.results}
-                                                            <Target className="w-3 h-3 text-primary/50" />
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                            {filteredCampaigns.length === 0 && (
-                                                <div className="py-8 text-center text-muted-foreground">
-                                                    <p className="text-sm font-medium">Không tìm thấy chiến dịch nào</p>
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-1 space-y-1">
+                                        {filteredCampaigns.map((c) => (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => {
+                                                    setSelectedCampaignId(c.id);
+                                                    setIsOpen(false);
+                                                    setSearchTerm('');
+                                                }}
+                                                className={cn(
+                                                    "w-full text-left p-3 rounded-xl transition-all flex flex-col gap-1 group/item relative overflow-hidden",
+                                                    selectedCampaignId === c.id
+                                                        ? "bg-primary-01/10 border border-primary-01/20"
+                                                        : "hover:bg-b-surface1 border border-transparent"
+                                                )}
+                                            >
+                                                <div className="flex items-center justify-between gap-2 relative z-1">
+                                                    <span className={cn(
+                                                        "text-[13px] font-black truncate flex-1 transition-colors",
+                                                        selectedCampaignId === c.id ? "text-primary-01" : "text-t-primary"
+                                                    )}>
+                                                        {c.name}
+                                                    </span>
+                                                    <div className={cn(
+                                                        "size-2 rounded-full",
+                                                        c.statusClass === 'good' ? 'bg-accent-green shadow-glow-green' :
+                                                            c.statusClass === 'warning' ? 'bg-accent-red animate-pulse' : 'bg-accent-orange'
+                                                    )} />
                                                 </div>
-                                            )}
-                                        </div>
-                                    </ScrollArea>
+                                                <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-tighter text-t-tertiary/70 relative z-1">
+                                                    <span>CTR: {c.ctr.toFixed(2)}%</span>
+                                                    <span>•</span>
+                                                    <span>Spend: {formatCurrency(Number(c.stats?.spend || 0))}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </PopoverContent>
                             </Popover>
                         </div>
 
-                        <div className="flex gap-4 items-end">
-                            <div className="flex-1 bg-secondary/30 rounded-2xl p-3 border border-border/30">
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">CTR Hiện tại</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <TrendingUp className="w-4 h-4 text-emerald-500" />
-                                    <span className="text-lg font-black text-foreground">{ctrValue}%</span>
+                        {selectedCampaign && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-b-surface1/40 p-4 rounded-3xl border border-s-subtle/30 shadow-inner group/stat">
+                                    <p className="text-[10px] font-black text-t-tertiary uppercase tracking-widest opacity-50 mb-1 group-hover/stat:text-primary-01 transition-colors">CTR</p>
+                                    <p className="text-h6 font-black text-t-primary tracking-tight">{ctrValue}%</p>
                                 </div>
-                            </div>
-                            <div className="flex-1 bg-secondary/30 rounded-2xl p-3 border border-border/30">
-                                <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60">Kết quả</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Target className="w-4 h-4 text-primary" />
-                                    <span className="text-lg font-black text-foreground">{stats.results || 0}</span>
+                                <div className="bg-b-surface1/40 p-4 rounded-3xl border border-s-subtle/30 shadow-inner group/stat">
+                                    <p className="text-[10px] font-black text-t-tertiary uppercase tracking-widest opacity-50 mb-1 group-hover/stat:text-secondary-01 transition-colors">Results</p>
+                                    <p className="text-h6 font-black text-t-primary tracking-tight">{Number(selectedStats.results || 0).toLocaleString()}</p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Analysis Content Area */}
-                    <div className="min-h-[300px] flex flex-col">
-                        {isAnalyzing ? (
-                            <div className="flex-1 flex flex-col items-center justify-center bg-secondary/20 backdrop-blur-sm rounded-3xl border border-dashed border-primary/30 p-10 mt-2 animate-pulse">
-                                <div className="relative mb-6">
-                                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                                    <Loader2 className="w-12 h-12 text-primary animate-spin relative" />
-                                </div>
-                                <p className="text-lg font-bold text-foreground mb-2">Đang suy luận...</p>
-                                <p className="text-sm text-muted-foreground text-center max-w-[280px]">AI đang phân tích các chỉ số và hành vi người dùng để tìm cơ hội tối ưu.</p>
-                            </div>
-                        ) : error ? (
-                            <div className="p-6 bg-destructive/10 border border-destructive/20 rounded-3xl flex gap-4 mt-2">
-                                <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold text-destructive">Lỗi phân tích</p>
-                                    <p className="text-sm text-destructive/80 leading-relaxed mt-1">{error}</p>
-                                </div>
-                            </div>
-                        ) : analysis ? (
-                            <div className="flex-1 mt-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div className="flex items-center justify-between mb-4 px-2">
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        <span>THÔNG TIN CHIẾN LƯỢC ĐÃ SẴN SÀNG</span>
-                                    </div>
-                                    <span className="text-[10px] text-muted-foreground font-medium">
-                                        Vừa cập nhật: {new Date(analysis.updated_at).toLocaleTimeString('vi-VN')}
-                                    </span>
-                                </div>
-                                <div className="bg-secondary/40 backdrop-blur-xs p-6 rounded-3xl border border-border/50 shadow-inner group-hover:border-primary/20 transition-colors">
-                                    <div
-                                        className="prose prose-sm prose-invert max-w-none 
-                                            prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:mb-4
-                                            prose-strong:text-primary prose-strong:font-black
-                                            prose-ul:list-none prose-ul:pl-0
-                                            prose-li:relative prose-li:pl-8 prose-li:mb-3 prose-li:before:content-[''] 
-                                            prose-li:before:absolute prose-li:before:left-0 prose-li:before:top-[12px] 
-                                            prose-li:before:w-5 prose-li:before:h-[1px] prose-li:before:bg-primary/50
-                                            text-sm scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent max-h-[400px] overflow-y-auto pr-2"
-                                        dangerouslySetInnerHTML={{ __html: formatMarkdown(analysis.analysis_text) }}
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center bg-secondary/10 rounded-3xl border border-dashed border-border/50 mt-2">
-                                <div className="p-5 bg-card border border-border/50 rounded-2xl shadow-float mb-6 transform group-hover:scale-110 transition-transform duration-500">
-                                    <Zap className="w-10 h-10 text-primary animate-pulse" />
-                                </div>
-                                <h4 className="text-lg font-bold text-foreground">Khai phá nội dung quảng cáo</h4>
-                                <p className="text-sm text-muted-foreground max-w-[260px] mx-auto mt-2 leading-relaxed">
-                                    Phân tích copy, tiêu đề của các mẫu quảng cáo và nhận đề xuất cải thiện để tăng CTR, giảm giá lead.
-                                </p>
                             </div>
                         )}
+
+                        <div className="pt-4 mt-auto">
+                            <button
+                                onClick={handleAnalyze}
+                                disabled={isAnalyzing || !selectedCampaignId}
+                                className={cn(
+                                    "w-full h-16 rounded-3xl relative overflow-hidden transition-all duration-500 active:scale-95 group/btn shadow-depth",
+                                    isAnalyzing || !selectedCampaignId ? "opacity-50 grayscale cursor-not-allowed" : "shadow-glow-primary"
+                                )}
+                            >
+                                <div className="absolute inset-0 bg-linear-to-r from-primary-01 via-primary-02 to-primary-01 bg-size-[200%_100%] animate-shimmer" />
+                                <div className="relative z-1 flex items-center justify-center gap-3 text-white font-black text-sm tracking-[0.2em]">
+                                    {isAnalyzing ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <span>ANALYZING...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-500" />
+                                            <span>RUN AI ANALYSIS</span>
+                                        </>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Right: AI Output Area */}
+                    <div className="lg:col-span-8 flex flex-col">
+                        <div className="flex-1 bg-b-surface1/60 rounded-[32px] border border-s-subtle/50 shadow-inner relative overflow-hidden flex flex-col">
+                            <div className="flex items-center justify-between px-8 h-14 border-b border-s-subtle/20 bg-white/5 backdrop-blur-md shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-2 rounded-full bg-accent-green animate-pulse" />
+                                    <span className="text-[11px] font-black text-t-secondary uppercase tracking-widest">AI Deduction Layer</span>
+                                </div>
+                                {analysis && (
+                                    <span className="text-[10px] font-bold text-t-tertiary opacity-50">
+                                        Last scan: {new Date(analysis.updated_at).toLocaleTimeString('vi-VN')}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                                {isAnalyzing ? (
+                                    <div className="h-full flex flex-col items-center justify-center space-y-6">
+                                        <div className="relative">
+                                            <div className="absolute inset-0 bg-primary-01/10 blur-3xl animate-pulse" />
+                                            <div className="size-20 rounded-full border-4 border-t-primary-01 border-r-transparent border-l-transparent border-b-transparent animate-spin flex items-center justify-center">
+                                                <Icon name="ai" className="size-8 fill-primary-01 animate-glow" />
+                                            </div>
+                                        </div>
+                                        <div className="text-center">
+                                            <h4 className="text-h6 font-black text-t-primary tracking-tight">AI đang xử lý dữ liệu...</h4>
+                                            <p className="text-body-2 text-t-tertiary mt-2 font-bold uppercase tracking-widest opacity-60">Triệt xuất Insight từ Gemini 2.0</p>
+                                        </div>
+                                    </div>
+                                ) : error ? (
+                                    <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-accent-red/5 rounded-3xl m-4 border border-accent-red/20 shadow-inner">
+                                        <AlertCircle className="size-12 text-accent-red mb-4 animate-bounce" />
+                                        <h4 className="text-body-1 font-black text-accent-red uppercase">System Alert</h4>
+                                        <p className="text-body-2 text-t-tertiary mt-2 max-w-sm font-bold uppercase tracking-tight">{error}</p>
+                                    </div>
+                                ) : analysis ? (
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <div className="bg-white/5 rounded-3xl p-8 border border-white/10 shadow-float">
+                                            <div
+                                                className="rich-text"
+                                                dangerouslySetInnerHTML={{ __html: marked.parse(analysis.analysis_text) }}
+                                            />
+                                            <div className="flex items-center gap-2 mt-8 py-3 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                                                <CheckCircle2 className="size-4 text-emerald-500" />
+                                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">KẾT QUẢ ĐÃ ĐƯỢC XÁC THỰC BỞI GEMINI AGENT</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                                        <div className="size-24 rounded-4xl bg-b-depth2/20 border border-s-subtle flex items-center justify-center mb-8 transform hover:scale-110 transition-transform duration-700 shadow-depth">
+                                            <Zap className="size-10 fill-t-tertiary text-t-tertiary" />
+                                        </div>
+                                        <h4 className="text-h6 font-black text-t-primary tracking-tight">KÍCH HOẠT HỆ THỐNG AI</h4>
+                                        <p className="text-body-1 text-t-tertiary mt-3 max-w-[280px] font-bold uppercase tracking-tighter leading-relaxed">
+                                            Phân tích nội dung quảng cáo và hành vi người dùng bằng thuật toán Gemini thế hệ mới.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                {/* Cyberpunk Action Button */}
-                <div className="mt-8 pt-6 border-t border-border/30">
-                    <button
-                        onClick={handleAnalyze}
-                        disabled={isAnalyzing || !selectedCampaignId}
-                        className="group/btn relative w-full h-14 overflow-hidden rounded-2xl bg-slate-900 border border-border/30 hover:border-primary/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <div className="absolute inset-0 bg-linear-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                        <div className="relative flex items-center justify-center gap-3 font-black text-sm text-white tracking-widest uppercase">
-                            {isAnalyzing ? (
-                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-primary group-hover/btn:rotate-12 transition-transform" />
-                                    <span>{analysis ? 'Làm mới phân tích' : 'Phân tích nội dung và hiệu suất'}</span>
-                                    <MousePointer2 className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 -translate-x-2 group-hover/btn:translate-x-0 transition-all" />
-                                </div>
-                            )}
-                        </div>
-                    </button>
-                    <p className="text-[9px] text-center text-muted-foreground mt-3 font-bold uppercase tracking-tighter opacity-40">Powered by Google Gemini Language Models</p>
-                </div>
             </div>
+
+            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black text-t-tertiary/20 tracking-[0.3em] uppercase transition-opacity group-hover:opacity-10 pointer-events-none">
+                Google DeepMind Gemini 2.0 Engine
+            </p>
         </div>
     );
-}
-
-// Advanced markdown formatter helper for premium UI
-function formatMarkdown(text: string) {
-    if (!text) return '';
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/^\d\.(.*$)/gim, '<div class="flex items-start gap-3 mt-6 mb-2"><span class="flex-none w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-[10px] font-black border border-primary/20">$0.</span><span class="font-black text-base text-foreground">$1</span></div>')
-        .replace(/^\* (.*$)/gim, '<li>$1</li>')
-        .replace(/^(?!<li>)(?!<div)(.*$)/gim, '<p>$1</p>')
-        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
 }

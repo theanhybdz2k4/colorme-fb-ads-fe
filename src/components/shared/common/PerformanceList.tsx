@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import Icon from "./Icon";
 import { TrendIndicator } from "./TrendIndicator";
+import { StatusBadge, type StatusType } from "./StatusBadge";
 
 interface PerformanceItemProps {
     rank?: number;
@@ -12,7 +13,7 @@ interface PerformanceItemProps {
     trend?: number;
     icon?: string;
     secondaryStats?: { label: string; value: string | number }[];
-    status?: 'success' | 'warning' | 'danger' | 'neutral';
+    status?: StatusType | string;
     className?: string;
 }
 
@@ -27,69 +28,54 @@ export function PerformanceItem({
     status = 'neutral',
     className,
 }: PerformanceItemProps) {
-    const getStatusIconStyles = () => {
-        switch (status) {
-            case 'success': return 'bg-accent-green/10 [&>svg]:fill-accent-green';
-            case 'warning': return 'bg-accent-orange/10 [&>svg]:fill-accent-orange';
-            case 'danger': return 'bg-accent-red/10 [&>svg]:fill-accent-red';
-            default: return 'bg-b-depth2 [&>svg]:fill-primary-01';
-        }
-    };
-
-    const getStatusTitleStyles = () => {
-        switch (status) {
-            case 'success': return 'group-hover:text-accent-green';
-            case 'warning': return 'group-hover:text-accent-orange';
-            case 'danger': return 'group-hover:text-accent-red';
-            default: return 'group-hover:text-primary-01';
-        }
-    };
-
     return (
-        <div className={cn("group relative flex items-center py-4 px-3 -mx-3 rounded-2xl cursor-pointer transition-all duration-300", className)}>
-            <div className="box-hover"></div>
+        <div className={cn("group relative flex items-center py-4 px-4 -mx-4 rounded-3xl cursor-pointer transition-all duration-500 hover:z-10", className)}>
+            <div className="box-hover shadow-depth-menu opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
             {rank !== undefined && (
-                <div className={cn("relative z-2 w-10 shrink-0 text-button font-bold text-t-primary/40 transition-colors", getStatusTitleStyles())}>
+                <div className="relative z-2 w-8 shrink-0 text-button font-black text-t-primary/20 group-hover:text-primary-01/40 transition-colors duration-500">
                     {rank.toString().padStart(2, '0')}
                 </div>
             )}
 
             {icon && (
-                <div className={cn("relative z-2 size-10 rounded-xl flex items-center justify-center mr-4 shrink-0 shadow-sm transition-transform group-hover:scale-105", getStatusIconStyles())}>
-                    <Icon name={icon} className="size-5" />
+                <div className="relative z-2 size-11 rounded-2xl flex items-center justify-center mr-4 shrink-0 bg-b-surface1 shadow-sm border border-s-subtle group-hover:border-primary-01/20 group-hover:scale-110 transition-all duration-500">
+                    <Icon name={icon} className="size-5.5 fill-t-primary group-hover:fill-primary-01 transition-colors duration-500" />
                 </div>
             )}
 
             <div className="relative z-2 flex-1 min-w-0 mr-4">
-                <h4 className={cn("text-body-2 font-bold text-t-primary truncate leading-tight transition-colors", getStatusTitleStyles())}>
+                <h4 className="text-body-2 font-bold text-t-primary truncate leading-tight group-hover:text-primary-01 transition-colors duration-500">
                     {title}
                 </h4>
                 {(subtitle || (secondaryStats && secondaryStats.length > 0)) && (
-                    <div className="flex items-center gap-2 mt-1">
-                        {subtitle && <p className="text-caption text-t-tertiary truncate font-medium">{subtitle}</p>}
-                        {subtitle && secondaryStats && secondaryStats.length > 0 && <span className="text-t-tertiary/30">|</span>}
+                    <div className="flex items-center gap-2 mt-1.5">
+                        {subtitle && <p className="text-[11px] text-t-tertiary truncate font-bold uppercase tracking-wider opacity-70">{subtitle}</p>}
+                        {subtitle && secondaryStats && secondaryStats.length > 0 && <span className="text-t-tertiary/20">|</span>}
                         {secondaryStats?.map((stat, i) => (
-                            <span key={stat.label} className="text-[10px] text-t-tertiary font-bold uppercase tracking-tighter">
-                                {stat.label}: {stat.value}
-                                {i < secondaryStats.length - 1 && <span className="mx-1 opacity-30">/</span>}
+                            <span key={stat.label} className="text-[10px] text-t-tertiary font-black uppercase tracking-tighter opacity-60">
+                                {stat.label}: <span className="text-t-secondary">{stat.value}</span>
+                                {i < secondaryStats.length - 1 && <span className="mx-1 opacity-20">/</span>}
                             </span>
                         ))}
                     </div>
                 )}
             </div>
 
-            <div className="relative z-2 text-right shrink-0">
-                <div className="flex flex-col items-end">
-                    <span className="text-body-2 font-bold text-t-primary whitespace-nowrap">
+            <div className="relative z-2 flex items-center gap-4 shrink-0">
+                <div className="text-right">
+                    <div className="text-body-1 font-black text-t-primary whitespace-nowrap tracking-tight">
                         {value}
-                    </span>
+                    </div>
                     {trend !== undefined && (
                         <div className="mt-0.5">
                             <TrendIndicator value={trend} size="sm" />
                         </div>
                     )}
                 </div>
+                {status && (
+                    <StatusBadge status={status} dot={false} className="h-6 px-3 text-[10px] font-black" />
+                )}
             </div>
         </div>
     );

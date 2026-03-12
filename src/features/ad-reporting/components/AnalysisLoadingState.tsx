@@ -4,21 +4,45 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ROUTES } from '@/constants';
 
-const ANALYSIS_SECTIONS = [
-    { id: 'executive', title: 'Executive Verdict' },
-    { id: 'diagnosis', title: 'Performance Diagnosis' },
-    { id: 'winners', title: 'Winners & Budget Killers' },
-    { id: 'creative', title: 'Creative & Strategic Reform' },
-    { id: 'action_plan', title: '72-Hour Action Plan' },
-    { id: 'risk_summary', title: 'Strategic Risk & CEO Summary' },
+// ── Section definitions matching Edge Function v3 ──────────────
+const CAMPAIGN_SECTIONS = [
+    { id: 'verdict', title: 'Kết luận điều hành' },
+    { id: 'ads_audit', title: 'Kiểm toán mẫu quảng cáo' },
+    { id: 'funnel', title: 'Chẩn đoán phễu chuyển đổi' },
+    { id: 'action_plan', title: 'Kế hoạch hành động 72h' },
+    { id: 'creative_reform', title: 'Đề xuất cải tiến sáng tạo' },
+    { id: 'risk_summary', title: 'Rủi ro & Tổng kết CEO' },
 ];
+
+const ACCOUNT_SECTIONS = [
+    { id: 'portfolio', title: 'Chiến lược danh mục' },
+    { id: 'quality', title: 'Kiểm toán chất lượng Lead' },
+    { id: 'scaling', title: 'Chiến lược scale ngân sách' },
+    { id: 'risk_summary', title: 'Rủi ro & Tổng kết CEO' },
+];
+
+const BRANCH_SECTIONS = [
+    { id: 'branch_health', title: 'Sức khỏe tổng thể cơ sở' },
+    { id: 'account_efficiency', title: 'Hiệu quả tài khoản/chiến dịch' },
+    { id: 'quality', title: 'Chất lượng Lead cơ sở' },
+    { id: 'risk_summary', title: 'Rủi ro & Tổng kết CEO' },
+];
+
+function getSections(reportType?: string) {
+    if (reportType === 'branch') return BRANCH_SECTIONS;
+    if (reportType === 'account') return ACCOUNT_SECTIONS;
+    return CAMPAIGN_SECTIONS;
+}
 
 interface AnalysisLoadingStateProps {
     status: string;
     completedSections: string[];
+    reportType?: string; // 'campaign' | 'account' | 'branch'
 }
 
-export function AnalysisLoadingState({ status, completedSections }: AnalysisLoadingStateProps) {
+export function AnalysisLoadingState({ status, completedSections, reportType }: AnalysisLoadingStateProps) {
+    const sections = getSections(reportType);
+
     return (
         <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
             <Button variant="ghost" asChild className="px-0 hover:bg-transparent text-muted-foreground hover:text-foreground">
@@ -36,7 +60,7 @@ export function AnalysisLoadingState({ status, completedSections }: AnalysisLoad
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-4">
-                    {ANALYSIS_SECTIONS.map((section) => {
+                    {sections.map((section) => {
                         const isDone = completedSections.includes(section.id);
                         return (
                             <div

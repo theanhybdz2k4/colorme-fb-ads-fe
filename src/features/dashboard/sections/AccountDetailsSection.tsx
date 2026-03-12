@@ -1,12 +1,19 @@
-
-import { EmptyState, MetricItem, StatusBadge, MetricGrid } from '@/components/shared/common';
+import { MetricItem, MetricGrid } from '@/components/shared/common';
 import { useDashboard } from '../context/DashboardContext';
 import { CampaignOptimizationSection } from './CampaignOptimizationSection';
-import { formatPercent } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
+import { PerformanceList, PerformanceItem } from '@/components/shared/common/PerformanceList';
 import Icon from '@/components/shared/common/Icon';
 
 export function AccountDetailsSection() {
     const { adAccounts, campaigns } = useDashboard();
+
+    // Sort campaigns by spend for the recent list
+    const sortedCampaigns = [...campaigns].sort((a, b) => {
+        const spendA = Number(a.stats?.spend || 0);
+        const spendB = Number(b.stats?.spend || 0);
+        return spendB - spendA;
+    });
 
     return (
         <div className="space-y-6">
@@ -30,74 +37,48 @@ export function AccountDetailsSection() {
             </MetricGrid>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="card m-0 p-0 overflow-hidden">
-                    <div className="flex items-center justify-between px-5 h-12">
-                        <div className="flex items-center gap-3">
-                            <Icon name="chart" className="size-5 fill-primary-01" />
-                            <span className="text-sub-title-1 font-bold text-t-primary">Chiến dịch gần đây</span>
-                        </div>
-                    </div>
+                {/* Recent Campaigns List */}
+                <div className="lg:col-span-1 h-full">
+                    {sortedCampaigns.length > 0 ? (
+                        <PerformanceList title="Chiến dịch gần đây" className="h-full">
+                            {sortedCampaigns.slice(0, 5).map((campaign, idx) => {
+                                const stats = campaign.stats || {};
+                                const spend = Number(stats.spend || 0);
+                                const results = Number(stats.results || 0);
+                                const impressions = Number(stats.impressions || 0);
+                                const clicks = Number(stats.clicks || 0);
+                                const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
 
-                    <div className="p-6 pt-2">
-                        {!campaigns.length ? (
-                            <EmptyState
-                                title="Chưa có dữ liệu chiến dịch"
-                                description="Các chiến dịch sẽ xuất hiện ở đây sau khi bạn kết nối tài khoản Facebook."
-                                className="py-12"
-                            />
-                        ) : (
-                            <div className="divide-y divide-s-subtle/20">
-                                {campaigns.slice(0, 5).map((campaign: any) => {
-                                    const stats = campaign.stats || {};
-                                    const impressions = Number(stats.impressions || 0);
-                                    const clicks = Number(stats.clicks || 0);
-                                    const results = Number(stats.results || 0);
+                                // Simple performance heuristic
+                                let status = 'average';
+                                if (ctr > 2.0) status = 'good';
+                                else if (ctr < 0.8 && impressions > 1000) status = 'bad';
 
-                                    const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-                                    const cvr = clicks > 0 ? (results / clicks) * 100 : 0;
-
-                                    let perfStatus: 'good' | 'average' | 'bad' = 'average';
-                                    if (ctr > 2.3 || cvr > 10) perfStatus = 'good';
-                                    else if (ctr < 1.2 && cvr < 5) perfStatus = 'bad';
-
-                                    const statusMap = {
-                                        good: 'success' as const,
-                                        average: 'pending' as const,
-                                        bad: 'warning' as const,
-                                    };
-                                    const labelMap = {
-                                        good: 'Tốt',
-                                        average: 'Ổn',
-                                        bad: 'Kém',
-                                    };
-
-                                    const isActive = campaign.effectiveStatus === 'ACTIVE' || campaign.status === 'ACTIVE';
-
-                                    return (
-                                        <div key={campaign.id} className="py-4 flex items-center justify-between group">
-                                            <div className="flex items-center gap-4 min-w-0">
-                                                <div className={cn(
-                                                    "size-2 rounded-full shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]",
-                                                    isActive ? 'bg-primary-02 animate-pulse' : 'bg-t-tertiary/30'
-                                                )} />
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-body-2 text-t-primary truncate group-hover:text-primary-01 transition-colors leading-tight">{campaign.name}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] text-t-tertiary uppercase tracking-widest font-bold">{campaign.platform?.name || 'FB'}</span>
-                                                        <span className="text-[10px] text-t-tertiary/30">•</span>
-                                                        <span className="text-[10px] font-bold text-t-secondary uppercase">CTR {formatPercent(ctr)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                <StatusBadge status={statusMap[perfStatus]} label={labelMap[perfStatus]} dot={false} className="h-6" />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                return (
+                                    <PerformanceItem
+                                        key={campaign.id}
+                                        rank={idx + 1}
+                                        title={campaign.name}
+                                        subtitle={campaign.objective}
+                                        value={formatCurrency(spend)}
+                                        status={status}
+                                        secondaryStats={[
+                                            { label: 'Kết quả', value: results.toLocaleString() },
+                                            { label: 'CTR', value: `${ctr.toFixed(2)}%` }
+                                        ]}
+                                    />
+                                );
+                            })}
+                        </PerformanceList>
+                    ) : (
+                        <div className="card h-full flex flex-col items-center justify-center p-8 text-center bg-b-depth2/10">
+                            <div className="size-16 rounded-full bg-b-depth2/50 flex items-center justify-center mb-4">
+                                <Icon name="chart-mixed" className="size-8 fill-t-tertiary" />
                             </div>
-                        )}
-                    </div>
+                            <h4 className="text-body-1 font-bold text-t-secondary">Chưa có dữ liệu</h4>
+                            <p className="text-body-2 text-t-tertiary mt-2">Dữ liệu chiến dịch sẽ xuất hiện tại đây</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* AI Optimization Insight Card */}
@@ -105,8 +86,4 @@ export function AccountDetailsSection() {
             </div>
         </div>
     );
-}
-
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ');
 }

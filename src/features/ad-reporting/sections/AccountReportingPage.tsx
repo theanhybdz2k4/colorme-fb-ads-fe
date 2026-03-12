@@ -85,7 +85,7 @@ function AccountReportingPageInner() {
 
     // Loading state (generating report)
     if (loading && (!data || !data.campaignName)) {
-        return <AnalysisLoadingState status={status} completedSections={completedSections} />;
+        return <AnalysisLoadingState status={status} completedSections={completedSections} reportType={reportType} />;
     }
 
     // Error state

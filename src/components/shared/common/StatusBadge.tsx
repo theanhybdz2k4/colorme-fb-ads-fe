@@ -10,14 +10,24 @@ interface StatusBadgeProps {
 }
 
 const statusMap: Record<string, { class: string; label: string }> = {
+    // Green states
     active: { class: "label-green", label: "Đang hoạt động" },
     success: { class: "label-green", label: "Thành công" },
     completed: { class: "label-green", label: "Hoàn tất" },
+    good: { class: "label-green", label: "Tốt" },
+
+    // Red states
     inactive: { class: "label-red", label: "Tạm dừng" },
     error: { class: "label-red", label: "Lỗi" },
     archived: { class: "label-red", label: "Đã lưu trữ" },
+    bad: { class: "label-red", label: "Kém" },
+
+    // Orange states
     pending: { class: "label-orange", label: "Chờ xử lý" },
-    warning: { class: "label-orange", label: "Cảnh báo" },
+    warning: { class: "label-orange", label: "Cần tối ưu" },
+    average: { class: "label-orange", label: "Ổn" },
+
+    // Purple states
     processing: { class: "label-purple", label: "Đang xử lý" },
 };
 

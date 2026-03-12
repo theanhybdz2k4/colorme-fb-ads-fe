@@ -217,6 +217,11 @@ export function ReportProvider({ children }: { children: ReactNode }) {
 
     // Load cached report from DB (no Gemini call)
     const loadCachedReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => {
+        if (!id || id === 'undefined') {
+            console.error("[Report] Invalid ID provided to loadCachedReport:", id);
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const { data: cached } = await supabase
@@ -279,6 +284,10 @@ export function ReportProvider({ children }: { children: ReactNode }) {
 
     // Generate new report via Edge Function (Gemini)
     const generateReport = useCallback(async (id: string, type: 'campaign' | 'account' | 'branch', dateStart?: string, dateEnd?: string) => {
+        if (!id || id === 'undefined') {
+            toast.error("ID không hợp lệ để tạo báo cáo");
+            return;
+        }
         try {
             setLoading(true);
             setError('');
@@ -309,12 +318,22 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                 breakdownMap[entityId].impressions += (Number(i.impressions) || 0);
             });
 
-            // Keep top 20 for AI analysis to avoid context window limit but ensure accuracy
-            const entityBreakdown = Object.entries(breakdownMap).map(([eid, e]: [string, any]) => ({
+            // Keep top 50 for AI analysis (Gemini supports large context) and add summary for the rest
+            const allEntities = Object.entries(breakdownMap).map(([eid, e]: [string, any]) => ({
                 id: eid, name: e.name, spend: e.spend, leads: e.leads,
                 cpl: e.leads > 0 ? e.spend / e.leads : e.spend,
                 ctr: e.impressions > 0 ? (e.clicks / e.impressions) * 100 : 0
-            })).sort((a, b) => b.leads - a.leads).slice(0, 20);
+            })).sort((a, b) => b.spend - a.spend);
+            
+            const entityBreakdown = allEntities.slice(0, 50);
+            
+            // Summary for remaining entities beyond top 50
+            const remainingEntities = allEntities.slice(50);
+            const remainingSummary = remainingEntities.length > 0 ? {
+                count: remainingEntities.length,
+                spend: remainingEntities.reduce((s, e) => s + e.spend, 0),
+                leads: remainingEntities.reduce((s, e) => s + e.leads, 0),
+            } : null;
 
             const avgCtr = impressions > 0 ? (clicks / impressions) * 100 : 0;
             const avgCpl = totalResults > 0 ? spend / totalResults : 0;
@@ -336,8 +355,13 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                 dateEnd: fetchedDateEnd
             });
 
-            // 3. GENERATE VIA EDGE FUNCTION
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ads-analytics-report/report/generate`, {
+            // For account/branch: use actual lead count from DB (totalLeadCount) instead of FB results
+            const actualLeads = type === 'campaign' ? totalResults : (totalLeadCount || totalResults);
+            const actualCpl = actualLeads > 0 ? spend / actualLeads : 0;
+
+            // 3. GENERATE VIA EDGE FUNCTION (force=true to bypass cache and always generate fresh)
+            const baseUrl = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+            const response = await fetch(`${baseUrl}/ai-reports/report/generate?force=true`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -348,10 +372,12 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                     referenceId: id,
                     campaignName,
                     metrics: {
-                        spend, impressions, clicks, totalResults,
-                        ctr: avgCtr, cpl: avgCpl, cpc: avgCpc,
+                        spend, impressions, clicks,
+                        totalResults: actualLeads,
+                        ctr: avgCtr, cpl: actualCpl, cpc: avgCpc,
                         entityBreakdown,
-                        leadQuality: { potentialCount, totalCount: totalLeadCount },
+                        remainingSummary,
+                        leadQuality: { potentialCount, totalCount: totalLeadCount || totalResults },
                         dateStart: fetchedDateStart,
                         dateEnd: fetchedDateEnd
                     }

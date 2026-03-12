@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { getVietnamDateString, getVietnamPastDateString } from '@/lib/utils';
 
 export function AIReportsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -25,8 +26,8 @@ export function AIReportsPage() {
     };
 
     // Mặc định lấy 7 ngày qua của campaigns
-    const dateStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const dateEnd = new Date().toISOString().split('T')[0];
+    const dateStart = getVietnamPastDateString(7);
+    const dateEnd = getVietnamDateString();
 
     const { data: accounts, isLoading: loadingAccounts } = useAdAccounts({ accountStatus: 'ACTIVE' });
     const { data: branches, isLoading: loadingBranches } = useQuery({
@@ -206,7 +207,7 @@ export function AIReportsPage() {
                                                     : "bg-primary-01 hover:bg-primary-01/90 text-white shadow-primary-01/20 hover:shadow-primary-01/40"
                                                     }`}
                                             >
-                                                <Link to={`${ROUTES.AD_ACCOUNT_REPORTING.replace(':id', acc.externalId)}?dateStart=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&dateEnd=${new Date().toISOString().split('T')[0]}`}>
+                                                <Link to={`${ROUTES.AD_ACCOUNT_REPORTING.replace(':id', acc.externalId)}?dateStart=${getVietnamPastDateString(30)}&dateEnd=${getVietnamDateString()}`}>
                                                     <Brain className="w-4 h-4 mr-2" />
                                                     {existingReports[`account:${acc.externalId}`] ? "Xem Báo Cáo Tài Khoản" : "Báo cáo Tài Khoản"}
                                                     <ArrowRight className="w-3 h-3 ml-2 opacity-50" />
@@ -262,7 +263,7 @@ export function AIReportsPage() {
                                                     : "bg-primary-01 hover:bg-primary-01/90 text-white shadow-primary-01/20 hover:shadow-primary-01/40"
                                                     }`}
                                             >
-                                                <Link to={`${ROUTES.ACCOUNT_REPORTING.replace(':id', branch.id.toString())}?dateStart=${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&dateEnd=${new Date().toISOString().split('T')[0]}`}>
+                                                <Link to={`${ROUTES.ACCOUNT_REPORTING.replace(':id', branch.id.toString())}?dateStart=${getVietnamPastDateString(30)}&dateEnd=${getVietnamDateString()}`}>
                                                     <Brain className="w-4 h-4 mr-2" />
                                                     {existingReports[`branch:${branch.id}`] ? "Xem Báo Cáo Chi Nhánh" : "Báo cáo Chi Nhánh"}
                                                     <ArrowRight className="w-3 h-3 ml-2 opacity-50" />

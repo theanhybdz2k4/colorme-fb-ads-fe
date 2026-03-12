@@ -297,7 +297,7 @@ function CampaignRow({
                     : "bg-primary-01 hover:bg-primary-01/90 text-white"
                     }`}
                 >
-                  <Link to={`${ROUTES.AD_REPORTING.replace(':id', campaign.id)}?dateStart=${dateStart}&dateEnd=${dateEnd}`}>
+                  <Link to={`${ROUTES.AD_REPORTING.replace(':id', campaign.id || campaign.externalId)}?dateStart=${dateStart}&dateEnd=${dateEnd}`}>
                     <Brain className="w-4 h-4 mr-1.5" />
                     {existingReport ? "Xem Báo Cáo AI" : "Phân Tích AI"}
                   </Link>
