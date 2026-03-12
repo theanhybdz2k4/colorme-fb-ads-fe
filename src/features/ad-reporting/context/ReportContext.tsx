@@ -365,7 +365,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
                 },
                 body: JSON.stringify({
                     type,
