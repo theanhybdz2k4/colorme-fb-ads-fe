@@ -3,7 +3,7 @@ import { useLeads } from '../context/LeadContext';
 import { PageHeader } from '@/components/shared/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Loader2, Key, BarChart2, MessageSquare, Clock } from 'lucide-react';
+import { Loader2, Key, BarChart2, MessageSquare, Clock } from 'lucide-react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -21,8 +21,6 @@ interface LeadHeaderProps {
 
 export function LeadHeader({ onTabChange }: LeadHeaderProps) {
     const {
-        syncLeads,
-        isSyncing,
         selectedPageId,
         setSelectedPageId,
         availablePages,
@@ -76,14 +74,6 @@ export function LeadHeader({ onTabChange }: LeadHeaderProps) {
 
                 <div className="flex gap-2 items-center justify-end">
                     <CookieManager />
-                    <Button
-                        onClick={syncLeads}
-                        disabled={isSyncing}
-                        className="rounded-xl h-10 font-bold gap-2 animate-shimmer min-w-[140px]"
-                    >
-                        {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                        <span className="whitespace-nowrap">Đồng bộ Leads</span>
-                    </Button>
                 </div>
             </div>
 

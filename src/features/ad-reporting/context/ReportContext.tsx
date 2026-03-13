@@ -224,13 +224,28 @@ export function ReportProvider({ children }: { children: ReactNode }) {
         }
         try {
             setLoading(true);
-            const { data: cached } = await supabase
+            let { data: cached } = await supabase
                 .from('ai_reports')
                 .select('*')
                 .eq('reference_id', id)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
+
+            // Fallback for branch reports saved as accounts
+            if (!cached && type === 'branch') {
+                const fallbackRes = await supabase
+                    .from('ai_reports')
+                    .select('*')
+                    .eq('type', 'account')
+                    .eq('reference_id', `branch_${id}`)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (fallbackRes.data) {
+                    cached = fallbackRes.data;
+                }
+            }
 
             if (cached) {
                 // Refresh KPI metrics to show live database counts (potential vs total)

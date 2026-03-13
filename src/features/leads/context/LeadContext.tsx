@@ -38,12 +38,6 @@ interface LeadContextType {
         totalPages: number;
     };
     setPage: (page: number) => void;
-    agents: any[];
-    agentsLoading: boolean;
-    assignAgent: (agent: { id: string; name: string }) => Promise<void>;
-    syncLeads: () => Promise<void>;
-    syncHistoricLeads: () => Promise<void>;
-    isSyncing: boolean;
     sendReply: (text: string) => Promise<void>;
     isSending: boolean;
     updateLead: (data: any) => void;
@@ -159,14 +153,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         enabled: !!selectedLeadId
     });
 
-    // 6. Agents
-    const { data: agents = [], isLoading: agentsLoading } = useQuery({
-        queryKey: ['agents'],
-        queryFn: async () => {
-            const res = await leadsApi.getAgents();
-            return res.result || [];
-        }
-    });
 
     // Throttled Realtime Subscription — max 1 invalidation per 3 seconds
     const lastInvalidateRef = useRef<number>(0);
@@ -196,9 +182,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const channel = supabase
             .channel('leads-realtime-global')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'lead_messages' }, () => {
-                throttledInvalidate([['messages'], ['leads']]);
-            })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
                 throttledInvalidate([['leads'], ['leads-stats']]);
             })
@@ -242,19 +225,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     }, [selectedLeadId]);
 
     // Mutations
-    const syncMutation = useMutation({
-        mutationFn: (options?: any) => leadsApi.syncLeadsFromFacebook(options),
-        onSuccess: (data) => {
-            if (data.success) {
-                toast.success(`Đã đồng bộ ${data.result.leadsSynced} khách hàng mới!`);
-                queryClient.invalidateQueries({ queryKey: ['leads'] });
-                queryClient.invalidateQueries({ queryKey: ['leads-stats'] });
-                queryClient.invalidateQueries({ queryKey: ['messages'] });
-            } else {
-                toast.error("Đồng bộ thất bại: " + data.error);
-            }
-        }
-    });
 
     const replyMutation = useMutation({
         mutationFn: (text: string) => leadsApi.reply(selectedLeadId!, text),
@@ -301,17 +271,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         }
     });
 
-    const assignAgentMutation = useMutation({
-        mutationFn: (agent: { id: string; name: string }) =>
-            leadsApi.updateLead(selectedLeadId!, {
-                assigned_agent_id: agent.id,
-                assigned_agent_name: agent.name
-            }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['leads'] });
-            toast.success("Phân công nhân viên thành công");
-        }
-    });
 
     const value = {
         leads,
@@ -335,12 +294,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         setActiveFilter,
         pagination,
         setPage,
-        agents,
-        agentsLoading,
-        assignAgent: async (agent: { id: string; name: string }) => { await assignAgentMutation.mutateAsync(agent); },
-        syncLeads: async () => { await syncMutation.mutateAsync({}); },
-        isSyncing: syncMutation.isPending,
-        syncHistoricLeads: async () => { await syncMutation.mutateAsync({ force_historic: true } as any); },
         sendReply: async (text: string) => { await replyMutation.mutateAsync(text); },
         isSending: replyMutation.isPending,
         updateLead: (data: any) => updateLeadMutation.mutate(data),

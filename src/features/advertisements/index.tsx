@@ -1,13 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAds, useDebounce } from '@/hooks';
-import { adsApi, adDetailApi } from '@/api';
-import { AD_STATUS_OPTIONS, getAdStatusVariant, type Ad } from '@/types/ads.types';
+import { AD_STATUS_OPTIONS, getAdStatusVariant } from '@/types/ads.types';
 import { usePlatform } from '@/contexts';
 import { useAdsets } from '@/hooks/useAdSets';
 import { BranchFilter } from '@/features/adAccounts';
-import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { DateRangeFilter } from '@/components/shared/common/DateRangeFilter';
@@ -18,8 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Loader2, RefreshCw, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { PageHeader } from '@/components/shared/common/PageHeader';
 import { FilterBar } from '@/components/shared/common/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/shared/common/FloatingCard';
@@ -30,7 +26,6 @@ import { useViewPreference } from '@/hooks/useViewPreference';
 import { AdCard, AdCardGrid } from '@/components/shared/common/AdCard';
 import { AdTable, AdTableRow } from '@/components/shared/common/AdTableRow';
 import { PlatformIcon } from '@/components/shared/common/PlatformIcon';
-import { getVietnamDateString } from '@/lib/utils';
 
 // Platform filter moved to global PlatformContext (header tabs)
 
@@ -38,11 +33,8 @@ export { AdDetailPage } from './sections/AdDetailPage';
 
 export function AdsPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [selectedAdset, setSelectedAdset] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
-  const [syncingAll, setSyncingAll] = useState(false);
-  const [syncingAd, setSyncingAd] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -76,67 +68,7 @@ export function AdsPage() {
     return (ad as any).account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(ad as any).account?.platform);
   });
 
-  const handleSyncAllActive = async () => {
-    setSyncingAll(true);
-    try {
-      if (!filteredData || filteredData.length === 0) {
-        toast.error('Không có ads nào để sync');
-        return;
-      }
 
-      const accountIds = Array.from(new Set(filteredData.map(a => a.accountId))).filter(Boolean) as number[];
-      if (accountIds.length === 0) {
-        toast.error('Không tìm thấy tài khoản để sync');
-        return;
-      }
-
-      const results = await Promise.all(accountIds.map(accountId => adsApi.syncAccount(accountId)));
-
-      let totalAdded = 0;
-      let totalUpdated = 0;
-      let totalCleanedUp = 0;
-
-      results.forEach(res => {
-        const data = res.data;
-        if (data?.ads) {
-          totalAdded += data.ads.added || 0;
-          totalUpdated += data.ads.updated || 0;
-        }
-        if (data?.creatives) {
-          totalCleanedUp += data.creatives.cleanedUp || 0;
-        }
-      });
-
-      if (totalAdded === 0 && totalUpdated === 0) {
-        toast.info(totalCleanedUp > 0 ? `Dữ liệu mới nhất. Đã dọn dẹp ${totalCleanedUp} creative.` : 'Tất cả quảng cáo đã là mới nhất');
-      } else {
-        let msg = `Đã sync: ${totalAdded} mới, ${totalUpdated} cập nhật`;
-        if (totalCleanedUp > 0) msg += `, xoá ${totalCleanedUp} cũ`;
-        toast.success(`${msg} cho ${accountIds.length} tài khoản`);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['ads'] });
-    } catch {
-      toast.error('Lỗi sync');
-    } finally {
-      setSyncingAll(false);
-    }
-  };
-
-  const handleSyncInsights = async (ad: Ad) => {
-    setSyncingAd(ad.id);
-    const today = getVietnamDateString();
-    try {
-      // Use targeted ad sync instead of account sync
-      await adDetailApi.syncInsights(ad.id, today, today, 'all');
-      toast.success('Đã cập nhật insights cho Ad');
-      queryClient.invalidateQueries({ queryKey: ['ad-analytics', ad.id] });
-    } catch {
-      toast.error('Lỗi sync Insights');
-    } finally {
-      setSyncingAd(null);
-    }
-  };
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -180,14 +112,6 @@ export function AdsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleSyncAllActive} disabled={syncingAll} size="lg">
-          {syncingAll ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Sync Ads
-        </Button>
       </PageHeader>
 
       <FloatingCard>
@@ -247,9 +171,7 @@ export function AdsPage() {
                   <AdCard
                     ad={ad}
                     statusVariant={getAdStatusVariant(ad.status)}
-                    onSyncInsights={() => handleSyncInsights(ad)}
                     onClick={() => navigate(`/ads/${ad.id}`)}
-                    isSyncing={syncingAd === ad.id}
                   />
                 </div>
               ))}
@@ -262,8 +184,6 @@ export function AdsPage() {
                   key={ad.id}
                   ad={ad}
                   statusVariant={getAdStatusVariant(ad.status)}
-                  onSyncInsights={() => handleSyncInsights(ad)}
-                  isSyncing={syncingAd === ad.id}
                 />
               ))}
             </AdTable>

@@ -49,7 +49,7 @@ function DashboardContent() {
         />
 
         {/* Dynamic Page Content */}
-        <main className="pt-22 pb-5 max-md:pt-18">
+        <main className="pt-18 pb-5 max-md:pt-18">
           <div className="center-with-sidebar animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Outlet />
           </div>

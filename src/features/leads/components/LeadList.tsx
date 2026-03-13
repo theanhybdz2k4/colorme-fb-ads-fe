@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, RefreshCw, Search, Target } from 'lucide-react';
+import { MessageSquare, Search, Target } from 'lucide-react';
 import { isValid } from 'date-fns';
 
 // Robust utility to format any timestamp (ISO, Space-delimited, etc) to Vietnam Time
@@ -54,8 +54,6 @@ export function LeadList() {
         setSearchQuery,
         activeFilter,
         setActiveFilter,
-        syncHistoricLeads,
-        isSyncing,
         pagination,
         setPage
     } = useLeads();
@@ -88,9 +86,6 @@ export function LeadList() {
                         <MessageSquare className="h-5 w-5 text-primary" />
                         Messenger
                     </h2>
-                    <Button variant="ghost" size="icon" onClick={syncHistoricLeads} disabled={isSyncing}>
-                        <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    </Button>
                 </div>
 
                 <div className="relative">
@@ -156,15 +151,6 @@ export function LeadList() {
                                             <AvatarFallback>{lead.customer_name?.charAt(0)}</AvatarFallback>
                                         </Avatar>
 
-                                        {/* Agent Indicator Badge */}
-                                        <div
-                                            className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-background flex items-center justify-center shadow-sm ${lead.assigned_agent_id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                                            title={lead.assigned_agent_name ? `Phụ trách bởi: ${lead.assigned_agent_name}` : 'Chưa phân công'}
-                                        >
-                                            <span className="text-[9px] font-bold">
-                                                {lead.assigned_agent_name?.charAt(0) || '?'}
-                                            </span>
-                                        </div>
                                     </div>
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                                         <div className="flex items-center gap-2 mb-0.5">
@@ -205,9 +191,9 @@ export function LeadList() {
                                             <p className="text-[10px] line-clamp-2 text-muted-foreground leading-relaxed">
                                                 {(() => {
                                                     const lines = lead.ai_analysis.split('\n');
-                                                    const summaryLine = lines.find((l: string) => l.trim().startsWith('Tóm tắt:'));
-                                                    if (summaryLine) return summaryLine.replace('Tóm tắt:', '').trim();
-                                                    return lines.filter((l: string) => l.trim() && !l.includes('Đánh giá:') && !l.includes('Tổng điểm:')).slice(0, 2).join(' • ');
+                                                    const summaryLine = lines.find((l: string) => l.trim().toLowerCase().includes('tóm tắt:'));
+                                                    if (summaryLine) return summaryLine.replace(/tóm tắt:/i, '').trim();
+                                                    return lines.filter((l: string) => l.trim() && !l.includes('Đánh giá:') && !l.includes('Tổng điểm:')).slice(0, 1).join('').substring(0, 80);
                                                 })()}
                                             </p>
                                         ) : (

@@ -43,13 +43,6 @@ export const branchesApi = {
         return response.data.result || [];
     },
 
-    /**
-     * Get region breakdown stats for a branch
-     */
-    async getRegionStats(id: number, dateStart: string, dateEnd: string, platformCode?: string) {
-        const response = await apiClient.get(`/branches/${id}/stats/region`, { params: { dateStart, dateEnd, platformCode } });
-        return response.data.result || response.data;
-    },
 
     /**
      * Get dashboard summary for all branches

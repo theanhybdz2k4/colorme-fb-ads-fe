@@ -79,7 +79,7 @@ export function LeadInsights() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col h-screen overflow-hidden bg-background">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col h-screen overflow-hidden bg-background rounded-2xl" >
       <LeadHeader onTabChange={handleTabChange} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

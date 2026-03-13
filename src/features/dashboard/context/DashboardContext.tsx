@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { adAccountsApi, campaignsApi, analyticsApi, adGroupsApi } from '@/api';
+import { adAccountsApi, campaignsApi, adGroupsApi } from '@/api';
 import { useInsights } from '@/hooks/useInsights';
 import { useAuth } from '@/features/auth';
 import { usePlatform } from '@/contexts';
@@ -16,7 +16,6 @@ interface DashboardContextType {
     prevInsights: any[];
     prevDailyInsights: any[];
     adGroups: any[];
-    ageGenderBreakdown: any[];
     isLoading: boolean;
     metrics: {
         totalSpend: number;
@@ -173,14 +172,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         granularity: 'DAILY'
     });
 
-    const { data: ageGenderBreakdown = [], isLoading: loadingBreakdown } = useQuery({
-        queryKey: ['ageGenderBreakdown', dateStart, dateEnd, activePlatform],
-        queryFn: () => analyticsApi.getAgeGenderBreakdown({
-            dateStart,
-            dateEnd,
-            branchId: activePlatform === 'all' ? undefined : activePlatform
-        }),
-    });
 
     const { data: prevInsights = [], isLoading: loadingPrevInsights } = useInsights({
         dateStart: prevDateStart,
@@ -196,7 +187,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         granularity: 'DAILY'
     });
 
-    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingDailyInsights || loadingPrevInsights || loadingPrevDailyInsights || loadingBreakdown || loadingAdGroups;
+    const isLoading = loadingAccounts || loadingCampaigns || loadingInsights || loadingDailyInsights || loadingPrevInsights || loadingPrevDailyInsights || loadingAdGroups;
 
     // Derived Metrics (Use Daily Insights for Aggregate Totals to ensure reliability)
     const metrics = useMemo(() => {
@@ -262,7 +253,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         prevInsights,
         prevDailyInsights,
         adGroups,
-        ageGenderBreakdown,
         isLoading,
         metrics,
         trends,

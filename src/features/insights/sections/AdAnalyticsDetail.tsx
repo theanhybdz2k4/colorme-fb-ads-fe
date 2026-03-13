@@ -27,7 +27,6 @@ import {
     Smartphone,
     Monitor,
     Layout,
-    Users,
     TrendingUp,
     TrendingDown,
     DollarSign,
@@ -157,7 +156,6 @@ export function AdAnalyticsDetail({ adId, adName, dateStart, dateEnd, onClose }:
                                     <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-6">Tổng quan</TabsTrigger>
                                     <TabsTrigger value="devices" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-6">Thiết bị</TabsTrigger>
                                     <TabsTrigger value="placements" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-6">Vị trí</TabsTrigger>
-                                    <TabsTrigger value="demographics" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all px-6">Nhân khẩu học</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="overview" className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
@@ -287,25 +285,6 @@ export function AdAnalyticsDetail({ adId, adName, dateStart, dateEnd, onClose }:
                                     </FloatingCard>
                                 </TabsContent>
 
-                                <TabsContent value="demographics" className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
-                                    <FloatingCard>
-                                        <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-6 flex items-center">
-                                            <Users size={16} className="mr-2 text-primary" />
-                                            Chi tiêu theo độ tuổi và giới tính
-                                        </h4>
-                                        <div className="h-[400px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={data.ageGenderBreakdown}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                                                    <XAxis dataKey="age" tick={{ fontSize: 12, fill: '#888888' }} />
-                                                    <YAxis tick={{ fontSize: 12, fill: '#888888' }} axisLine={false} />
-                                                    <Tooltip />
-                                                    <Bar dataKey="spend" name="Chi tiêu" fill="#ffc658" radius={[4, 4, 0, 0]} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </FloatingCard>
-                                </TabsContent>
                             </Tabs>
                         </>
                     )}

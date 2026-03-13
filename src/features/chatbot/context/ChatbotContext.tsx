@@ -106,7 +106,10 @@ export function ChatbotProvider({ children }: { children: React.ReactNode }) {
     // Test send
     const handleTest = async () => {
         try {
-            await testChatbot.mutateAsync({ psid: testPsid });
+            await testChatbot.mutateAsync({ 
+                psid: testPsid, 
+                pageId: config?.page_id || undefined 
+            });
             toast.success('Đã gửi test message!');
         } catch (e: any) { toast.error('Lỗi: ' + e.message); }
     };

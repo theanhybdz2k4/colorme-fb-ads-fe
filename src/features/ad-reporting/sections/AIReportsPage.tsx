@@ -55,7 +55,16 @@ export function AIReportsPage() {
 
                 const mapping: Record<string, { createdAt: string }> = {};
                 data?.forEach(report => {
-                    const key = `${report.type}:${report.reference_id}`;
+                    let type = report.type;
+                    let refId = report.reference_id;
+                    
+                    // Fallback mapping: if it's an account report but prefixed with branch_, it's a branch report
+                    if (type === 'account' && refId.startsWith('branch_')) {
+                        type = 'branch';
+                        refId = refId.replace('branch_', '');
+                    }
+
+                    const key = `${type}:${refId}`;
                     // Only keep the latest report for each entity
                     if (!mapping[key]) {
                         mapping[key] = { createdAt: report.created_at };

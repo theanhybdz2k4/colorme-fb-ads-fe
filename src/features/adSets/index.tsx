@@ -1,14 +1,10 @@
-export { useAdsets } from '@/hooks/useAdSets';
 import { useState, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAdsets } from '@/hooks/useAdSets';
-import { adsApi, campaignsApi } from '@/api';
-import { ADSET_STATUS_OPTIONS, getAdsetStatusVariant, type Adset } from '@/types/adSets.types';
+import { ADSET_STATUS_OPTIONS, getAdsetStatusVariant } from '@/types/adSets.types';
 import { usePlatform } from '@/contexts';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { BranchFilter } from '@/features/adAccounts';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,8 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
-import { Loader2, RefreshCw, FolderOpen } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { PageHeader } from '@/components/shared/common/PageHeader';
 import { FilterBar } from '@/components/shared/common/FilterBar';
 import { FloatingCard, FloatingCardHeader, FloatingCardTitle, FloatingCardContent } from '@/components/shared/common/FloatingCard';
@@ -29,11 +24,8 @@ import { PlatformIcon } from '@/components/shared/common/PlatformIcon';
 // Platform filter moved to global PlatformContext (header tabs)
 
 export function AdSetsPage() {
-  const queryClient = useQueryClient();
   const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
-  const [syncingAll, setSyncingAll] = useState(false);
-  const [syncingAdset, setSyncingAdset] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
   const { activePlatform } = usePlatform();
@@ -55,64 +47,6 @@ export function AdSetsPage() {
     return (adset as any).account?.platform?.code === activePlatform || (activePlatform === 'facebook' && !(adset as any).account?.platform);
   });
 
-  const handleSyncAllActive = async () => {
-    setSyncingAll(true);
-    try {
-      let accountIdsToSync: number[] = [];
-
-      if (selectedCampaign !== 'all') {
-        const campaign = campaigns?.find(c => c.id === selectedCampaign);
-        if (campaign) {
-          accountIdsToSync = [campaign.accountId];
-        }
-      } else {
-        if (!campaigns || campaigns.length === 0) {
-          toast.error('Không có campaign nào đang active');
-          return;
-        }
-        accountIdsToSync = Array.from(new Set(campaigns.map(c => c.accountId)));
-      }
-
-      await Promise.all(accountIdsToSync.map(accountId => campaignsApi.syncAccount(accountId)));
-
-      toast.success(`Đã hoàn thành sync Ad Sets cho các tài khoản liên quan`);
-      queryClient.invalidateQueries({ queryKey: ['adsets'] });
-    } catch {
-      toast.error('Lỗi sync');
-    } finally {
-      setSyncingAll(false);
-    }
-  };
-
-  const handleSyncAds = async (adset: Adset) => {
-    setSyncingAdset(adset.id);
-    try {
-      const response = await adsApi.syncAccount(adset.accountId);
-      const result = response.data;
-      
-      if (result?.ads) {
-        const { added, updated } = result.ads;
-        const cleanedUp = result.creatives?.cleanedUp || 0;
-        
-        let msg = `Đã sync: ${added} mới, ${updated} cập nhật`;
-        if (cleanedUp > 0) msg += `, đã xóa ${cleanedUp} creative cũ`;
-        
-        if (added === 0 && updated === 0) {
-          toast.info(cleanedUp > 0 ? `Dữ liệu mới nhất. Đã dọn dẹp ${cleanedUp} creative.` : 'Dữ liệu quảng cáo đã là mới nhất');
-        } else {
-          toast.success(msg);
-        }
-      } else {
-        toast.success('Đã hoàn thành sync Quảng cáo');
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['ads'] });
-    } catch {
-      toast.error('Lỗi sync Ads');
-    } finally {
-      setSyncingAdset(null);
-    }
-  };
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -154,14 +88,6 @@ export function AdSetsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleSyncAllActive} disabled={syncingAll}>
-          {syncingAll ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Sync Ad Sets
-        </Button>
       </PageHeader>
 
       {/* Filters */}
@@ -232,20 +158,7 @@ export function AdSetsPage() {
                         {new Date(adset.syncedAt).toLocaleString('vi-VN')}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSyncAds(adset)}
-                          disabled={syncingAdset === adset.id}
-                          className="bg-muted/30 border-border/50 hover:bg-muted/50"
-                        >
-                          {syncingAdset === adset.id ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                          )}
-                          Sync Ads
-                        </Button>
+                        -
                       </TableCell>
                     </TableRow>
                   ))}

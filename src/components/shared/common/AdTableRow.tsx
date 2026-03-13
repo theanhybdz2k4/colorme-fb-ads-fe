@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Loader2, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Image as ImageIcon, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AdTableRowProps {
@@ -21,8 +21,6 @@ interface AdTableRowProps {
         };
     };
     statusVariant: "default" | "secondary" | "destructive" | "outline";
-    onSyncInsights: () => void;
-    isSyncing: boolean;
     className?: string;
 }
 
@@ -43,8 +41,6 @@ const formatNumber = (value: number) => {
 export function AdTableRow({
     ad,
     statusVariant,
-    onSyncInsights,
-    isSyncing,
     className,
 }: AdTableRowProps) {
     const navigate = useNavigate();
@@ -128,22 +124,6 @@ export function AdTableRow({
                         variant="ghost"
                         onClick={(e) => {
                             e.stopPropagation();
-                            onSyncInsights();
-                        }}
-                        disabled={isSyncing}
-                        className="h-7 w-7"
-                    >
-                        {isSyncing ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                            <RefreshCw className="h-3.5 w-3.5" />
-                        )}
-                    </Button>
-                    <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                            e.stopPropagation();
                             navigate(`/ads/${ad.id}`);
                         }}
                         className="h-7 w-7"
@@ -175,7 +155,7 @@ export function AdTable({ children, className }: AdTableProps) {
                         <th className="py-3 px-3 text-right font-medium">Clicks</th>
                         <th className="py-3 px-3 text-right font-medium">Results</th>
                         <th className="py-3 px-3 text-right font-medium">CTR</th>
-                        <th className="py-3 px-3 text-center font-medium w-20"></th>
+                        <th className="py-3 px-3 text-center font-medium w-12"></th>
                     </tr>
                 </thead>
                 <tbody>

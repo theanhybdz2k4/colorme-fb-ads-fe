@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Loader2, Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 
 interface AdCardProps {
   ad: {
@@ -20,9 +20,7 @@ interface AdCardProps {
     };
   };
   statusVariant: "default" | "secondary" | "destructive" | "outline";
-  onSyncInsights: () => void;
   onClick?: () => void;
-  isSyncing: boolean;
   className?: string;
 }
 
@@ -41,9 +39,7 @@ const formatNumber = (value: number) => {
 export function AdCard({
   ad,
   statusVariant,
-  onSyncInsights,
   onClick,
-  isSyncing,
   className,
 }: AdCardProps) {
   const status = ad.effectiveStatus || ad.status || 'UNKNOWN';
@@ -133,23 +129,6 @@ export function AdCard({
             <span className="opacity-60">{ad.accountId}</span>
           </div>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSyncInsights();
-            }}
-            disabled={isSyncing}
-            className="w-full h-9 bg-b-surface1 border border-s-subtle hover:bg-b-surface2 hover:border-s-stroke2 text-[11px] font-bold uppercase tracking-wider rounded-full transition-all"
-          >
-            {isSyncing ? (
-              <Loader2 className="size-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="size-3.5 mr-2" />
-            )}
-            {isSyncing ? 'Syncing...' : 'Sync Insights'}
-          </Button>
         </div>
       </div>
     </div>

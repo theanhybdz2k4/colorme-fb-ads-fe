@@ -74,20 +74,12 @@ export interface PlacementBreakdown {
     clicks: number;
 }
 
-export interface AgeGenderBreakdown {
-    age: string;
-    gender: string;
-    spend: number;
-    impressions: number;
-    clicks: number;
-}
 
 export interface AdAnalytics {
     summary: AdAnalyticsSummary;
     dailyInsights: DailyInsight[];
     deviceBreakdown: DeviceBreakdown[];
     placementBreakdown: PlacementBreakdown[];
-    ageGenderBreakdown: AgeGenderBreakdown[];
 }
 
 export interface HourlyInsight {

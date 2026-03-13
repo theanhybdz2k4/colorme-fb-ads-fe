@@ -1,16 +1,13 @@
-import { useState, useMemo, memo, useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, memo, useEffect } from 'react';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { useAdsets } from '@/hooks/useAdSets';
 import { useAds } from '@/hooks/useAds';
 import { useInsights } from '@/hooks/useInsights';
-import { campaignsApi, adsApi } from '@/api';
 import { usePlatform } from '@/contexts';
-import { useAdAccounts, BranchFilter } from '@/features/adAccounts';
+import { BranchFilter } from '@/features/adAccounts';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Loader2, RefreshCw, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal, LineChart, Calendar, Brain } from 'lucide-react';
+import { Loader2, Megaphone, ChevronDown, ChevronRight, SlidersHorizontal, LineChart, Calendar, Brain } from 'lucide-react';
 import { ROUTES } from '@/constants';
 import { HourlyInsightsDialog } from './HourlyInsightsDialog';
 import { LoadingPage, EmptyState, PlatformIcon } from '@/components/shared/common';
@@ -21,17 +18,13 @@ import { vi } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 
 export function CampaignsPage() {
-  const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
-  const [syncingAll, setSyncingAll] = useState(false);
-  const [syncingCampaign, setSyncingCampaign] = useState<string | null>(null);
   const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
   const [expandedAdSet, setExpandedAdSet] = useState<string | null>(null);
   const [selectedAdForHourly, setSelectedAdForHourly] = useState<{ id: string, name: string, date?: Date } | null>(null);
   const [existingReports, setExistingReports] = useState<Record<string, { createdAt: string }>>({});
   const { activePlatform } = usePlatform();
 
-  const { data: accounts } = useAdAccounts();
 
   // Calculate 7 days ago
   const dateStart = useMemo(() => {
@@ -112,40 +105,6 @@ export function CampaignsPage() {
     fetchExistingReports();
   }, []);
 
-  const handleSyncAllActive = useCallback(async () => {
-    if (!accounts || accounts.length === 0) {
-      toast.error('Không có tài khoản nào');
-      return;
-    }
-    setSyncingAll(true);
-    try {
-      await Promise.all(accounts.map(account => campaignsApi.syncAccount(account.id)));
-      toast.success(`Đã hoàn thành sync Campaigns cho các tài khoản`);
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-    } catch {
-      toast.error('Lỗi sync');
-    } finally {
-      setSyncingAll(false);
-    }
-  }, [accounts, queryClient]);
-
-  const handleSyncCampaign = useCallback(async (campaign: any) => {
-    setSyncingCampaign(campaign.id);
-    try {
-      await Promise.all([
-        campaignsApi.syncAccount(campaign.accountId),
-        adsApi.syncAccount(campaign.accountId)
-      ]);
-      toast.success('Đã hoàn thành sync dữ liệu chiến dịch');
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      queryClient.invalidateQueries({ queryKey: ['adsets'] });
-      queryClient.invalidateQueries({ queryKey: ['ads'] });
-    } catch {
-      toast.error('Lỗi sync');
-    } finally {
-      setSyncingCampaign(null);
-    }
-  }, [queryClient]);
 
   const getStatusColor = (status: string) => {
     const s = status?.toUpperCase();
@@ -170,10 +129,6 @@ export function CampaignsPage() {
         </div>
         <div className="flex gap-3">
           <BranchFilter value={selectedBranch} onChange={setSelectedBranch} />
-          <Button variant="outline" onClick={handleSyncAllActive} disabled={syncingAll || !accounts?.length}>
-            {syncingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            Sync All
-          </Button>
         </div>
       </div>
 
@@ -190,7 +145,7 @@ export function CampaignsPage() {
           <EmptyState
             icon={<Megaphone className="h-8 w-8" />}
             title="Không tìm thấy campaign"
-            description="Hãy chạy sync hoặc thay đổi bộ lọc"
+            description="Hãy chờ hệ thống tự cập nhật hoặc thay đổi bộ lọc"
             className="py-12"
           />
         ) : (
@@ -201,8 +156,6 @@ export function CampaignsPage() {
               isExpanded={expandedCampaign === campaign.id}
               onToggle={() => setExpandedCampaign(expandedCampaign === campaign.id ? null : campaign.id)}
               getStatusColor={getStatusColor}
-              handleSync={handleSyncCampaign}
-              isSyncing={syncingCampaign === campaign.id}
               adSets={expandedCampaign === campaign.id ? adSets : undefined}
               isLoadingAdSets={isLoadingAdSets}
               expandedAdSet={expandedAdSet}
@@ -234,8 +187,6 @@ function CampaignRow({
   isExpanded,
   onToggle,
   getStatusColor,
-  handleSync,
-  isSyncing,
   adSets,
   isLoadingAdSets,
   expandedAdSet,
@@ -301,9 +252,6 @@ function CampaignRow({
                     <Brain className="w-4 h-4 mr-1.5" />
                     {existingReport ? "Xem Báo Cáo AI" : "Phân Tích AI"}
                   </Link>
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => handleSync(campaign)} disabled={isSyncing}>
-                  {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 </Button>
               </div>
             </div>

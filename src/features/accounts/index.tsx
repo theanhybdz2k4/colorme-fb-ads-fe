@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAccounts, useAddAccount, useSyncAccount, useDeleteAccount, useUpdateAccountToken } from '@/hooks/useAccounts';
+import { useAccounts, useAddAccount, useDeleteAccount, useUpdateAccountToken } from '@/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, RefreshCw, Trash2, Brain } from 'lucide-react';
+import { Plus, Trash2, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { PageHeader } from '@/components/shared/common/PageHeader';
@@ -36,7 +36,6 @@ export function AccountsPage() {
 
     const { data, isLoading } = useAccounts();
     const addMutation = useAddAccount();
-    const syncMutation = useSyncAccount();
     const deleteMutation = useDeleteAccount();
     const updateTokenMutation = useUpdateAccountToken();
 
@@ -249,16 +248,6 @@ export function AccountsPage() {
                                     </div>
 
                                     <div className="flex gap-2 pt-2 border-t border-border/50">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="flex-1"
-                                            onClick={() => syncMutation.mutate(account.id)}
-                                            disabled={syncMutation.isPending}
-                                        >
-                                            <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-                                            Sync
-                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="sm"

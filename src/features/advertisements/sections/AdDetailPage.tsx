@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdDetail, useAdAnalytics, useSyncAdInsights } from '@/hooks/useAdDetail';
 import { PerformanceChart, AdInsightsViewer } from '../components';
-import type { DeviceBreakdown, PlacementBreakdown, AgeGenderBreakdown } from '@/api/adDetail.api';
+import type { DeviceBreakdown, PlacementBreakdown } from '@/api/adDetail.api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -414,61 +414,6 @@ export function AdDetailPage() {
         )}
       </div>
 
-      {/* Age/Gender Breakdown */}
-      {analytics?.ageGenderBreakdown && analytics.ageGenderBreakdown.length > 0 && (
-        <FloatingCard>
-          <FloatingCardHeader>
-            <div className="flex items-center justify-between w-full">
-              <FloatingCardTitle>Theo độ tuổi & giới tính</FloatingCardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSync('age_gender')}
-                disabled={syncingSection === 'age_gender'}
-                className="h-8"
-              >
-                {syncingSection === 'age_gender' ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                    Đang sync...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-2" />
-                    Sync
-                  </>
-                )}
-              </Button>
-            </div>
-          </FloatingCardHeader>
-          <FloatingCardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/30">
-                    <TableHead className="text-xs">Độ tuổi</TableHead>
-                    <TableHead className="text-xs">Giới tính</TableHead>
-                    <TableHead className="text-xs text-right">Chi tiêu</TableHead>
-                    <TableHead className="text-xs text-right">Impressions</TableHead>
-                    <TableHead className="text-xs text-right">Clicks</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {analytics.ageGenderBreakdown.map((a: AgeGenderBreakdown, i: number) => (
-                    <TableRow key={i} className="border-border/30">
-                      <TableCell>{a.age}</TableCell>
-                      <TableCell className="capitalize">{a.gender}</TableCell>
-                      <TableCell className="text-right font-mono">{formatCurrency(a.spend, currency)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatNumber(a.impressions)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatNumber(a.clicks)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </FloatingCardContent>
-        </FloatingCard>
-      )}
 
       {/* Empty state for no analytics */}
       {(!analytics?.dailyInsights || analytics.dailyInsights.length === 0) && (

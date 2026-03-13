@@ -36,7 +36,7 @@ export function LeadDetails() {
                         </Avatar>
                         <h4 className="font-black text-lg flex items-center justify-center gap-1">
                             {selectedLead.customer_name}
-                            {selectedLead.is_potential && selectedLead.is_manual_potential && (
+                            {(selectedLead.is_potential || selectedLead.is_manual_potential) && (
                                 <span className="text-amber-500 text-base">⭐</span>
                             )}
                         </h4>
@@ -57,19 +57,18 @@ export function LeadDetails() {
                             <label className="text-[10px] font-black text-muted-foreground uppercase flex items-center gap-1">
                                 <Calendar className="h-3 w-3" /> Lần đầu liên hệ
                             </label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="datetime-local"
-                                    defaultValue={selectedLead.first_contact_at ? new Date(new Date(selectedLead.first_contact_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                                    className="h-8 text-xs font-bold bg-orange-500/5 border-orange-500/10 text-orange-700"
-                                    onBlur={(e) => {
-                                        if (e.target.value) {
-                                            // Convert to Vietnam time (UTC+7) or just use ISO for DB
-                                            const selectedDate = new Date(e.target.value);
-                                            updateLead({ first_contact_at: selectedDate.toISOString() });
-                                        }
-                                    }}
-                                />
+                            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-orange-500/5 border border-orange-500/10">
+                                <span className="text-xs font-bold text-orange-700">
+                                    {selectedLead.first_contact_at 
+                                        ? new Date(selectedLead.first_contact_at).toLocaleString('vi-VN', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric'
+                                        })
+                                        : 'Chưa có dữ liệu'}
+                                </span>
                             </div>
                         </div>
 
@@ -160,9 +159,7 @@ export function LeadDetails() {
                             {selectedLead.ai_analysis ? (
                                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
                                     <div className="text-[11px] font-medium leading-relaxed whitespace-pre-wrap text-foreground/80">
-                                        {selectedLead.ai_analysis.startsWith('Đánh giá')
-                                            ? selectedLead.ai_analysis.split('\n').slice(1).join('\n').trim()
-                                            : selectedLead.ai_analysis}
+                                        {selectedLead.ai_analysis}
                                     </div>
                                 </div>
                             ) : (

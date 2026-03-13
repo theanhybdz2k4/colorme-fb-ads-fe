@@ -5,7 +5,7 @@ import Icon from '@/components/shared/common/Icon';
 import { formatPercent } from '@/lib/format';
 
 export function QuickInsightsSection() {
-    const { campaigns, metrics, ageGenderBreakdown, adGroups, dailyInsights } = useDashboard();
+    const { campaigns, metrics, } = useDashboard();
 
     // Find campaign with highest CTR
     const campaignWithStats = useMemo(() => {
@@ -34,43 +34,6 @@ export function QuickInsightsSection() {
     const ctrStatus = bestCTRCampaign && avgCTR > 0
         ? ((bestCTRCampaign.ctr - avgCTR) / avgCTR) * 100
         : 0;
-
-    // Best Audience (Ad Set)
-    const audienceLabel = useMemo(() => {
-        if (!dailyInsights || !dailyInsights.length || !adGroups) return null;
-
-        // Group results by ad_group_id
-        const groupResults: Record<string, number> = {};
-        dailyInsights.forEach((insight: any) => {
-            const groupId = insight.unified_ad_group_id || insight.unifiedAdGroupId;
-            if (groupId) {
-                groupResults[groupId] = (groupResults[groupId] || 0) + (Number(insight.results) || 0);
-            }
-        });
-
-        // Find the group ID with most results
-        const topGroupId = Object.entries(groupResults)
-            .filter(([, results]) => results > 0)
-            .sort(([, a], [, b]) => b - a)[0]?.[0];
-
-        if (topGroupId) {
-            const group = adGroups.find((g: any) => g.id === topGroupId);
-            if (group) return `Nhóm "${group.name}"`;
-        }
-
-        // Fallback 1: Age Gender Breakdown
-        const bestAgeGender = ageGenderBreakdown?.[0];
-        if (bestAgeGender) {
-            return `Độ tuổi ${bestAgeGender.age} (${bestAgeGender.gender === 'female' ? 'Nữ' : 'Nam'})`;
-        }
-
-        // Fallback 2: Best Results Campaign
-        if (bestResultsCampaign && bestResultsCampaign.results > 0) {
-            return "Nhóm đối tượng tiềm năng nhất";
-        }
-
-        return null;
-    }, [dailyInsights, adGroups, ageGenderBreakdown, bestResultsCampaign]);
 
     return (
         <div className="space-y-6">
@@ -103,19 +66,6 @@ export function QuickInsightsSection() {
                         </p>
                     </div>
 
-                    {/* Audience Insight */}
-                    <div className="p-5 bg-b-depth2/50 rounded-2xl shadow-depth-toggle">
-                        <div className="flex items-center gap-2 mb-2.5">
-                            <Icon name="profile" className="size-4 fill-primary-02" />
-                            <span className="text-[10px] font-bold text-primary-02 uppercase tracking-widest">Audience Insight</span>
-                        </div>
-                        <p className="text-body-2 leading-relaxed text-t-secondary transition-colors">
-                            {audienceLabel
-                                ? `${audienceLabel} đang mang lại lượng Leads cao nhất với chi phí tối ưu dựa trên dữ liệu 30 ngày qua.`
-                                : "Đang phân tích thông tin đối tượng... Gợi ý sẽ xuất hiện sau khi đồng bộ dữ liệu hoàn tất."
-                            }
-                        </p>
-                    </div>
                 </div>
             </div>
 

@@ -21,8 +21,6 @@ const formatVnTime = (dateInput: any) => {
         hour12: false
     }).format(date);
 };
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { LeadDetails } from './LeadDetails';
 
@@ -38,9 +36,7 @@ export function ChatWindow() {
         syncMessages,
         isSyncingMessages,
         reanalyzeLead,
-        isReanalyzing,
-        agents,
-        assignAgent
+        isReanalyzing
     } = useLeads();
 
     const [replyText, setReplyText] = useState("");
@@ -101,8 +97,14 @@ export function ChatWindow() {
                                 <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200 text-[9px] h-4 px-1.5 font-black flex items-center gap-1 group/tooltip relative">
                                     <Target className="h-2.5 w-2.5" />
                                     AI TIỀM NĂNG
-                                    <div className="absolute top-full left-0 mt-1 w-48 p-2 bg-background border rounded-lg shadow-xl hidden group-hover/tooltip:block z-[100] font-normal normal-case text-foreground text-[10px] leading-relaxed">
-                                        {selectedLead.ai_analysis}
+                                    <div className="absolute top-full left-0 mt-1 w-48 p-2 bg-background border rounded-lg shadow-xl hidden group-hover/tooltip:block z-10 font-normal normal-case text-foreground text-[10px] leading-relaxed">
+                                        {(() => {
+                                            if (!selectedLead.ai_analysis) return '';
+                                            const lines = selectedLead.ai_analysis.split('\n');
+                                            const summaryLine = lines.find((l: string) => l.trim().toLowerCase().includes('tóm tắt:'));
+                                            if (summaryLine) return summaryLine.replace(/tóm tắt:/i, '').trim();
+                                            return lines.filter((l: string) => l.trim() && !l.includes('Đánh giá:') && !l.includes('Tổng điểm:')).slice(0, 1).join('').substring(0, 80);
+                                        })()}
                                     </div>
                                 </Badge>
                             )}
@@ -119,70 +121,6 @@ export function ChatWindow() {
                     </div>
                 </div>
                 <div className="flex items-center gap-1 md:gap-2 shrink-0">
-                    {/* Agent Assignment */}
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className={`h-8 gap-2 px-2 hidden sm:flex border-dashed ${selectedLead.assigned_agent_id ? 'border-primary/50 bg-primary/5' : 'text-muted-foreground'}`}
-                            >
-                                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                    <span className="text-[10px] font-bold text-primary">
-                                        {selectedLead.assigned_agent_name?.charAt(0) || '?'}
-                                    </span>
-                                </div>
-                                <span className="text-[11px] font-medium max-w-[80px] truncate">
-                                    {selectedLead.assigned_agent_name || 'Chưa bàn giao'}
-                                </span>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-2" align="end">
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-bold px-2 py-1.5 text-muted-foreground uppercase tracking-wider">Chọn nhân viên phụ trách</p>
-                                {agents.length > 0 ? (
-                                    agents.map((agent: any) => (
-                                        <Button
-                                            key={agent.id}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full justify-start font-normal h-9"
-                                            onClick={() => assignAgent(agent)}
-                                        >
-                                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-2">
-                                                <span className="text-[10px] font-bold text-primary">{agent.name.charAt(0)}</span>
-                                            </div>
-                                            <span className="text-sm">{agent.name}</span>
-                                            {selectedLead.assigned_agent_id === agent.id && (
-                                                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-                                            )}
-                                        </Button>
-                                    ))
-                                ) : (
-                                    <div className="p-4 text-center text-xs text-muted-foreground">
-                                        Chưa phát hiện nhân viên nào.
-                                        <p className="mt-1">Hãy để nhân viên nhắn tin cho khách trên fanpage để tự động nhận diện.</p>
-                                    </div>
-                                )}
-                                {selectedLead.assigned_agent_id && (
-                                    <>
-                                        <Separator className="my-1" />
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full justify-start font-normal h-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                            onClick={() => assignAgent({ id: '', name: '' })}
-                                        >
-                                            <div className="h-6 w-6 rounded-full bg-rose-100 flex items-center justify-center mr-2">
-                                                <span className="text-[10px] font-bold text-rose-500">X</span>
-                                            </div>
-                                            <span className="text-sm">Gỡ phân công</span>
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
 
                     <Button
                         variant="ghost"
@@ -551,7 +489,7 @@ export function ChatWindow() {
                                                 </div>
                                             )}
 
-                                        <p className={`text-[10px] mt-1 opacity-60 group-hover:opacity-100 transition-opacity ${isSystem ? 'text-right' : 'text-left'} text-muted-foreground`}>
+                                        <p className={`text-[10px] mt-1 opacity-100 ${isSystem ? 'text-right' : 'text-left'} text-muted-foreground/80 font-medium`}>
                                             {formatVnTime(msg.sent_at)}
                                         </p>
                                     </div>

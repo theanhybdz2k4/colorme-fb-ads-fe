@@ -42,17 +42,13 @@ export const leadsApi = {
     return data;
   },
 
-  getAgents: async () => {
-    const { data } = await apiClient.get('/leads/agents');
-    return data;
-  },
 
   reply: async (leadId: string, message: string) => {
     const { data } = await apiClient.post('/fb-reply', { leadId, message });
     return data;
   },
 
-  updateLead: async (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean; is_manual_potential?: boolean; assigned_agent_id?: string; assigned_agent_name?: string, is_read?: boolean, first_contact_at?: string }) => {
+  updateLead: async (leadId: string, data: { notes?: string; phone?: string; is_qualified?: boolean; is_manual_potential?: boolean; is_read?: boolean, first_contact_at?: string }) => {
     const { data: responseData } = await apiClient.patch(`/leads/${leadId}`, data);
     return responseData;
   },
@@ -64,12 +60,6 @@ export const leadsApi = {
 
   syncMessages: async (leadId: string) => {
     const { data } = await apiClient.post(`/leads/${leadId}/sync_messages`);
-    return data;
-  },
-
-
-  syncLeadsFromFacebook: async (options?: { force_historic?: boolean }) => {
-    const { data } = await apiClient.post('/fb-sync-leads', options || {});
     return data;
   },
 };
