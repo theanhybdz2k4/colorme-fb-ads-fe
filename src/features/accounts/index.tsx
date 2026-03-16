@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAccounts, useAddAccount, useDeleteAccount, useUpdateAccountToken } from '@/hooks/useAccounts';
+import { useAccounts, useAddAccount, useDeleteAccount, useUpdateAccountToken, useSyncAccount } from '@/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Trash2, Brain } from 'lucide-react';
+import { Plus, Trash2, Brain, RefreshCw, RefreshCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants';
 import { PageHeader } from '@/components/shared/common/PageHeader';
@@ -38,6 +38,7 @@ export function AccountsPage() {
     const addMutation = useAddAccount();
     const deleteMutation = useDeleteAccount();
     const updateTokenMutation = useUpdateAccountToken();
+    const syncMutation = useSyncAccount();
 
     const filteredData = useMemo(() => {
         if (activeTab === 'all') return data;
@@ -254,8 +255,27 @@ export function AccountsPage() {
                                             className="flex-1 text-primary hover:text-primary hover:bg-primary/10"
                                             onClick={() => setIsAddingToken(account.id)}
                                         >
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Token
+                                            {account.isValid ? (
+                                                <>
+                                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                                    Cập nhật
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Plus className="h-4 w-4 mr-2" />
+                                                    Token
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="flex-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                                            onClick={() => syncMutation.mutate(account.id)}
+                                            disabled={syncMutation.isPending}
+                                        >
+                                            <RefreshCcw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+                                            Đồng bộ
                                         </Button>
                                         <Button
                                             variant="ghost"
