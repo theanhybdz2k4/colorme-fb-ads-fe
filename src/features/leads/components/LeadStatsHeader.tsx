@@ -5,14 +5,11 @@ import {
     Users,
     Target,
     MessageSquare,
-    DollarSign,
-    MessageCircle
+    DollarSign
 } from 'lucide-react';
-import { format, isToday, isSameDay } from 'date-fns';
-import { vi } from 'date-fns/locale';
 
 export function LeadStatsHeader() {
-    const { stats, dateRange } = useLeads();
+    const { stats } = useLeads();
 
     const formatCurrency = (val: number) => {
         if (val >= 1000000) return (val / 1000000).toFixed(2) + 'tr';
@@ -20,25 +17,9 @@ export function LeadStatsHeader() {
         return val.toString();
     };
 
-    // Determine if selected range is "today"
-    const isRangeToday = dateRange?.from && dateRange?.to &&
-        isToday(dateRange.from) && isSameDay(dateRange.from, dateRange.to);
-
-    // Generate label based on date range
-    const getDateLabel = () => {
-        if (!dateRange?.from) return 'KỲ NÀY';
-        if (isRangeToday) return 'HÔM NAY';
-        if (isSameDay(dateRange.from, dateRange.to || dateRange.from)) {
-            return format(dateRange.from, 'dd/MM', { locale: vi }).toUpperCase();
-        }
-        return 'KỲ NÀY';
-    };
-
-    const dateLabel = getDateLabel();
-
     return (
         <div className="space-y-6 shrink-0 z-20">
-            <StatsGrid columns={6}>
+            <StatsGrid columns={5}>
                 <StatsCard
                     title="CHI PHÍ QUẢNG CÁO"
                     value={`${formatCurrency(stats?.spendTotal || 0)}`}
@@ -74,13 +55,6 @@ export function LeadStatsHeader() {
                     subtitle={`${stats?.potentialFromOrganic || 0}/${stats?.todayNewOrganic || 0} tiềm năng`}
                     icon={<Users className="h-4 w-4" />}
                     className="bg-green-500/5 border-green-500/10"
-                />
-                <StatsCard
-                    title={`TIN NHẮN ${dateLabel}`}
-                    value={`${stats?.todayMessagesCount || 0}`}
-                    subtitle="Mới + Cũ"
-                    icon={<MessageCircle className="h-4 w-4" />}
-                    className="bg-primary/5 border-primary/10"
                 />
             </StatsGrid>
         </div>
