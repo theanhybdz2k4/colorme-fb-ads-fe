@@ -3,27 +3,43 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     FloatingCard,
     FloatingCardHeader,
     FloatingCardTitle,
     FloatingCardContent,
 } from '@/components/shared/common';
-import { Sparkles, Save, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Sparkles, Save, Eye, EyeOff, Loader2, Bot } from 'lucide-react';
+
+const GEMINI_MODELS = [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', category: 'Stable' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', category: 'Stable' },
+    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', category: 'Stable' },
+    { id: 'gemini-2-flash', name: 'Gemini 2 Flash', category: 'Stable' },
+    { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', category: 'Preview' },
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', category: 'Preview' },
+    { id: 'gemini-2-flash-exp', name: 'Gemini 2 Flash Exp', category: 'Experimental' },
+];
 
 export function AISettingsSection() {
     const { user, updateProfile, refreshUser } = useAuth();
     const [geminiApiKey, setGeminiApiKey] = useState(user?.geminiApiKey || '');
+    const [geminiModel, setGeminiModel] = useState(user?.geminiModel || 'gemini-2.5-flash');
     const [showKey, setShowKey] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async () => {
         try {
             setIsSaving(true);
-            await updateProfile({ gemini_api_key: geminiApiKey });
+            await updateProfile({ 
+                gemini_api_key: geminiApiKey,
+                gemini_model: geminiModel 
+            });
             await refreshUser();
-            toast.success('Đã lưu Gemini API Key');
+            toast.success('Đã lưu cấu hình Gemini');
         } catch (err: any) {
             toast.error('Lỗi khi lưu key: ' + (err.response?.data?.error || err.message));
         } finally {
@@ -75,6 +91,33 @@ export function AISettingsSection() {
                     <p className="text-[10px] text-muted-foreground">
                         Bạn có thể lấy API Key miễn phí tại <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google AI Studio</a>.
                     </p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="gemini-model">Model Gemini</Label>
+                    <Select value={geminiModel} onValueChange={setGeminiModel}>
+                        <SelectTrigger id="gemini-model" className="w-full">
+                            <SelectValue placeholder="Chọn model..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {GEMINI_MODELS.map(model => (
+                                <SelectItem key={model.id} value={model.id}>
+                                    <div className="flex items-center gap-2">
+                                        <Bot className="h-3.5 w-3.5 text-blue-400" />
+                                        <span>{model.name}</span>
+                                        <span className={cn(
+                                            "text-[10px] px-1.5 py-0.5 rounded-full border",
+                                            model.category === 'Stable' ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                            model.category === 'Preview' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                                            "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                                        )}>
+                                            {model.category}
+                                        </span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="bg-blue-500/5 rounded-lg p-3 text-xs space-y-1 border border-blue-500/10">

@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     ...rawUser,
                     avatarUrl: rawUser.avatar_url || rawUser.avatarUrl || null,
                     geminiApiKey: rawUser.gemini_api_key || rawUser.geminiApiKey || null,
+                    geminiModel: rawUser.gemini_model || rawUser.geminiModel || null,
                 };
             } catch (err) {
                 console.error('getMe error:', err);
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...data.user,
                 avatarUrl: data.user.avatar_url || data.user.avatarUrl || null,
                 geminiApiKey: data.user.gemini_api_key || data.user.geminiApiKey || null,
+                geminiModel: data.user.gemini_model || data.user.geminiModel || null,
             } : null;
             queryClient.setQueryData(['auth-me'], user);
         }
