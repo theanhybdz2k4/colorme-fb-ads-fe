@@ -171,7 +171,7 @@ export function PerformanceChart({ adId, dailyData, currency = 'VND' }: Performa
               <YAxis tick={{ fontSize: 10, fill: '#888' }} tickFormatter={formatCurrency} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
-                formatter={(value: number | undefined) => [`${formatCurrency(value)} ${currency}`, 'Chi tiêu']}
+                formatter={(value: any) => [`${formatCurrency(value)} ${currency}`, 'Chi tiêu']} 
               />
               <Area type="monotone" dataKey="spend" stroke="#3b82f6" fillOpacity={1} fill="url(#spendGradient)" strokeWidth={2} />
             </AreaChart>
@@ -188,7 +188,7 @@ export function PerformanceChart({ adId, dailyData, currency = 'VND' }: Performa
               <YAxis tick={{ fontSize: 10, fill: '#888' }} tickFormatter={formatNumber} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
-                formatter={(value: number | undefined, name?: string) => [formatNumber(value), name === 'results' ? 'Result' : 'New Message']}
+                formatter={(value: any, name?: any) => [formatNumber(value), name === 'results' ? 'Result' : 'New Message']}
               />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
               <Line type="monotone" dataKey="results" stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} name="Result" />
@@ -207,7 +207,7 @@ export function PerformanceChart({ adId, dailyData, currency = 'VND' }: Performa
               <YAxis tick={{ fontSize: 10, fill: '#888' }} tickFormatter={formatCurrency} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
-                formatter={(value: number | undefined, name?: string) => {
+                formatter={(value: any, name?: any) => {  
                   return [`${formatCurrency(value)} ${currency}`, name === 'costPerResult' ? 'Cost per Result' : 'Cost per New Message'];
                 }}
               />
