@@ -59,6 +59,11 @@ export interface PromoRedemption {
     redeemed_at: string;
     promo_codes?: { code: string };
     promo_rewards?: { name: string } | null;
+    leads?: {
+        customer_name: string | null;
+        customer_avatar: string | null;
+        phone: string | null;
+    } | null;
 }
 
 export interface ReplyTemplate {

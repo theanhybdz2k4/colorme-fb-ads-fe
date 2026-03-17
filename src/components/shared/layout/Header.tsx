@@ -16,7 +16,7 @@ export function Header({ onToggleSidebar, title = "Dashboard" }: HeaderProps) {
             "fixed top-0 right-0 z-20 h-22 max-md:h-18 bg-b-surface1/80 backdrop-blur-xl transition-all",
             "left-85 max-4xl:left-70 max-3xl:left-60 max-xl:left-0"
         )}>
-            <div className="h-full center-with-sidebar flex items-center justify-between gap-4">
+            <div className="h-full md:ps-8 ps-4 center-with-sidebar flex items-center justify-between gap-4">
                 {/* Left Header - Mobile Menu & Platform */}
                 <div className="flex items-center gap-3 lg:gap-6 flex-1 max-w-3xl">
                     <div className="flex items-center gap-3 xl:hidden">

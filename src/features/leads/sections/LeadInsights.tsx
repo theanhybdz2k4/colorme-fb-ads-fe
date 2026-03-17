@@ -35,10 +35,24 @@ export function LeadInsights() {
     localStorage.setItem(TABS_STORAGE_KEY, value);
   };
 
-  // Ensure isRealtime state matches initial activeTab
-  useEffect(() => {
-    setIsRealtime(activeTab === 'realtime');
-  }, []);
+    // Ensure isRealtime state matches initial activeTab
+    useEffect(() => {
+        setIsRealtime(activeTab === 'realtime');
+
+        // Check for leadId in URL to auto-select
+        const params = new URLSearchParams(window.location.search);
+        const urlLeadId = params.get('leadId');
+        const urlTab = params.get('tab');
+
+        if (urlLeadId) {
+            setSelectedLeadId(urlLeadId);
+            if (urlTab === 'chat' || !urlTab) {
+                handleTabChange('chat');
+            }
+        } else if (urlTab) {
+            handleTabChange(urlTab);
+        }
+    }, []);
 
   // Helper to detect if a lead is from ads
   // Helper to detect if a lead is from ads

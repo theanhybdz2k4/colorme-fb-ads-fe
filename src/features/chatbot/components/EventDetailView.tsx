@@ -5,6 +5,8 @@ import { useEvent } from '@/hooks/useEvents';
 import { EventCodeManager } from './EventCodeManager';
 import { EventRewardManager } from './EventRewardManager';
 import { EventStatsPanel } from './EventStatsPanel';
+import { EventRecipientsPanel } from './EventRecipientsPanel';
+import { Users } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     draft: { label: 'Nháp', color: 'text-gray-400', bg: 'bg-gray-500/10' },
@@ -21,6 +23,7 @@ interface Props {
 const TABS = [
     { key: 'codes', label: 'Mã Code', icon: Hash },
     { key: 'rewards', label: 'Ưu đãi', icon: Gift },
+    { key: 'recipients', label: 'Người nhận', icon: Users },
     { key: 'stats', label: 'Thống kê', icon: BarChart3 },
 ] as const;
 
@@ -44,25 +47,25 @@ export function EventDetailView({ eventId, onBack }: Props) {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-xl h-10 w-10">
+            <div className="flex items-center gap-6">
+                <Button variant="ghost" size="icon" onClick={onBack} className="rounded-2xl h-11 w-11 hover:bg-white/50 hover:shadow-sm border border-transparent hover:border-border transition-all">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold tracking-tight">{event.name}</h3>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${sc.bg} ${sc.color}`}>
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-extrabold tracking-tight text-foreground">{event.name}</h3>
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${sc.bg} ${sc.color} shadow-sm border border-current/10`}>
                             {sc.label}
                         </span>
                     </div>
                     {event.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{event.description}</p>
+                        <p className="text-sm font-medium text-muted-foreground mt-1 line-clamp-1">{event.description}</p>
                     )}
                 </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-1 p-1 bg-muted rounded-xl w-fit">
+            {/* Tab Navigation (Unified Style) */}
+            <div className="relative inline-flex gap-1 p-1 bg-muted/60 backdrop-blur-xl border border-border rounded-2xl shadow-sm">
                 {TABS.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.key;
@@ -70,13 +73,13 @@ export function EventDetailView({ eventId, onBack }: Props) {
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                            className={`relative flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300
                                 ${isActive
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                    ? 'bg-white dark:bg-zinc-800 text-foreground shadow-md'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
                                 }`}
                         >
-                            <Icon className="h-4 w-4" />
+                            <Icon className={`h-4 w-4 transition-transform ${isActive ? 'scale-110' : ''}`} />
                             {tab.label}
                         </button>
                     );
@@ -86,6 +89,7 @@ export function EventDetailView({ eventId, onBack }: Props) {
             {/* Tab Content */}
             {activeTab === 'codes' && <EventCodeManager eventId={eventId} />}
             {activeTab === 'rewards' && <EventRewardManager eventId={eventId} />}
+            {activeTab === 'recipients' && <EventRecipientsPanel eventId={eventId} />}
             {activeTab === 'stats' && <EventStatsPanel eventId={eventId} />}
         </div>
     );

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Hash, Trophy, AlertTriangle, Clock, CheckCircle, XCircle, Users } from 'lucide-react';
 import { useEventStats, useRedemptions } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 interface Props {
     eventId: string;
@@ -150,11 +152,12 @@ export function EventStatsPanel({ eventId }: Props) {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="bg-muted/50">
-                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Thời gian</th>
-                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">PSID</th>
-                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Mã</th>
-                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Ưu đãi nhận</th>
-                                        <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Trạng thái</th>
+                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">Thời gian</th>
+                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">Khách hàng</th>
+                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">PSID</th>
+                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">Mã</th>
+                                        <th className="text-left px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">Ưu đãi nhận</th>
+                                        <th className="text-center px-4 py-2.5 font-medium text-muted-foreground whitespace-nowrap">Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -163,13 +166,27 @@ export function EventStatsPanel({ eventId }: Props) {
                                         const Icon = st.icon;
                                         return (
                                             <tr key={r.id} className="hover:bg-muted/30">
-                                                <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                                                <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
                                                     {new Date(r.redeemed_at).toLocaleString('vi-VN')}
                                                 </td>
-                                                <td className="px-4 py-2.5 font-mono text-xs">{r.customer_psid}</td>
-                                                <td className="px-4 py-2.5 font-mono font-bold">{r.promo_codes?.code || '—'}</td>
-                                                <td className="px-4 py-2.5 text-xs">{r.promo_rewards?.name || '—'}</td>
-                                                <td className="px-4 py-2.5 text-center">
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="h-6 w-6 border border-border">
+                                                            <AvatarImage src={r.leads?.customer_avatar || undefined} />
+                                                            <AvatarFallback className="text-[10px]">
+                                                                {(r.leads?.customer_name || 'U').substring(0, 1)}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-semibold line-clamp-1">{r.leads?.customer_name || r.customer_name || 'Khách hàng'}</span>
+                                                            {r.leads?.phone && <span className="text-[10px] text-muted-foreground">{r.leads.phone}</span>}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2.5 font-mono text-[10px] text-muted-foreground whitespace-nowrap">{r.customer_psid}</td>
+                                                <td className="px-4 py-2.5 font-mono font-bold whitespace-nowrap">{r.promo_codes?.code || '—'}</td>
+                                                <td className="px-4 py-2.5 text-xs line-clamp-1">{r.promo_rewards?.name || '—'}</td>
+                                                <td className="px-4 py-2.5 text-center whitespace-nowrap">
                                                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${st.color}`}>
                                                         <Icon className="h-3 w-3" />
                                                         {st.label}

@@ -1,75 +1,131 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Workflow, Gift } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Workflow, Gift } from "lucide-react";
 
 // Context
-import { ChatbotProvider, useChatbot } from './context/ChatbotContext';
+import { ChatbotProvider, useChatbot } from "./context/ChatbotContext";
 
 // Sections
-import { ChatbotHeader } from './sections/ChatbotHeader';
-import { SettingsTab } from './sections/SettingsTab';
-import { FlowsTab } from './sections/FlowsTab';
-import { EventsTab } from './sections/EventsTab';
+import { ChatbotHeader } from "./sections/ChatbotHeader";
+import { SettingsTab } from "./sections/SettingsTab";
+import { FlowsTab } from "./sections/FlowsTab";
+import { EventsTab } from "./sections/EventsTab";
 
 // Components
-import { FlowEditDialog } from './components/FlowEditDialog';
+import { FlowEditDialog } from "./components/FlowEditDialog";
+
+const TAB_CONFIG = [
+  {
+    value: "flows",
+    label: "Flow Builder",
+    icon: Workflow,
+    component: <FlowsTab />,
+  },
+  {
+    value: "events",
+    label: "Event Builder",
+    icon: Gift,
+    component: <EventsTab />,
+  },
+  {
+    value: "settings",
+    label: "Cài đặt",
+    icon: Settings,
+    component: <SettingsTab />,
+  },
+];
+
+const tabTriggerClass = `
+relative flex items-center gap-2.5 px-5 py-4 rounded-xl text-sm font-semibold
+text-muted-foreground transition-all duration-300
+
+hover:text-foreground hover:bg-white/40
+
+data-[state=active]:text-foreground
+`;
+
+const tabContentClass =
+  "animate-in fade-in slide-in-from-bottom-2 duration-500";
 
 function ChatbotPageContent() {
-    const { configLoading } = useChatbot();
+  const { configLoading } = useChatbot();
 
-    if (configLoading) return (
-        <div className="flex flex-col items-center justify-center h-screen gap-4">
-            <div className="animate-spin w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full" />
-            <p className="text-xs font-medium text-muted-foreground tracking-tight uppercase">Đang tải Chatbot...</p>
-        </div>
-    );
+  const [activeTab, setActiveTab] = useState("flows");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const indicatorRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    const el = tabRefs.current[activeTab];
+    const indicator = indicatorRef.current;
+
+    if (!el || !indicator) return;
+
+    indicator.style.width = `${el.offsetWidth}px`;
+    indicator.style.transform = `translateX(${el.offsetLeft}px)`;
+  }, [activeTab]);
+
+  if (configLoading) {
     return (
-        <div className="relative min-h-screen overflow-hidden bg-background/50">
-            {/* Background Aesthetic Blobs */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-blue-400/5 rounded-full blur-[80px] pointer-events-none" />
-
-            <div className="relative z-10 p-4 md:p-8 max-w-6xl mx-auto space-y-10 min-h-screen">
-                <ChatbotHeader />
-
-            <Tabs defaultValue="flows" className="space-y-8">
-                <TabsList className="bg-muted p-1 rounded-xl border border-border inline-flex">
-                    <TabsTrigger value="flows" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
-                        <Workflow className="h-4 w-4" /> Flow Builder
-                    </TabsTrigger>
-                    <TabsTrigger value="events" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
-                        <Gift className="h-4 w-4" /> Event Builder
-                    </TabsTrigger>
-                    <TabsTrigger value="settings" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
-                        <Settings className="h-4 w-4" /> Cài đặt
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="events" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <EventsTab />
-                </TabsContent>
-
-                <TabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <SettingsTab />
-                </TabsContent>
-
-                <TabsContent value="flows" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <FlowsTab />
-                </TabsContent>
-
-            </Tabs>
-
-                <FlowEditDialog />
-            </div>
-        </div>
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <div className="animate-spin w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full" />
+        <p className="text-xs font-medium text-muted-foreground tracking-tight uppercase">
+          Đang tải Chatbot...
+        </p>
+      </div>
     );
+  }
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-b-surface1">
+      <div className="relative z-10 p-4 md:p-8 mx-auto space-y-10 min-h-screen">
+        <ChatbotHeader />
+
+        <Tabs
+          defaultValue="flows"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-8"
+        >
+          <TabsList className="relative bg-muted/60 backdrop-blur-xl p-1.5 h-12 rounded-2xl border border-border inline-flex shadow-sm">
+
+            {/* Sliding Active Indicator */}
+            <div
+              ref={indicatorRef}
+              className="absolute top-1.5 left-0.5 h-[calc(100%-12px)] bg-white rounded-xl shadow-sm transition-all duration-300"
+            />
+
+            {TAB_CONFIG.map(({ value, label, icon: Icon }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                ref={(el) => {
+                  tabRefs.current[value] = el;
+                }}
+                className={tabTriggerClass}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {TAB_CONFIG.map(({ value, component }) => (
+            <TabsContent key={value} value={value} className={tabContentClass}>
+              {component}
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        <FlowEditDialog />
+      </div>
+    </div>
+  );
 }
 
 export default function ChatbotPage() {
-    return (
-        <ChatbotProvider>
-            <ChatbotPageContent />
-        </ChatbotProvider>
-    );
+  return (
+    <ChatbotProvider>
+      <ChatbotPageContent />
+    </ChatbotProvider>
+  );
 }
