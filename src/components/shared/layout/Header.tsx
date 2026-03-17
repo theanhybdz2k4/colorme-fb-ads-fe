@@ -21,17 +21,20 @@ export function Header({ onToggleSidebar, title = "Dashboard" }: HeaderProps) {
                 <div className="flex items-center gap-3 lg:gap-6 flex-1 max-w-3xl">
                     <div className="flex items-center gap-3 xl:hidden">
                         <Button
-                            className="size-11 flex flex-col gap-[4.5px] items-center justify-center bg-b-pop border border-s-subtle rounded-full hover:bg-b-surface2 shadow-widget transition-all"
+                            className="size-10 flex flex-col gap-[3px] items-center justify-center bg-b-pop border border-s-subtle rounded-xl hover:bg-b-surface2 shadow-widget transition-all"
                             variant="ghost"
                             onClick={onToggleSidebar}
                         >
-                            <div className="w-4.5 h-[1.5px] rounded-full bg-t-secondary transition-colors group-hover:bg-t-primary" />
-                            <div className="w-4.5 h-[1.5px] rounded-full bg-t-secondary transition-colors group-hover:bg-t-primary" />
+                            <div className="w-4 h-[1.5px] rounded-full bg-t-secondary transition-colors group-hover:bg-t-primary" />
+                            <div className="w-4 h-[1.5px] rounded-full bg-t-secondary transition-colors group-hover:bg-t-primary" />
+                            <div className="w-4 h-[1.5px] rounded-full bg-t-secondary transition-colors group-hover:bg-t-primary" />
                         </Button>
                     </div>
 
-                    <h1 className="text-h4 max-lg:text-h5 whitespace-nowrap hidden lg:block tracking-tight">{title}</h1>
-                    <PlatformTabs />
+                    <h1 className="text-h6 max-lg:text-sub-title-1 font-bold whitespace-nowrap hidden sm:block tracking-tight">{title}</h1>
+                    <div className="max-sm:hidden flex-1 overflow-hidden">
+                        <PlatformTabs />
+                    </div>
 
                     <div className="relative flex-1 group max-w-sm hidden sm:block">
                         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">

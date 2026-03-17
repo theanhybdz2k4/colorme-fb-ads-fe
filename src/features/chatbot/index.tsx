@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Workflow } from 'lucide-react';
+import { Settings, Workflow, Gift } from 'lucide-react';
 
 // Context
 import { ChatbotProvider, useChatbot } from './context/ChatbotContext';
@@ -8,6 +8,7 @@ import { ChatbotProvider, useChatbot } from './context/ChatbotContext';
 import { ChatbotHeader } from './sections/ChatbotHeader';
 import { SettingsTab } from './sections/SettingsTab';
 import { FlowsTab } from './sections/FlowsTab';
+import { EventsTab } from './sections/EventsTab';
 
 // Components
 import { FlowEditDialog } from './components/FlowEditDialog';
@@ -23,18 +24,31 @@ function ChatbotPageContent() {
     );
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-10 min-h-screen">
-            <ChatbotHeader />
+        <div className="relative min-h-screen overflow-hidden bg-background/50">
+            {/* Background Aesthetic Blobs */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-blue-400/5 rounded-full blur-[80px] pointer-events-none" />
+
+            <div className="relative z-10 p-4 md:p-8 max-w-6xl mx-auto space-y-10 min-h-screen">
+                <ChatbotHeader />
 
             <Tabs defaultValue="flows" className="space-y-8">
                 <TabsList className="bg-muted p-1 rounded-xl border border-border inline-flex">
                     <TabsTrigger value="flows" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
                         <Workflow className="h-4 w-4" /> Flow Builder
                     </TabsTrigger>
+                    <TabsTrigger value="events" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
+                        <Gift className="h-4 w-4" /> Event Builder
+                    </TabsTrigger>
                     <TabsTrigger value="settings" className="data-[state=active]:bg-card rounded-lg gap-2.5 px-6 py-2.5 font-bold transition-all">
                         <Settings className="h-4 w-4" /> Cài đặt
                     </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="events" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <EventsTab />
+                </TabsContent>
 
                 <TabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <SettingsTab />
@@ -46,7 +60,8 @@ function ChatbotPageContent() {
 
             </Tabs>
 
-            <FlowEditDialog />
+                <FlowEditDialog />
+            </div>
         </div>
     );
 }

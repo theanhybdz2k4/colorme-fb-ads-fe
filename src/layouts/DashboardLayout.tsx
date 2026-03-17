@@ -38,8 +38,9 @@ function DashboardContent() {
       {/* Main content area */}
       <div
         className={cn(
-          "transition-all duration-300 min-h-screen p-5 max-md:p-3",
-          "pl-85 max-4xl:pl-70 max-3xl:pl-60 max-xl:pl-0"
+          "transition-all duration-300 min-h-screen",
+          "pl-85 max-4xl:pl-70 max-3xl:pl-60 max-xl:pl-0",
+          "w-full flex flex-col"
         )}
       >
         {/* Centralized Header component */}
@@ -49,8 +50,8 @@ function DashboardContent() {
         />
 
         {/* Dynamic Page Content */}
-        <main className="pt-18 pb-5 max-md:pt-18">
-          <div className="center-with-sidebar animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <main className="flex-1 pt-22 max-md:pt-18">
+          <div className="center-with-sidebar animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
             <Outlet />
           </div>
         </main>

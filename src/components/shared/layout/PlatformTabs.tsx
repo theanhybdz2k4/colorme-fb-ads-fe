@@ -32,7 +32,7 @@ export function PlatformTabs() {
                         )}>
                             {tab.icon}
                         </span>
-                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="hidden sm:inline text-nowrap">{tab.label}</span>
                     </button>
                 );
             })}

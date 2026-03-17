@@ -63,7 +63,7 @@ export function FlowsTab() {
                             placeholder="Tìm kiếm kịch bản..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-9 h-11 rounded-xl bg-muted/50 border-border focus:bg-background transition-all"
+                            className="pl-9 pr-9 h-11 rounded-xl bg-b-surface2 transition-all"
                         />
                         {searchQuery && (
                             <button

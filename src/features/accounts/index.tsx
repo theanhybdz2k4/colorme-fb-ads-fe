@@ -88,7 +88,7 @@ export function AccountsPage() {
     }
 
     return (
-        <div className="space-y-6 animate-float-up p-6">
+        <div className="space-y-6 animate-float-up p-4 sm:p-6 lg:p-8">
             {/* Header */}
             <PageHeader
                 title="Accounts"
@@ -96,12 +96,12 @@ export function AccountsPage() {
             >
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button className="w-full sm:w-auto">
                             <Plus className="h-4 w-4 mr-2" />
                             Thêm tài khoản
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-card border-border">
+                    <DialogContent className="bg-card border-border w-[95vw] max-w-lg p-4 sm:p-6">
                         <DialogHeader>
                             <DialogTitle>Thêm tài khoản mới</DialogTitle>
                             <DialogDescription className="text-muted-foreground">
@@ -152,7 +152,7 @@ export function AccountsPage() {
                                 />
                             </div>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="gap-2 sm:gap-0">
                             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="bg-muted/30 border-border/50">
                                 Hủy
                             </Button>
@@ -165,16 +165,18 @@ export function AccountsPage() {
             </PageHeader>
 
             {/* Tabs / Filter */}
-            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="bg-muted/30 border border-border/50">
-                    <TabsTrigger value="all">Tất cả</TabsTrigger>
-                    {PLATFORMS.map(p => (
-                        <TabsTrigger key={p.code} value={p.code} className="flex items-center gap-2">
-                            {p.name}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+            <div className="overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="bg-muted/30 border border-border/50 h-10 w-max sm:w-auto">
+                        <TabsTrigger value="all">Tất cả</TabsTrigger>
+                        {PLATFORMS.map(p => (
+                            <TabsTrigger key={p.code} value={p.code} className="flex items-center gap-2">
+                                {p.name}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                </Tabs>
+            </div>
 
             {/* Content */}
             {!filteredData?.length ? (
@@ -183,12 +185,12 @@ export function AccountsPage() {
                     description="Kết nối tài khoản để bắt đầu quản lý"
                 />
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {filteredData.map((account) => {
                         const config = getPlatformConfig(account.platform?.code);
                         return (
                             <FloatingCard key={account.id}>
-                                <div className="p-4 space-y-4">
+                                <div className="space-y-4">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold ${config.color}`}>

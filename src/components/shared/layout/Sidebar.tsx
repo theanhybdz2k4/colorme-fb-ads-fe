@@ -37,9 +37,10 @@ export function Sidebar({ visible, onClose, expanded = true }: SidebarProps) {
         <>
             <aside
                 className={cn(
-                    "fixed left-0 top-0 z-40 h-screen p-5 bg-b-surface1 transition-all duration-300 ease-in-out flex flex-col max-md:p-3",
-                    expanded ? "w-85 max-4xl:w-70 max-3xl:w-60 max-xl:w-74" : "w-20",
-                    visible ? "translate-x-0" : "max-xl:-translate-x-full"
+                    "fixed left-0 top-0 z-40 h-screen p-5 bg-b-surface1 transition-all duration-300 ease-in-out flex flex-col max-md:p-4",
+                    expanded ? "w-85 max-4xl:w-70 max-3xl:w-60 max-xl:w-72" : "w-20",
+                    visible ? "translate-x-0" : "-translate-x-full xl:translate-x-0",
+                    !expanded && "max-xl:-translate-x-full"
                 )}
             >
                 {/* Logo */}

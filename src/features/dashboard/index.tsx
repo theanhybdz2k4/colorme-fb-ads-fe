@@ -1,8 +1,6 @@
 
 import { DashboardProvider, useDashboard } from './context/DashboardContext';
 import { KpiSection } from './sections/KpiSection';
-import { AccountDetailsSection } from './sections/AccountDetailsSection';
-import { QuickInsightsSection } from './sections/QuickInsightsSection';
 import { LoadingPage } from '@/components/shared/common';
 
 function DashboardContent() {
@@ -18,10 +16,6 @@ function DashboardContent() {
             Xin chào, <span className="font-bold text-t-primary">{user?.name || user?.email}</span>! Đây là tổng quan hiệu suất trong 30 ngày qua.
           </p>
         <KpiSection />
-        <QuickInsightsSection />
-         <div className="mt-8">
-          <AccountDetailsSection />
-        </div>
     </div>
   );
 }
