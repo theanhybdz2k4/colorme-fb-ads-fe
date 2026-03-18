@@ -87,7 +87,7 @@ function AdReportingPageInner() {
     // Error state
     if (error) {
         return (
-            <div className="p-8 max-w-4xl mx-auto space-y-6">
+            <div className="p-8 mx-auto space-y-6">
                 <Button variant="outline" asChild className="mb-4">
                     <Link to={`${ROUTES.AI_REPORTS}?tab=campaigns`}><ArrowLeft className="w-4 h-4 mr-2" /> Trở về danh sách báo cáo</Link>
                 </Button>
@@ -110,7 +110,7 @@ function AdReportingPageInner() {
     const { campaignName, metrics, report, createdAt } = data || {};
 
     return (
-        <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+        <div className="p-6 md:p-8 mx-auto space-y-6">
             {/* Nav */}
             <div className="flex items-center justify-between">
                 <Button variant="ghost" asChild className="px-0 hover:bg-transparent text-muted-foreground hover:text-foreground">
