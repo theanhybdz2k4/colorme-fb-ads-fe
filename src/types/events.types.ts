@@ -33,6 +33,7 @@ export interface PromoReward {
     max_claims: number | null;
     claimed_count: number;
     is_active: boolean;
+    linked_flow_key?: string | null;
     created_at: string;
 }
 
@@ -69,11 +70,15 @@ export interface PromoRedemption {
 }
 
 export interface ReplyTemplate {
-    message_type: 'text' | 'buttons' | 'carousel';
+    message_type: 'text' | 'image' | 'quick_reply' | 'buttons' | 'carousel';
     content: {
         text?: string;
+        text_before?: string;
+        image_url?: string;
+        quick_replies?: any[];
         buttons?: any[];
         elements?: any[];
+        image_aspect_ratio?: 'horizontal' | 'square';
     };
 }
 

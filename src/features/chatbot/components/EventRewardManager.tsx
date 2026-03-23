@@ -3,7 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Edit2, Save, X, Award } from 'lucide-react';
 import { useRewards, useSaveReward, useDeleteReward } from '@/hooks/useEvents';
+import { useChatbotFlows } from '@/hooks/useChatbot';
+import { ContentEditor } from './ContentEditor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { PromoReward } from '@/types/events.types';
+import type { MessageType } from '@/types/chatbot.types';
 
 interface Props {
     eventId: string;
@@ -11,6 +15,7 @@ interface Props {
 
 export function EventRewardManager({ eventId }: Props) {
     const { data: rewards, isLoading } = useRewards(eventId);
+    const { data: flows } = useChatbotFlows();
     const saveReward = useSaveReward();
     const deleteReward = useDeleteReward();
 
@@ -49,6 +54,18 @@ export function EventRewardManager({ eventId }: Props) {
         if (editingReward) setEditingReward({ ...editingReward, [key]: value });
     };
 
+    const updateReplyTemplate = (key: string, value: any) => {
+        if (editingReward) {
+            setEditingReward({
+                ...editingReward,
+                reply_template: {
+                    ...editingReward.reply_template!,
+                    [key]: value
+                }
+            });
+        }
+    };
+
     // Calculate total weight for probability display
     const totalWeight = (rewards || []).filter(r => r.is_active).reduce((sum, r) => sum + r.weight, 0);
 
@@ -69,7 +86,7 @@ export function EventRewardManager({ eventId }: Props) {
                                 type="text"
                                 value={editingReward.name || ''}
                                 onChange={e => update('name', e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm"
                                 placeholder="VD: Giảm 20%, Free Ship"
                             />
                         </div>
@@ -80,7 +97,7 @@ export function EventRewardManager({ eventId }: Props) {
                                     type="number"
                                     value={editingReward.weight || 1}
                                     onChange={e => update('weight', Math.max(1, parseInt(e.target.value) || 1))}
-                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                    className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm"
                                     min={1}
                                 />
                             </div>
@@ -90,7 +107,7 @@ export function EventRewardManager({ eventId }: Props) {
                                     type="number"
                                     value={editingReward.max_claims ?? ''}
                                     onChange={e => update('max_claims', e.target.value ? parseInt(e.target.value) : null)}
-                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                    className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm"
                                     placeholder="∞"
                                     min={1}
                                 />
@@ -98,16 +115,48 @@ export function EventRewardManager({ eventId }: Props) {
                         </div>
                     </div>
 
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">Loại tin nhắn</Label>
+                            <Select 
+                                value={editingReward.reply_template?.message_type || 'text'} 
+                                onValueChange={(v: MessageType) => {
+                                    const currentContent = editingReward.reply_template?.content || {};
+                                    let newContent = { ...currentContent };
+                                    
+                                    // Basic content reset similar to FlowEditDialog
+                                    if (v === 'text') {
+                                        newContent = { text: currentContent.text || '' };
+                                    } else if (v === 'quick_reply') {
+                                        newContent = { text: currentContent.text || '', quick_replies: currentContent.quick_replies || [] };
+                                    } else if (v === 'buttons') {
+                                        newContent = { text: currentContent.text || '', buttons: currentContent.buttons || [] };
+                                    } else if (v === 'carousel') {
+                                        newContent = { text_before: currentContent.text_before || '', elements: currentContent.elements || [] };
+                                    }
+
+                                    update('reply_template', {
+                                        message_type: v,
+                                        content: newContent
+                                    });
+                                }}
+                            >
+                                <SelectTrigger className="h-9 rounded-xl border-border bg-background"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="text">Văn bản (Text)</SelectItem>
+                                    <SelectItem value="quick_reply">Phản hồi nhanh (Quick Reply)</SelectItem>
+                                    <SelectItem value="buttons">Nút bấm (Buttons)</SelectItem>
+                                    <SelectItem value="carousel">Thẻ quay vòng (Carousel)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                     <div className="space-y-1.5">
-                        <Label className="text-xs">Tin nhắn gửi cho user khi nhận ưu đãi</Label>
-                        <textarea
-                            value={editingReward.reply_template?.content?.text || ''}
-                            onChange={e => update('reply_template', {
-                                message_type: 'text',
-                                content: { text: e.target.value }
-                            })}
-                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm min-h-[80px] resize-y"
-                            placeholder="VD: 🎉 Chúc mừng! Bạn nhận được Giảm 20%! Mã: SALE20..."
+                        <Label className="text-xs font-bold text-primary">Nội dung tin nhắn ưu đãi</Label>
+                        <ContentEditor
+                            type={(editingReward.reply_template?.message_type as any) || 'text'}
+                            content={editingReward.reply_template?.content || {}}
+                            flows={flows}
+                            onChange={(content) => updateReplyTemplate('content', content)}
                         />
                     </div>
 

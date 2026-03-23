@@ -2,16 +2,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Type, MousePointerClick, LayoutGrid } from 'lucide-react';
+import { Type, MousePointerClick, LayoutGrid, Image as ImageIcon } from 'lucide-react';
 import type { MessageType } from '@/types/chatbot.types';
-import { ContentEditor } from './ContentEditor';
+import { ContentEditor, FlowMultiSelect } from './ContentEditor';
 import { useChatbot } from '../context/ChatbotContext';
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, { label: string; icon: any; color: string }> = {
-    text: { label: 'Text', icon: Type, color: 'text-green-400' },
-    quick_reply: { label: 'Quick Reply', icon: MousePointerClick, color: 'text-blue-400' },
-    buttons: { label: 'Buttons', icon: LayoutGrid, color: 'text-purple-400' },
-    carousel: { label: 'Carousel', icon: LayoutGrid, color: 'text-orange-400' },
+    text: { label: 'Văn bản (Text)', icon: Type, color: 'text-green-400' },
+    image: { label: 'Hình ảnh (Image)', icon: ImageIcon, color: 'text-pink-400' },
+    quick_reply: { label: 'Phản hồi nhanh (Quick Reply)', icon: MousePointerClick, color: 'text-blue-400' },
+    buttons: { label: 'Nút bấm (Buttons)', icon: LayoutGrid, color: 'text-purple-400' },
+    carousel: { label: 'Thẻ quay vòng (Carousel)', icon: LayoutGrid, color: 'text-orange-400' },
 };
 
 export function FlowEditDialog() {
@@ -22,6 +23,7 @@ export function FlowEditDialog() {
         setEditingFlow: setFlow,
         handleSaveFlow: onSave,
         saveFlow,
+        flows,
     } = useChatbot();
 
     if (!flow) return null;
@@ -50,7 +52,7 @@ export function FlowEditDialog() {
                                 type="text"
                                 value={flow.display_name || ''}
                                 onChange={e => updateField('display_name', e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm"
                                 placeholder="VD: Chào mừng"
                             />
                         </div>
@@ -60,7 +62,7 @@ export function FlowEditDialog() {
                                 type="text"
                                 value={flow.flow_key || ''}
                                 onChange={e => updateField('flow_key', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-mono"
+                                className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm font-mono"
                                 placeholder="VD: welcome"
                             />
                         </div>
@@ -87,9 +89,11 @@ export function FlowEditDialog() {
                         }}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {Object.entries(MESSAGE_TYPE_LABELS).map(([key, info]) => (
-                                    <SelectItem key={key} value={key}>{info.label}</SelectItem>
-                                ))}
+                                {Object.entries(MESSAGE_TYPE_LABELS)
+                                    .filter(([key]) => key !== 'image')
+                                    .map(([key, info]) => (
+                                        <SelectItem key={key} value={key}>{info.label}</SelectItem>
+                                    ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -99,18 +103,18 @@ export function FlowEditDialog() {
                         type={messageType}
                         content={flow.content || {}}
                         onChange={(c) => updateField('content', c)}
+                        flows={flows}
                     />
 
                     {/* Triggers */}
                     <div className="space-y-2">
-                        <Label>Trigger Payloads (cách nhau dấu phẩy)</Label>
-                        <input
-                            type="text"
-                            value={(flow.trigger_payloads || []).join(', ')}
-                            onChange={e => updateField('trigger_payloads', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm font-mono"
-                            placeholder="VD: COMBO_CAP_TOC, MY_PAYLOAD"
+                        <Label>Trigger Payloads (chọn từ các Flow hiện có hoặc nhập thủ công)</Label>
+                        <FlowMultiSelect
+                            flows={flows || []}
+                            selectedKeys={flow.trigger_payloads || []}
+                            onChange={(keys) => updateField('trigger_payloads', keys)}
                         />
+                        <p className="text-[10px] text-muted-foreground italic">Gợi ý: Dùng Flow Key của các bước khác để liên kết</p>
                     </div>
 
                     <div className="space-y-2">
@@ -119,7 +123,7 @@ export function FlowEditDialog() {
                             type="text"
                             value={(flow.trigger_keywords || []).join(', ')}
                             onChange={e => updateField('trigger_keywords', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                            className="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm"
                             placeholder="VD: xin chào, hello"
                         />
                     </div>

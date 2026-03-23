@@ -3,8 +3,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSaveEvent } from '@/hooks/useEvents';
 import { usePages } from '@/hooks/usePages';
+import { useChatbotFlows } from '@/hooks/useChatbot';
 import type { PromoEvent } from '@/types/events.types';
 import { Check, Info } from 'lucide-react';
+import { ContentEditor } from './ContentEditor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { MessageType } from '@/types/chatbot.types';
 
 interface Props {
     open: boolean;
@@ -16,6 +20,7 @@ interface Props {
 export function EventEditDialog({ open, onOpenChange, event, setEvent }: Props) {
     const saveEvent = useSaveEvent();
     const { data: pages } = usePages();
+    const { data: flows } = useChatbotFlows();
 
     if (!event) return null;
 
@@ -125,42 +130,84 @@ export function EventEditDialog({ open, onOpenChange, event, setEvent }: Props) 
                     <div className="space-y-3 pt-2 border-t border-border">
                         <h4 className="text-sm font-bold">Tin nhắn tự động</h4>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Khi mã đã hết lượt sử dụng</Label>
-                            <textarea
-                                value={event.code_used_reply?.content?.text || ''}
-                                onChange={e => update('code_used_reply', {
-                                    message_type: 'text',
-                                    content: { text: e.target.value }
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground font-bold">Khi mã đã hết lượt sử dụng</Label>
+                                <Select 
+                                    value={event.code_used_reply?.message_type || 'text'} 
+                                    onValueChange={(v: MessageType) => update('code_used_reply', { message_type: v, content: event.code_used_reply?.content || {} })}
+                                >
+                                    <SelectTrigger className="h-7 w-[180px] text-[10px]"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="text">Văn bản</SelectItem>
+                                        <SelectItem value="quick_reply">Phản hồi nhanh</SelectItem>
+                                        <SelectItem value="buttons">Nút bấm</SelectItem>
+                                        <SelectItem value="carousel">Carousel</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <ContentEditor
+                                type={event.code_used_reply?.message_type || 'text'}
+                                content={event.code_used_reply?.content || {}}
+                                flows={flows}
+                                onChange={(content) => setEvent({
+                                    ...event,
+                                    code_used_reply: { ...(event.code_used_reply || { message_type: 'text' }), content }
                                 })}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm min-h-[60px] resize-y"
-                                placeholder="VD: Mã này đã được sử dụng rồi!"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Khi mã/event hết hạn</Label>
-                            <textarea
-                                value={event.code_expired_reply?.content?.text || ''}
-                                onChange={e => update('code_expired_reply', {
-                                    message_type: 'text',
-                                    content: { text: e.target.value }
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground font-bold">Khi mã/event hết hạn</Label>
+                                <Select
+                                    value={event.code_expired_reply?.message_type || 'text'}
+                                    onValueChange={(v: MessageType) => update('code_expired_reply', { message_type: v, content: event.code_expired_reply?.content || {} })}
+                                >
+                                    <SelectTrigger className="h-7 w-[180px] text-[10px]"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="text">Văn bản</SelectItem>
+                                        <SelectItem value="quick_reply">Phản hồi nhanh</SelectItem>
+                                        <SelectItem value="buttons">Nút bấm</SelectItem>
+                                        <SelectItem value="carousel">Carousel</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <ContentEditor
+                                type={event.code_expired_reply?.message_type || 'text'}
+                                content={event.code_expired_reply?.content || {}}
+                                flows={flows}
+                                onChange={(content) => setEvent({
+                                    ...event,
+                                    code_expired_reply: { ...(event.code_expired_reply || { message_type: 'text' }), content }
                                 })}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm min-h-[60px] resize-y"
-                                placeholder="VD: Mã này đã hết hạn!"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Khi hết ưu đãi trong pool</Label>
-                            <textarea
-                                value={event.no_reward_reply?.content?.text || ''}
-                                onChange={e => update('no_reward_reply', {
-                                    message_type: 'text',
-                                    content: { text: e.target.value }
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground font-bold">Khi hết ưu đãi trong pool</Label>
+                                <Select
+                                    value={event.no_reward_reply?.message_type || 'text'}
+                                    onValueChange={(v: MessageType) => update('no_reward_reply', { message_type: v, content: event.no_reward_reply?.content || {} })}
+                                >
+                                    <SelectTrigger className="h-7 w-[180px] text-[10px]"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="text">Văn bản</SelectItem>
+                                        <SelectItem value="quick_reply">Phản hồi nhanh</SelectItem>
+                                        <SelectItem value="buttons">Nút bấm</SelectItem>
+                                        <SelectItem value="carousel">Carousel</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <ContentEditor
+                                type={event.no_reward_reply?.message_type || 'text'}
+                                content={event.no_reward_reply?.content || {}}
+                                flows={flows}
+                                onChange={(content) => setEvent({
+                                    ...event,
+                                    no_reward_reply: { ...(event.no_reward_reply || { message_type: 'text' }), content }
                                 })}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm min-h-[60px] resize-y"
-                                placeholder="VD: Rất tiếc, ưu đãi đã hết!"
                             />
                         </div>
                     </div>

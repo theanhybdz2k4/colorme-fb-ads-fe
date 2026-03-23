@@ -11,7 +11,7 @@ export interface ChatbotConfig {
     updated_at?: string;
 }
 
-export type MessageType = 'text' | 'quick_reply' | 'buttons' | 'carousel';
+export type MessageType = 'text' | 'image' | 'quick_reply' | 'buttons' | 'carousel';
 
 export interface QuickReply {
     content_type: 'text';
@@ -39,6 +39,7 @@ export interface FlowContent {
     quick_replies?: QuickReply[];
     buttons?: ButtonItem[];
     elements?: CarouselElement[];
+    image_url?: string;
     image_aspect_ratio?: 'horizontal' | 'square';
     handoff?: boolean;
 }
