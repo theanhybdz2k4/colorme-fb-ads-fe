@@ -44,6 +44,8 @@ export interface PromoCode {
     used_count: number;
     expires_at: string | null;
     created_at: string;
+    reward_id?: string | null;
+    promo_rewards?: { id: string; name: string } | null;
 }
 
 export interface PromoRedemption {
@@ -104,4 +106,5 @@ export interface CreateCodesRequest {
     count?: number;
     max_uses?: number;
     expires_at?: string | null;
+    reward_id?: string | null;
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Copy, Shuffle, Keyboard, Check } from 'lucide-react';
-import { useCodes, useCreateCodes, useDeleteCode } from '@/hooks/useEvents';
+import { Plus, Trash2, Copy, Shuffle, Keyboard, Check, Gift } from 'lucide-react';
+import { useCodes, useCreateCodes, useDeleteCode, useRewards } from '@/hooks/useEvents';
 
 interface Props {
     eventId: string;
@@ -10,6 +10,7 @@ interface Props {
 
 export function EventCodeManager({ eventId }: Props) {
     const { data: codes, isLoading } = useCodes(eventId);
+    const { data: rewards } = useRewards(eventId);
     const createCodes = useCreateCodes();
     const deleteCode = useDeleteCode();
 
@@ -17,21 +18,24 @@ export function EventCodeManager({ eventId }: Props) {
     const [prefix, setPrefix] = useState('');
     const [count, setCount] = useState(10);
     const [maxUses, setMaxUses] = useState(1);
+    const [rewardId, setRewardId] = useState<string>('random');
     const [manualCodes, setManualCodes] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const handleGenerate = async () => {
+        const payloadRewardId = rewardId === 'random' ? null : rewardId;
+
         if (mode === 'random') {
             await createCodes.mutateAsync({
                 eventId,
-                req: { prefix: prefix || undefined, count, max_uses: maxUses },
+                req: { prefix: prefix || undefined, count, max_uses: maxUses, reward_id: payloadRewardId },
             });
         } else {
             const codeList = manualCodes.split('\n').map(c => c.trim()).filter(Boolean);
             if (codeList.length === 0) return;
             await createCodes.mutateAsync({
                 eventId,
-                req: { codes: codeList, max_uses: maxUses },
+                req: { codes: codeList, max_uses: maxUses, reward_id: payloadRewardId },
             });
             setManualCodes('');
         }
@@ -74,7 +78,7 @@ export function EventCodeManager({ eventId }: Props) {
                 </div>
 
                 {mode === 'random' ? (
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                         <div className="space-y-1.5">
                             <Label className="text-xs">Prefix (tuỳ chọn)</Label>
                             <input
@@ -97,7 +101,7 @@ export function EventCodeManager({ eventId }: Props) {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Số lần sử dụng / mã</Label>
+                            <Label className="text-xs">Số lần/mã</Label>
                             <input
                                 type="number"
                                 value={maxUses}
@@ -105,6 +109,19 @@ export function EventCodeManager({ eventId }: Props) {
                                 className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
                                 min={1}
                             />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Gắn ưu đãi</Label>
+                            <select
+                                value={rewardId}
+                                onChange={e => setRewardId(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                            >
+                                <option value="random">⚡️ Random (Pool)</option>
+                                {rewards?.filter(r => r.is_active).map(r => (
+                                    <option key={r.id} value={r.id}>🎁 {r.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 ) : (
@@ -118,15 +135,30 @@ export function EventCodeManager({ eventId }: Props) {
                                 placeholder={"SALE2026\nCOLORME50\nTET-VIP"}
                             />
                         </div>
-                        <div className="space-y-1.5 w-48">
-                            <Label className="text-xs">Số lần sử dụng / mã</Label>
-                            <input
-                                type="number"
-                                value={maxUses}
-                                onChange={e => setMaxUses(Math.max(1, parseInt(e.target.value) || 1))}
-                                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
-                                min={1}
-                            />
+                        <div className="flex gap-4">
+                            <div className="space-y-1.5 w-48">
+                                <Label className="text-xs">Số lần sử dụng / mã</Label>
+                                <input
+                                    type="number"
+                                    value={maxUses}
+                                    onChange={e => setMaxUses(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                    min={1}
+                                />
+                            </div>
+                            <div className="space-y-1.5 flex-1">
+                                <Label className="text-xs">Gắn ưu đãi</Label>
+                                <select
+                                    value={rewardId}
+                                    onChange={e => setRewardId(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                >
+                                    <option value="random">⚡️ Random (Pool)</option>
+                                    {rewards?.filter(r => r.is_active).map(r => (
+                                        <option key={r.id} value={r.id}>🎁 {r.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -154,6 +186,7 @@ export function EventCodeManager({ eventId }: Props) {
                             <thead>
                                 <tr className="bg-muted/50">
                                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Mã</th>
+                                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Ưu đãi</th>
                                     <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Đã dùng</th>
                                     <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Tối đa</th>
                                     <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">Trạng thái</th>
@@ -166,6 +199,19 @@ export function EventCodeManager({ eventId }: Props) {
                                     return (
                                         <tr key={code.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-2.5 font-mono font-bold text-foreground">{code.code}</td>
+                                            <td className="px-4 py-2.5">
+                                                {code.promo_rewards ? (
+                                                    <span className="flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 w-fit px-2 py-0.5 rounded-full">
+                                                        <Gift className="h-3.5 w-3.5" />
+                                                        {code.promo_rewards.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground w-fit px-2 py-0.5 rounded-full border border-border">
+                                                        <Shuffle className="h-3 w-3" />
+                                                        Random pool
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-2.5 text-center">{code.used_count}</td>
                                             <td className="px-4 py-2.5 text-center">{code.max_uses}</td>
                                             <td className="px-4 py-2.5 text-center">
