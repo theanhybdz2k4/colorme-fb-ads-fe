@@ -28,7 +28,7 @@ export interface PromoReward {
     id: string;
     event_id: string;
     name: string;
-    reply_template: ReplyTemplate;
+    reply_template: ReplyTemplate | ReplyTemplate[];
     weight: number;
     max_claims: number | null;
     claimed_count: number;

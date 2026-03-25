@@ -6,7 +6,7 @@ import { useRewards, useSaveReward, useDeleteReward } from '@/hooks/useEvents';
 import { useChatbotFlows } from '@/hooks/useChatbot';
 import { ContentEditor } from './ContentEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { PromoReward } from '@/types/events.types';
+import type { PromoReward, ReplyTemplate } from '@/types/events.types';
 import type { MessageType } from '@/types/chatbot.types';
 
 interface Props {
@@ -20,21 +20,26 @@ export function EventRewardManager({ eventId }: Props) {
     const deleteReward = useDeleteReward();
 
     const [editingReward, setEditingReward] = useState<Partial<PromoReward> | null>(null);
+    const [templateKeys, setTemplateKeys] = useState<number[]>([]);
     const [isNew, setIsNew] = useState(false);
 
     const handleNew = () => {
         setEditingReward({
             name: '',
-            reply_template: { message_type: 'text', content: { text: '🎉 Chúc mừng! Bạn nhận được ưu đãi!' } },
+            reply_template: [{ message_type: 'text', content: { text: '🎉 Chúc mừng! Bạn nhận được ưu đãi!' } }],
             weight: 1,
             max_claims: null,
             is_active: true,
         });
+        setTemplateKeys([Date.now()]);
         setIsNew(true);
     };
 
     const handleEdit = (reward: PromoReward) => {
-        setEditingReward({ ...reward });
+        const rt = reward.reply_template;
+        const replySequence = Array.isArray(rt) ? [...rt] : (rt ? [rt] : []);
+        setEditingReward({ ...reward, reply_template: replySequence });
+        setTemplateKeys(replySequence.map((_, i) => Date.now() + i));
         setIsNew(false);
     };
 
@@ -54,15 +59,61 @@ export function EventRewardManager({ eventId }: Props) {
         if (editingReward) setEditingReward({ ...editingReward, [key]: value });
     };
 
-    const updateReplyTemplate = (key: string, value: any) => {
+    const updateReplyTemplate = (index: number, key: keyof ReplyTemplate, value: any) => {
         if (editingReward) {
+            const currentTemplates = Array.isArray(editingReward.reply_template) 
+                ? [...editingReward.reply_template] 
+                : (editingReward.reply_template ? [editingReward.reply_template as ReplyTemplate] : []);
+            
+            if (currentTemplates[index]) {
+                currentTemplates[index] = {
+                    ...currentTemplates[index],
+                    [key]: value
+                };
+                setEditingReward({
+                    ...editingReward,
+                    reply_template: currentTemplates
+                });
+            }
+        }
+    };
+
+    const addReplyTemplate = () => {
+        if (editingReward) {
+            const currentTemplates = Array.isArray(editingReward.reply_template) 
+                ? [...editingReward.reply_template] 
+                : (editingReward.reply_template ? [editingReward.reply_template as ReplyTemplate] : []);
+            
+            currentTemplates.push({ message_type: 'text', content: { text: '' } });
+            
+            setTemplateKeys(prev => [...prev, Date.now()]);
             setEditingReward({
                 ...editingReward,
-                reply_template: {
-                    ...editingReward.reply_template!,
-                    [key]: value
-                }
+                reply_template: currentTemplates
             });
+        }
+    };
+
+    const removeReplyTemplate = (index: number) => {
+        if (editingReward) {
+            const currentTemplates = Array.isArray(editingReward.reply_template) 
+                ? [...editingReward.reply_template] 
+                : (editingReward.reply_template ? [editingReward.reply_template as ReplyTemplate] : []);
+            
+            if (currentTemplates.length > 1) {
+                currentTemplates.splice(index, 1);
+                
+                setTemplateKeys(prev => {
+                    const newKeys = [...prev];
+                    newKeys.splice(index, 1);
+                    return newKeys;
+                });
+                
+                setEditingReward({
+                    ...editingReward,
+                    reply_template: currentTemplates
+                });
+            }
         }
     };
 
@@ -115,49 +166,84 @@ export function EventRewardManager({ eventId }: Props) {
                         </div>
                     </div>
 
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold">Loại tin nhắn</Label>
-                            <Select 
-                                value={editingReward.reply_template?.message_type || 'text'} 
-                                onValueChange={(v: MessageType) => {
-                                    const currentContent = editingReward.reply_template?.content || {};
-                                    let newContent = { ...currentContent };
-                                    
-                                    // Basic content reset similar to FlowEditDialog
-                                    if (v === 'text') {
-                                        newContent = { text: currentContent.text || '' };
-                                    } else if (v === 'quick_reply') {
-                                        newContent = { text: currentContent.text || '', quick_replies: currentContent.quick_replies || [] };
-                                    } else if (v === 'buttons') {
-                                        newContent = { text: currentContent.text || '', buttons: currentContent.buttons || [] };
-                                    } else if (v === 'carousel') {
-                                        newContent = { text_before: currentContent.text_before || '', elements: currentContent.elements || [] };
-                                    }
-
-                                    update('reply_template', {
-                                        message_type: v,
-                                        content: newContent
-                                    });
-                                }}
-                            >
-                                <SelectTrigger className="h-9 rounded-xl border-border bg-background"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="text">Văn bản (Text)</SelectItem>
-                                    <SelectItem value="quick_reply">Phản hồi nhanh (Quick Reply)</SelectItem>
-                                    <SelectItem value="buttons">Nút bấm (Buttons)</SelectItem>
-                                    <SelectItem value="carousel">Thẻ quay vòng (Carousel)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    <div className="space-y-4 pt-2 border-t border-border/50">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-xs font-bold text-primary">Chuỗi tin nhắn chúc mừng (Gửi tuần tự khi trúng thưởng)</Label>
+                            <Button variant="outline" size="sm" onClick={addReplyTemplate} className="h-7 px-2 text-[10px] gap-1 rounded-lg">
+                                <Plus className="h-3 w-3" /> Thêm tin nhắn
+                            </Button>
                         </div>
 
-                    <div className="space-y-1.5">
-                        <Label className="text-xs font-bold text-primary">Nội dung tin nhắn ưu đãi</Label>
-                        <ContentEditor
-                            type={(editingReward.reply_template?.message_type as any) || 'text'}
-                            content={editingReward.reply_template?.content || {}}
-                            flows={flows}
-                            onChange={(content) => updateReplyTemplate('content', content)}
-                        />
+                        <div className="space-y-4">
+                            {(() => {
+                                const templates = Array.isArray(editingReward.reply_template) 
+                                    ? editingReward.reply_template 
+                                    : (editingReward.reply_template ? [editingReward.reply_template as ReplyTemplate] : []);
+                                
+                                return templates.map((template, index) => {
+                                    const key = templateKeys[index] || index;
+                                    return (
+                                    <div key={key} className="relative p-4 rounded-xl border border-border bg-card/50 space-y-4">
+                                        <div className="absolute -left-2.5 -top-2.5 w-6 h-6 bg-primary text-primary-foreground border-2 border-background rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm">
+                                            {index + 1}
+                                        </div>
+                                        {(templates.length > 1) && (
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="absolute -top-1 right-2 h-7 px-2 text-[10px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                onClick={() => removeReplyTemplate(index)}
+                                            >
+                                                <Trash2 className="h-3 w-3 mr-1" /> Xóa
+                                            </Button>
+                                        )}
+                                        
+                                        <div className="space-y-1.5 w-[calc(100%-4rem)]">
+                                            <Label className="text-xs font-bold">Loại tin nhắn</Label>
+                                            <Select 
+                                                value={template.message_type || 'text'} 
+                                                onValueChange={(v: MessageType) => {
+                                                    const currentContent = template.content || {};
+                                                    let newContent = { ...currentContent };
+                                                    
+                                                    if (v === 'text') {
+                                                        newContent = { text: currentContent.text || '' };
+                                                    } else if (v === 'quick_reply') {
+                                                        newContent = { text: currentContent.text || '', quick_replies: currentContent.quick_replies || [] };
+                                                    } else if (v === 'buttons') {
+                                                        newContent = { text: currentContent.text || '', buttons: currentContent.buttons || [] };
+                                                    } else if (v === 'carousel') {
+                                                        newContent = { text_before: currentContent.text_before || '', elements: currentContent.elements || [] };
+                                                    }
+
+                                                    updateReplyTemplate(index, 'message_type', v);
+                                                    updateReplyTemplate(index, 'content', newContent);
+                                                }}
+                                            >
+                                                <SelectTrigger className="h-9 rounded-xl border-border bg-background"><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="text">Văn bản (Text)</SelectItem>
+                                                    <SelectItem value="quick_reply">Phản hồi nhanh (Quick Reply)</SelectItem>
+                                                    <SelectItem value="buttons">Nút bấm (Buttons)</SelectItem>
+                                                    <SelectItem value="carousel">Thẻ quay vòng (Carousel)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-bold text-muted-foreground">Nội dung</Label>
+                                            <ContentEditor
+                                                type={(template.message_type as any) || 'text'}
+                                                content={template.content || {}}
+                                                flows={flows}
+                                                onChange={(content) => updateReplyTemplate(index, 'content', content)}
+                                            />
+                                        </div>
+                                    </div>
+                                    );
+                                });
+                            })()}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -222,11 +308,25 @@ export function EventRewardManager({ eventId }: Props) {
                                                     <span>Trọng số: {reward.weight} ({prob}%)</span>
                                                     <span>Đã phát: {reward.claimed_count}{reward.max_claims !== null ? `/${reward.max_claims}` : ''}</span>
                                                 </div>
-                                                {reward.reply_template?.content?.text && (
-                                                    <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1 italic">
-                                                        "{reward.reply_template.content.text}"
-                                                    </p>
-                                                )}
+                                                {(() => {
+                                                    const templates = Array.isArray(reward.reply_template) 
+                                                        ? reward.reply_template 
+                                                        : (reward.reply_template ? [reward.reply_template] : []);
+                                                    const firstText = templates.find(t => t.content?.text)?.content?.text;
+                                                    if (!firstText) return null;
+                                                    return (
+                                                        <div className="mt-1.5 line-clamp-2">
+                                                            <p className="text-xs text-muted-foreground italic inline">
+                                                                "{firstText}"
+                                                            </p>
+                                                            {templates.length > 1 && (
+                                                                <span className="text-[10px] text-primary/80 ml-1.5 font-medium border border-primary/20 bg-primary/5 px-1.5 py-0.5 rounded-full inline-block">
+                                                                    +{templates.length - 1} tin
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
 
