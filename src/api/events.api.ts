@@ -40,6 +40,11 @@ export const eventsApi = {
         await apiClient.delete(`/chatbot/events/${eventId}/codes/${codeId}`);
     },
 
+    updateCode: async (eventId: string, codeId: string, req: Partial<PromoCode>): Promise<PromoCode> => {
+        const { data } = await apiClient.post(`/chatbot/events/${eventId}/codes/${codeId}`, req);
+        return data.result || data;
+    },
+
     // Rewards
     getRewards: async (eventId: string): Promise<PromoReward[]> => {
         const { data } = await apiClient.get(`/chatbot/events/${eventId}/rewards`);

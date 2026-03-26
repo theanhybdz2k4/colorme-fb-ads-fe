@@ -73,6 +73,18 @@ export function useDeleteCode() {
     });
 }
 
+export function useUpdateCode() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ eventId, codeId, req }: { eventId: string; codeId: string; req: any }) =>
+            eventsApi.updateCode(eventId, codeId, req),
+        onSuccess: (_, { eventId }) => {
+            qc.invalidateQueries({ queryKey: KEYS.codes(eventId) });
+            qc.invalidateQueries({ queryKey: KEYS.events });
+        },
+    });
+}
+
 // Rewards
 export function useRewards(eventId: string | null) {
     return useQuery({
